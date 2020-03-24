@@ -5,76 +5,94 @@
 
 #include "plateform.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+// TODO:
+// * add texture and white default texture to batch rendering cube.
+// * add IMGUI window with renderer stats.
+// * generate terrain?
+// * refact resource manager class
+// * refact shader class
+// * implement logger? check the cherno
+// * implement frame rate counter
+// * add batch model renderer?
+// * implement game entity and level?
+// * memory profiler
+// * light system?
 
-const unsigned int SCREEN_WIDTH = 800;
-const unsigned int SCREEN_HEIGHT = 600;
+
 
 int main(int argc, char *argv[]) {
-    // ============================== GLFW + GLAD INIT =================================
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
-    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "SecSec", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    // NOTE: OpenGL configuration
-    //glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    // =================================================================================
-
-    // Initialize stuff
+    // Initialize engine
     engine *Engine = engine_construct();
-    init_engine_data(Engine, window, SCREEN_WIDTH, SCREEN_HEIGHT); // TODO: atm set default shaders and stuff ...
+    init_engine_data(Engine, 800, 600, POLYGONE_MODE);
+    prepare_debug_rendering(Engine->Renderer);
+    prepare_cube_batch_rendering(Engine->Renderer);
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    while (!glfwWindowShouldClose(window)) {
-	// DeltaTime
+    while (Engine->GlobalState == ENGINE_ACTIVE) {
+	// DeltaTime TODO build a function to auto retrieve this?
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-	// Inputs
-	glfwPollEvents();
-        process_input_event(Engine, deltaTime);
+	// DEBUG ==============================================================================
+        engine_update(Engine, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_ESCAPE]) {
+	    Engine->GlobalState = ENGINE_TERMINATE;
+	}
 
-	// Update
-        update_engine(Engine, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_W]) {
+	    process_camera_keyboard(Engine->Camera, FORWARD, deltaTime);
+	}
 
-        // Render
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        global_render(Engine);
+	if (Engine->InputState->Keyboard[GLFW_KEY_S]) {
+	    process_camera_keyboard(Engine->Camera, BACKWARD, deltaTime);
+	}
 
-        glfwSwapBuffers(window);
+	if (Engine->InputState->Keyboard[GLFW_KEY_A]) {
+	    process_camera_keyboard(Engine->Camera, LEFT, deltaTime);
+	}
+
+	if (Engine->InputState->Keyboard[GLFW_KEY_D]) {
+	    process_camera_keyboard(Engine->Camera, RIGHT, deltaTime);
+	}
+	
+	if (Engine->InputState->MouseLeftButton) {
+	    update_mouse_offset(Engine->InputState);
+	    process_camera_mouse_movement(Engine->Camera, Engine->InputState->MouseOffsetX, Engine->InputState->MouseOffsetY);
+	}
+
+	// Render
+        start_rendering(Engine);
+
+	draw_debug(Engine->Renderer);
+	
+	reset_renderer_stats(Engine->Renderer);
+        start_new_cube_batch(Engine->Renderer);
+
+	float r = 0.12f;
+	float g = 0.25f;
+	for (float i = 0.0f; i < 10.0f; i += 1.0f) {
+	    add_to_cube_buffer(
+		Engine->Renderer,
+		{ 0.0f, 0.0f, -i },
+		{ 2.0f, 2.0f, 2.0f },
+		{ r, g, 0.0f, 1.0f });
+
+	    r += 0.05f;
+	    g += 0.05f;
+	}
+
+	close_cube_batch(Engine->Renderer);
+	flush_cube_batch(Engine->Renderer);
+
+	stop_rendering(Engine);
+	// DEBUG ==============================================================================	
     }
 
     // Delete
-    ResourceManager::Clear(); // TODO
     delete_engine(Engine);
-    glfwTerminate();
 
     return 0;
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
 }

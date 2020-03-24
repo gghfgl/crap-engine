@@ -5,7 +5,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-input_state *_INPUT_STATE_DATA;
+static input_state *_INPUT_STATE_DATA;
 
 input_state* input_state_construct(GLFWwindow* Window, unsigned int width, unsigned int height) {
     glfwSetKeyCallback(Window, key_callback);
@@ -50,11 +50,7 @@ void update_mouse_offset(input_state *InputState) {
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    
-    if (key >= 0 && key < 1024)
-    {
+    if (key >= 0 && key < 1024) {
         if (action == GLFW_PRESS)	    
             _INPUT_STATE_DATA->Keyboard[key] = true;
         else if (action == GLFW_RELEASE)

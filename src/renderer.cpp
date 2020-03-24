@@ -20,222 +20,331 @@ bool GLLogCall(const char* function, const char* file, int line) {
 }
 // DEBUG: OPENGL_DEBUG ===================================================================
 
-unsigned int texture1, texture2;
-// world space positions of our cubes
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f, -10.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f,  3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f,  2.0f, -2.5f),
-    glm::vec3( 1.5f,  0.2f, -1.5f),
-    glm::vec3(-1.3f,  1.0f, -1.5f)
-};
-
-void init_renderer_data(renderer *Renderer) {
-    // // TODO: hardcoded
-    // float vertices[] = {
-    //     -0.5f, -0.5f, -0.5f, 
-    // 	0.5f, -0.5f, -0.5f,  
-    // 	0.5f,  0.5f, -0.5f,  
-    // 	0.5f,  0.5f, -0.5f,  
-    //     -0.5f,  0.5f, -0.5f, 
-    //     -0.5f, -0.5f, -0.5f, 
-    // };
-
-
-    
-    // // Configure VAO/VBO
-    // unsigned int VBO;
-    // glGenVertexArrays(1, &this->cubeVAO);
-    // glGenBuffers(1, &VBO);
-
-    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // glBindVertexArray(this->cubeVAO);
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glBindVertexArray(0);
-
-    // TODO: implement IBO!
-    
-    float vertices[] = {
-        -10.5f, -0.0f, -10.5f,  0.0f, 0.0f,
-         10.5f, -0.0f, -10.5f,  1.0f, 0.0f,
-         10.5f,  0.0f, -10.5f,  1.0f, 1.0f,
-         10.5f,  0.0f, -10.5f,  1.0f, 1.0f,
-        -10.5f,  0.0f, -10.5f,  0.0f, 1.0f,
-        -10.5f, -0.0f, -10.5f,  0.0f, 0.0f,
-
-        -10.5f, -0.0f,  10.5f,  0.0f, 0.0f,
-         10.5f, -0.0f,  10.5f,  1.0f, 0.0f,
-         10.5f,  0.0f,  10.5f,  1.0f, 1.0f,
-         10.5f,  0.0f,  10.5f,  1.0f, 1.0f,
-        -10.5f,  0.0f,  10.5f,  0.0f, 1.0f,
-        -10.5f, -0.0f,  10.5f,  0.0f, 0.0f,
-
-        -10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-        -10.5f,  0.0f, -10.5f,  1.0f, 1.0f,
-        -10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-        -10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-        -10.5f, -0.0f,  10.5f,  0.0f, 0.0f,
-        -10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-
-         10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-         10.5f,  0.0f, -10.5f,  1.0f, 1.0f,
-         10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-         10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-         10.5f, -0.0f,  10.5f,  0.0f, 0.0f,
-         10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-
-        -10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-         10.5f, -0.0f, -10.5f,  1.0f, 1.0f,
-         10.5f, -0.0f,  10.5f,  1.0f, 0.0f,
-         10.5f, -0.0f,  10.5f,  1.0f, 0.0f,
-        -10.5f, -0.0f,  10.5f,  0.0f, 0.0f,
-        -10.5f, -0.0f, -10.5f,  0.0f, 1.0f,
-
-        -10.5f,  0.0f, -10.5f,  0.0f, 1.0f,
-         10.5f,  0.0f, -10.5f,  1.0f, 1.0f,
-         10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-         10.5f,  0.0f,  10.5f,  1.0f, 0.0f,
-        -10.5f,  0.0f,  10.5f,  0.0f, 0.0f,
-        -10.5f,  0.0f, -10.5f,  0.0f, 1.0f
-    };
-    
-    unsigned int VBO;
-    GLCall(glGenVertexArrays(1, &Renderer->cubeVAO));
-    GLCall(glGenBuffers(1, &VBO));
-
-    GLCall(glBindVertexArray(Renderer->cubeVAO));
-
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-
-    // position attribute
-    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0));
-    GLCall(glEnableVertexAttribArray(0));
-    // texture coord attribute
-    GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
-    GLCall(glEnableVertexAttribArray(1));
-
-
-    // load and create a texture 
-    // -------------------------
-    // texture 1
-    // ---------
-    GLCall(glGenTextures(1, &texture1));
-    GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
-    // set the texture wrapping parameters
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    // set texture filtering parameters
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char *data = stbi_load("../assets/container.jpg", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
-	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-    // texture 2
-    // ---------
-    GLCall(glGenTextures(1, &texture2));
-    GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
-    // set the texture wrapping parameters
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    // set texture filtering parameters
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    // load image, create texture and generate mipmaps
-    data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-    // -------------------------------------------------------------------------------------------
-    Renderer->shader->Use();
-    Renderer->shader->SetInteger("texture1", 0);
-    Renderer->shader->SetInteger("texture2", 1);    
-}
-
 renderer* renderer_construct(Shader *shader) {
     renderer* Result = new renderer();
     Result->shader = shader;
-    init_renderer_data(Result);
 
     return Result;
 }
 
+void prepare_debug_rendering(renderer *Renderer) {    
+    float debug_axis[] = {
+    	0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+    	3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+    	0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+    	0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+	
+    	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+    	0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 1.0f, 1.0f
+    };
+
+    GLCall(glGenVertexArrays(1, &Renderer->DebugVAO));
+    GLCall(glBindVertexArray(Renderer->DebugVAO));
+
+    GLCall(glGenBuffers(1, &Renderer->DebugVBO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->DebugVBO));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(debug_axis), debug_axis, GL_STATIC_DRAW));
+
+    GLCall(glEnableVertexAttribArray(0));
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0));
+
+    GLCall(glEnableVertexAttribArray(1));
+    GLCall(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float))));
+}
+
+void draw_debug(renderer *Renderer) {
+    glBindVertexArray(Renderer->DebugVAO);
+    glDrawArrays(GL_LINES, 0, 6);
+}
+
+void prepare_cube_batch_rendering(renderer *Renderer) {
+    Renderer->CubeBuffer = new vertex[MaxVertexCount];
+
+    GLCall(glGenVertexArrays(1, &Renderer->CubeVAO));
+    GLCall(glBindVertexArray(Renderer->CubeVAO));
+
+    GLCall(glGenBuffers(1, &Renderer->CubeVBO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO));
+    // DYNAMIC because of no data initialization and set data every frame later
+    GLCall(glBufferData(GL_ARRAY_BUFFER, MaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW));
+
+    GLCall(glEnableVertexAttribArray(0));
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Position)));
+
+    GLCall(glEnableVertexAttribArray(1));
+    GLCall(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Color)));
+
+    // predictable cube layout
+    uint32_t indices[MaxIndexCount];
+    uint32_t offset = 0;
+    for (int i = 0; i < MaxIndexCount; i += PerCubeIndices) { // 8 = nb of vertex needed for 1 cube
+	indices[i + 0] = 0 + offset;
+	indices[i + 1] = 1 + offset;
+	indices[i + 2] = 2 + offset;
+	indices[i + 3] = 2 + offset;
+    	indices[i + 4] = 3 + offset;
+	indices[i + 5] = 0 + offset;
+
+	indices[i + 6] = 1 + offset;
+	indices[i + 7] = 5 + offset;
+	indices[i + 8] = 6 + offset;
+	indices[i + 9] = 6 + offset;
+    	indices[i + 10] = 2 + offset;
+	indices[i + 11] = 1 + offset;
+
+	indices[i + 12] = 7 + offset;
+	indices[i + 13] = 6 + offset;
+	indices[i + 14] = 5 + offset;
+	indices[i + 15] = 5 + offset;
+    	indices[i + 16] = 4 + offset;
+	indices[i + 17] = 7 + offset;
+
+	indices[i + 18] = 4 + offset;
+	indices[i + 19] = 0 + offset;
+	indices[i + 20] = 3 + offset;
+	indices[i + 21] = 3 + offset;
+    	indices[i + 22] = 7 + offset;
+	indices[i + 23] = 4 + offset;
+
+	indices[i + 24] = 4 + offset;
+	indices[i + 25] = 5 + offset;
+	indices[i + 26] = 1 + offset;
+	indices[i + 27] = 1 + offset;
+    	indices[i + 28] = 0 + offset;
+	indices[i + 29] = 4 + offset;
+
+	indices[i + 30] = 3 + offset;
+	indices[i + 31] = 2 + offset;
+	indices[i + 32] = 6 + offset;
+	indices[i + 33] = 6 + offset;
+    	indices[i + 34] = 7 + offset;
+	indices[i + 35] = 3 + offset;
+
+	offset += PerCubeVertex;
+    }
+
+    GLCall(glGenBuffers(1, &Renderer->CubeIBO));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Renderer->CubeIBO));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+}
+
 void delete_renderer(renderer *Renderer) {
-    glDeleteVertexArrays(1, &Renderer->cubeVAO);
+    GLCall(glDeleteVertexArrays(1, &Renderer->DebugVAO));
+    GLCall(glDeleteBuffers(1, &Renderer->DebugVBO));
+
+    GLCall(glDeleteVertexArrays(1, &Renderer->CubeVAO));
+    GLCall(glDeleteBuffers(1, &Renderer->CubeVBO));
+    GLCall(glDeleteBuffers(1, &Renderer->CubeIBO));
+
+    // delete texture
+
+    delete[] Renderer->CubeBuffer;
+    // delete cubebufferptr?
+    // delete shader?
     delete Renderer;
 }
 
-void renderer_draw(renderer *Renderer, camera *Camera, glm::vec3 position, glm::vec3 color) {
+void start_new_cube_batch(renderer *Renderer) {
+    Renderer->CubeBufferPtr = Renderer->CubeBuffer;
+}
 
-    // // world transformation
-    // this->shader->Use();
-    // glm::mat4 view = camera.GetViewMatrix();
-    // this->shader->SetMatrix4("view", view);
+void close_cube_batch(renderer *Renderer) {
+    GLsizeiptr size = (uint8_t*)Renderer->CubeBufferPtr - (uint8_t*)Renderer->CubeBuffer;
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO));
+    GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer));
+}
 
-    // glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::translate(model, glm::vec3(position));
-    // // TODO: test rotation hardcoded
-    // // float angle = 35.0f;
-    // // model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-    // // model = glm::scale(model, glm::vec3(size, 1.0f)); // Last scale
-    // this->shader->SetMatrix4("model", model);
-    // // Color
-    // this->shader->SetVector3f("objectColor", color);
-    //  //glActiveTexture(GL_TEXTURE0);
-    // //texture->Bind();    
-    // glBindVertexArray(this->cubeVAO);
-    // glDrawArrays(GL_TRIANGLES, 0, 6);
-    // //glBindVertexArray(0);
+void flush_cube_batch(renderer *Renderer) {
+    GLCall(glBindVertexArray(Renderer->CubeVAO));
+    GLCall(glDrawElements(GL_TRIANGLES, Renderer->IndexCount, GL_UNSIGNED_INT, nullptr));
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
+    Renderer->Stats.DrawCount++;
+    Renderer->IndexCount = 0;
+}
 
-    Renderer->shader->Use();
-    glm::mat4 view = get_camera_view_matrix(Camera);
-    Renderer->shader->SetMatrix4("view", view);
-
-    glBindVertexArray(Renderer->cubeVAO);
-    for (unsigned int i = 0; i < 1; i++){
-	// calculate the model matrix for each object and pass it to shader before drawing
-	glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-	model = glm::translate(model, cubePositions[i]);
-	float angle = 20.0f * i;
-	model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-        Renderer->shader->SetMatrix4("model", model);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+void add_to_cube_buffer(renderer *Renderer, const glm::vec3 &Position, const glm::vec3 &Size, const glm::vec4 &Color) {    
+    // Are we out of vertex buffer? if then reset everything
+    if (Renderer->IndexCount >= MaxIndexCount) {
+	close_cube_batch(Renderer);
+	flush_cube_batch(Renderer);
+        start_new_cube_batch(Renderer);
     }
 
+    // FRONT
+    Renderer->CubeBufferPtr->Position = { Position.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    // BACK
+    Renderer->CubeBufferPtr->Position = { Position.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->CubeBufferPtr->Position = { Position.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr++;
+
+    Renderer->IndexCount += PerCubeIndices; // 36
+    Renderer->Stats.CubeCount++;
 }
+
+void reset_renderer_stats(renderer *Renderer) {
+    memset(&Renderer->Stats, 0, sizeof(renderer_stats));
+}
+
+
+// void OLD_STUFF(renderer *Renderer) {    
+//     float vertices[] = {
+// 	// front
+// 	-1.0f, -1.0f,  1.0, // 0
+// 	1.0f, -1.0f,  1.0f, // 1
+// 	1.0f,  1.0f,  1.0f, // 2
+// 	-1.0f,  1.0f,  1.0f, // 3
+
+// 	// back
+// 	-1.0f, -1.0f, -1.0f, // 4
+// 	1.0f, -1.0f, -1.0f, // 5
+// 	1.0f,  1.0f, -1.0f, // 6
+// 	-1.0f,  1.0f, -1.0f, // 7
+
+//     	// front 2
+// 	-1.0f, -1.0f,  -1.0, // 8
+// 	1.0f, -1.0f,  -1.0f, // 9
+// 	1.0f,  1.0f,  -1.0f, // 10
+// 	-1.0f,  1.0f,  -1.0f, // 11
+
+// 	// back 2
+// 	-1.0f, -1.0f, -3.0f, // 12
+// 	1.0f, -1.0f, -3.0f, // 13
+// 	1.0f,  1.0f, -3.0f, // 14
+// 	-1.0f,  1.0f, -3.0f // 15
+//     };
+
+//     unsigned int indices[] = {
+// 	// front
+// 	0, 1, 2, 2, 3, 0,
+// 	// right
+// 	1, 5, 6, 6, 2, 1,
+// 	// back
+// 	7, 6, 5, 5, 4, 7,
+// 	// left
+// 	4, 0, 3, 3, 7, 4,
+// 	// bottom
+// 	4, 5, 1, 1, 0, 4,
+// 	// top
+// 	3, 2, 6, 6, 7, 3,
+
+//     	// front
+// 	8, 9, 10, 10, 11, 8,
+// 	// right
+// 	9, 13, 14, 14, 10, 9,
+// 	// back
+// 	15, 14, 13, 13, 12, 15,
+// 	// left
+// 	12, 8, 11, 11, 15, 12,
+// 	// bottom
+// 	12, 13, 9, 9, 8, 12,
+// 	// top
+// 	11, 20, 14, 14, 15, 11
+//     };
+    
+//     GLCall(glGenVertexArrays(1, &Renderer->CubeVAO));
+//     GLCall(glBindVertexArray(Renderer->CubeVAO));
+
+//     unsigned int VBO;
+//     GLCall(glGenBuffers(1, &VBO));
+//     GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+//     GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
+
+//     // position attribute
+//     GLCall(glEnableVertexAttribArray(0));
+//     GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+
+//     // // texture coord attribute
+//     // GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
+//     // GLCall(glEnableVertexAttribArray(1));
+
+//     unsigned int IBO;
+//     GLCall(glGenBuffers(1, &IBO));
+//     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO));
+//     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+
+
+//     // // load and create a texture 
+//     // // -------------------------
+//     // // texture 1
+//     // // ---------
+//     // GLCall(glGenTextures(1, &texture1));
+//     // GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
+//     // // set the texture wrapping parameters
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+//     // // set texture filtering parameters
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+//     // // load image, create texture and generate mipmaps
+//     // int width, height, nrChannels;
+//     // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+//     // unsigned char *data = stbi_load("../assets/container2.png", &width, &height, &nrChannels, 0);
+//     // if (data)
+//     // {
+//     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
+//     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
+//     // }
+//     // else
+//     // {
+//     //     std::cout << "Failed to load texture" << std::endl;
+//     // }
+//     // stbi_image_free(data);
+
+//     // // texture 2
+//     // // ---------
+//     // GLCall(glGenTextures(1, &texture2));
+//     // GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
+//     // // set the texture wrapping parameters
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+//     // // set texture filtering parameters
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+//     // // load image, create texture and generate mipmaps
+//     // data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
+//     // if (data)
+//     // {
+//     //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+//     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
+//     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
+//     // }
+//     // else
+//     // {
+//     //     std::cout << "Failed to load texture" << std::endl;
+//     // }
+//     // stbi_image_free(data);
+
+//     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+//     // -------------------------------------------------------------------------------------------
+//     //Renderer->shader->Use();
+//     //Renderer->shader->SetInteger("texture1", 0);
+//     // Renderer->shader->SetInteger("texture2", 1);    
+// }
