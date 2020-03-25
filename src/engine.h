@@ -20,11 +20,13 @@ enum init_flag {
 };
 
 struct engine {
-    engine_state GlobalState;	
+    engine_state GlobalState;
 
     GLFWwindow  *Window;
     input_state *InputState;
     renderer    *Renderer;
     camera      *Camera;
     unsigned int Width, Height;
+
+    unsigned int UBO;
 };

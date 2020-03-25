@@ -6,24 +6,26 @@
 #include "plateform.h"
 
 // TODO:
-// * add texture and white default texture to batch rendering cube.
 // * add IMGUI window with renderer stats.
+// * work on z-buffer to avoid z-fighting colors/ textures
+// * add texture and white default texture to batch rendering cube.
 // * generate terrain?
-// * refact resource manager class
-// * refact shader class
+// * stencil test outline object
+// * compile and read shader for presetting uniform? the cherno
 // * implement logger? check the cherno
 // * implement frame rate counter
 // * add batch model renderer?
 // * implement game entity and level?
+// * in fuction time profiler (handemade hero fast thread id retrieval)
 // * memory profiler
-// * light system?
+// * light system PBR?
 
 
 
 int main(int argc, char *argv[]) {
     // Initialize engine
     engine *Engine = engine_construct();
-    init_engine_data(Engine, 800, 600, POLYGONE_MODE);
+    init_engine_data(Engine, 800, 600, NO_DEBUG);
     prepare_debug_rendering(Engine->Renderer);
     prepare_cube_batch_rendering(Engine->Renderer);
 
@@ -73,15 +75,17 @@ int main(int argc, char *argv[]) {
 
 	float r = 0.12f;
 	float g = 0.25f;
+	float pos = 2.0f;
 	for (float i = 0.0f; i < 10.0f; i += 1.0f) {
 	    add_to_cube_buffer(
 		Engine->Renderer,
-		{ 0.0f, 0.0f, -i },
+		{ 0.0f, 0.0f, -pos },
 		{ 2.0f, 2.0f, 2.0f },
 		{ r, g, 0.0f, 1.0f });
 
 	    r += 0.05f;
 	    g += 0.05f;
+	    pos += 2.0f;
 	}
 
 	close_cube_batch(Engine->Renderer);

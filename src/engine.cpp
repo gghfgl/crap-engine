@@ -1,6 +1,22 @@
 #include "engine.h"
 #include "resource_manager.h"
 
+/* NOTE: should implement
+   - depth test / z-fighting
+   - stencil test outline object
+   - face culling
+   - white / blanc texture
+   - blending
+   - framebuffer ?
+   - mipmap ?
+   - cubemap / skybox / reflect ?
+   - geometry shader ?
+   - instancing ?
+   - MSAA anti aliasing ?
+   - light system / PBR?
+   - load models
+*/
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 engine* engine_construct() {
@@ -13,7 +29,7 @@ engine* engine_construct() {
 }
 
 void delete_engine(engine *Engine) {
-    ResourceManager::Clear(); // TODO improve resource manager
+    clear_resources();
     delete_input_state(Engine->InputState);
     delete_camera(Engine->Camera);
     delete_renderer(Engine->Renderer);
@@ -27,6 +43,7 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    //glfwWindowHint(GLFW_SAMPLES, 4); // TODO: Options -> MSAA 4 sample
 
     GLFWwindow* window = glfwCreateWindow(width, height, "CrapEngine", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -42,7 +59,11 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     //glEnable(GL_CULL_FACE);
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
+    glEnable(GL_CULL_FACE); // TODO: Options -> face culling
+    glCullFace(GL_FRONT); // TODO: Options -> face culling
+    //glEnable(GL_MULTISAMPLE); // TODO: Options -> MSAA enable
 
     if (options & POLYGONE_MODE)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -50,20 +71,29 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     camera *Camera = camera_construct(glm::vec3(0.0f, 5.0f, 10.0f));
     input_state *InputState = input_state_construct(window, width, height);
 
-    // TODO improve this crap
-    ResourceManager::LoadShader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
-    Shader defaultShader = ResourceManager::GetShader("default")->Use();
-    // view/projection transformations (perspective by default)
+    load_shader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
+    shader *DefaultShader = get_shader("default");
+    unsigned int uniformBlockIndexDefault = glGetUniformBlockIndex(DefaultShader->ID, "Matrices");  
+    glUniformBlockBinding(DefaultShader->ID, uniformBlockIndexDefault, 0);
+
+    glGenBuffers(1, &Engine->UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, Engine->UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, Engine->UBO, 0, sizeof(glm::mat4));
+
     glm::mat4 projection = glm::perspective(glm::radians(Camera->Zoom), (float)width / (float)height, 0.1f, 100.0f);
-    defaultShader.SetMatrix4("projection", projection);
+    glBindBuffer(GL_UNIFORM_BUFFER, Engine->UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     Engine->Window = window;
     Engine->InputState = InputState;
     Engine->Camera = Camera;
     Engine->Width = width;
     Engine->Height = height;    
-    Engine->Renderer = renderer_construct(ResourceManager::GetShader("default"));
-
+    Engine->Renderer = renderer_construct(get_shader("default"));
+    
     return 0;
 }
 
@@ -77,12 +107,13 @@ void start_rendering(engine *Engine) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Engine->Renderer->shader->Use();
     glm::mat4 view = get_camera_view_matrix(Engine->Camera);
-    Engine->Renderer->shader->SetMatrix4("view", view);
-    glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    use_shader(Engine->Renderer->Shader);
+    shader_set_uniform4fv(Engine->Renderer->Shader, "view", view);
+    
+    glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    Engine->Renderer->shader->SetMatrix4("model", model);
+    shader_set_uniform4fv(Engine->Renderer->Shader, "model", model);
 }
 
 void stop_rendering(engine *Engine) {

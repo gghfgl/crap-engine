@@ -20,9 +20,9 @@ bool GLLogCall(const char* function, const char* file, int line) {
 }
 // DEBUG: OPENGL_DEBUG ===================================================================
 
-renderer* renderer_construct(Shader *shader) {
+renderer* renderer_construct(shader *Shader) {
     renderer* Result = new renderer();
-    Result->shader = shader;
+    Result->Shader = Shader;
 
     return Result;
 }
@@ -141,7 +141,6 @@ void delete_renderer(renderer *Renderer) {
 
     delete[] Renderer->CubeBuffer;
     // delete cubebufferptr?
-    // delete shader?
     delete Renderer;
 }
 
@@ -210,6 +209,7 @@ void add_to_cube_buffer(renderer *Renderer, const glm::vec3 &Position, const glm
 }
 
 void reset_renderer_stats(renderer *Renderer) {
+    // Set all values as 0 for integral data type (byte by byte)
     memset(&Renderer->Stats, 0, sizeof(renderer_stats));
 }
 

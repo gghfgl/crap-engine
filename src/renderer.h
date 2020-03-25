@@ -14,7 +14,7 @@ bool GLLogCall(const char* function, const char* file, int line);
 
 static const size_t PerCubeVertex = 8;
 static const size_t PerCubeIndices = 36;
-static const size_t MaxCubeCount = 10;
+static const size_t MaxCubeCount = 200;
 static const size_t MaxVertexCount = MaxCubeCount * PerCubeVertex;
 static const size_t MaxIndexCount = MaxCubeCount * PerCubeIndices;
 
@@ -29,7 +29,7 @@ struct renderer_stats {
 };
 
 struct renderer {
-    Shader *shader; //TODO shader refact
+    shader *Shader;
 
     unsigned int DebugVAO = 0;
     unsigned int DebugVBO = 0;
