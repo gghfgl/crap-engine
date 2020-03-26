@@ -33,7 +33,14 @@ engine* engine_construct() {
     return Result;
 }
 
+void delete_imgui() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
 void delete_engine(engine *Engine) {
+    delete_imgui();
     clear_resources();
     delete_input_state(Engine->InputState);
     delete_camera(Engine->Camera);
@@ -41,12 +48,6 @@ void delete_engine(engine *Engine) {
     delete Engine;
 
     glfwTerminate();
-}
-
-void delete_imgui() {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 void init_imgui(GLFWwindow* window) {
@@ -67,6 +68,7 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     //glfwWindowHint(GLFW_SAMPLES, 4); // TODO: Options -> MSAA 4 sample
+    glfwSwapInterval(1); // TODO VSync
 
     GLFWwindow* window = glfwCreateWindow(width, height, "CrapEngine", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -146,3 +148,52 @@ void stop_rendering(engine *Engine) {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
+
+void display_debug_overlay(engine *Engine, float deltaTime) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    const float DISTANCE = 10.0f;
+    static int corner = 0;
+    ImGuiIO& io = ImGui::GetIO();
+    if (corner != -1)
+    {
+	ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
+	ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+    }
+
+    ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+    if (ImGui::Begin("Debug overlay", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+    {
+	ImGui::Text("Debug overlay");
+	ImGui::Separator();
+	ImGui::Text((const char*)glGetString(GL_RENDERER));
+	ImGui::Text((const char*)glGetString(GL_VERSION));
+	ImGui::Separator();
+	if (ImGui::IsMousePosValid())
+	    ImGui::Text("Mouse Position: (%.1f,%.1f)", io.MousePos.x, io.MousePos.y);
+	else
+	    ImGui::Text("Mouse Position: <invalid>");
+	ImGui::Text("CubeCount = %d", Engine->Renderer->Stats.CubeCount);
+	ImGui::Text("DrawCount = %d", Engine->Renderer->Stats.DrawCount);
+	ImGui::Text("Frame = %.3f ms", deltaTime);
+	ImGui::End();
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
+}
+
+// float enforcing_framerate_60fps(float currentFrame) {
+//     float deltaTime = (float)(std::clock() - currentFrame);
+//     unsigned int waitTime = (unsigned int)(FRAME_MIN_OFFSET_MS - deltaTime);
+
+//     if (waitTime > 0.0f) {
+// 	Sleep(waitTime);
+//     }
+
+//     deltaTime = (float)(std::clock() - currentFrame);
+//     return deltaTime;
+// }

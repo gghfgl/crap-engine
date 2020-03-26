@@ -14,7 +14,7 @@ bool GLLogCall(const char* function, const char* file, int line);
 
 static const size_t PerCubeVertex = 8;
 static const size_t PerCubeIndices = 36;
-static const size_t MaxCubeCount = 200;
+static const size_t MaxCubeCount = 500;
 static const size_t MaxVertexCount = MaxCubeCount * PerCubeVertex;
 static const size_t MaxIndexCount = MaxCubeCount * PerCubeIndices;
 
