@@ -1,3 +1,7 @@
+#include "IMGUI/imgui.h"
+#include "IMGUI/imgui_impl_glfw.h"
+#include "IMGUI/imgui_impl_opengl3.h"
+
 #include "engine.h"
 #include "resource_manager.h"
 
@@ -22,6 +26,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 engine* engine_construct() {
     engine* Result = new engine();
     Result->GlobalState = ENGINE_ACTIVE;
+    Result->OverlayState = OVERLAY_DEBUG;
     Result->Width = 0;
     Result->Height = 0;
 
@@ -34,7 +39,25 @@ void delete_engine(engine *Engine) {
     delete_camera(Engine->Camera);
     delete_renderer(Engine->Renderer);
     delete Engine;
+
     glfwTerminate();
+}
+
+void delete_imgui() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void init_imgui(GLFWwindow* window) {
+    const char* glsl_version = "#version 150"; 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
 int init_engine_data(engine *Engine, unsigned int width, unsigned int height, int options) {
@@ -67,7 +90,7 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
 
     if (options & POLYGONE_MODE)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+    
     camera *Camera = camera_construct(glm::vec3(0.0f, 5.0f, 10.0f));
     input_state *InputState = input_state_construct(window, width, height);
 

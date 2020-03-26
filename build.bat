@@ -18,5 +18,5 @@ set AdditionalLibDir=/LIBPATH:C:\Users\test\Documents\dev\crapengine\dep\lib
 REM robocopy ..\Shaders Shaders /MIR
 REM robocopy ..\data data /MIR
 
-cl /Feapp.exe %CommonCompilerFlags% %AdditionalIncludesDir% "..\src\main.cpp" /link %AdditionalLibDir% %CommonLinkerFlags%
+cl /Feapp.exe %CommonCompilerFlags% %AdditionalIncludesDir% "..\dep\includes\IMGUI\*.cpp" "..\src\main.cpp" /link %AdditionalLibDir% %CommonLinkerFlags%
 popd

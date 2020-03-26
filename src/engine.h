@@ -13,6 +13,11 @@ enum engine_state {
     ENGINE_TERMINATE
 };
 
+enum overlay_state {
+    OVERLAY_DISABLE,
+    OVERLAY_DEBUG
+};
+
 enum init_flag {
     NO_DEBUG      = 0x0,
     SHOW_AXIS     = 0x01,
@@ -21,6 +26,7 @@ enum init_flag {
 
 struct engine {
     engine_state GlobalState;
+    overlay_state OverlayState;
 
     GLFWwindow  *Window;
     input_state *InputState;
