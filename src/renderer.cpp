@@ -5,12 +5,15 @@
 #include "renderer.h"
 
 // DEBUG: OPENGL_DEBUG ===================================================================
-void GLClearError() {
+void GLClearError()
+{
     while (glGetError() != GL_NO_ERROR);
 }
 
-bool GLLogCall(const char* function, const char* file, int line) {
+bool GLLogCall(const char* function, const char* file, int line)
+{
     while (GLenum error = glGetError())
+   
     {
 	std::cout << "[OpenGL Error] (" << error << "): " << function << " " << file << ":" << line << std::endl;
 	return false;
@@ -20,24 +23,26 @@ bool GLLogCall(const char* function, const char* file, int line) {
 }
 // DEBUG: OPENGL_DEBUG ===================================================================
 
-renderer* renderer_construct(shader *Shader) {
+renderer* RendererConstruct(shader *Shader)
+{
     renderer* Result = new renderer();
     Result->Shader = Shader;
-
     return Result;
 }
 
-void prepare_debug_rendering(renderer *Renderer) {    
-    float debug_axis[] = {
-    	0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-    	3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+void PrepareDebugRendering(renderer *Renderer)
+{    
+    float debug_axis[] =
+	{
+	    0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	    3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
-    	0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-    	0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+	    0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+	    0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
 	
-    	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-    	0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 1.0f, 1.0f
-    };
+	    0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+	    0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 1.0f, 1.0f
+	};
 
     GLCall(glGenVertexArrays(1, &Renderer->DebugVAO));
     GLCall(glBindVertexArray(Renderer->DebugVAO));
@@ -53,12 +58,15 @@ void prepare_debug_rendering(renderer *Renderer) {
     GLCall(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float))));
 }
 
-void draw_debug(renderer *Renderer) {
+void DrawDebug(renderer *Renderer)
+{
     glBindVertexArray(Renderer->DebugVAO);
     glDrawArrays(GL_LINES, 0, 6);
+    Renderer->Stats.DrawCount++;
 }
 
-void prepare_cube_batch_rendering(renderer *Renderer) {
+void PrepareCubeBatchRendering(renderer *Renderer)
+{
     Renderer->CubeBuffer = new vertex[MaxVertexCount];
 
     GLCall(glGenVertexArrays(1, &Renderer->CubeVAO));
@@ -78,7 +86,8 @@ void prepare_cube_batch_rendering(renderer *Renderer) {
     // predictable cube layout
     uint32_t indices[MaxIndexCount];
     uint32_t offset = 0;
-    for (int i = 0; i < MaxIndexCount; i += PerCubeIndices) { // 8 = nb of vertex needed for 1 cube
+    for (int i = 0; i < MaxIndexCount; i += PerCubeIndices)
+    { // 8 = nb of vertex needed for 1 cube
 	indices[i + 0] = 0 + offset;
 	indices[i + 1] = 1 + offset;
 	indices[i + 2] = 2 + offset;
@@ -129,7 +138,8 @@ void prepare_cube_batch_rendering(renderer *Renderer) {
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 }
 
-void delete_renderer(renderer *Renderer) {
+void DeleteRenderer(renderer *Renderer)
+{
     GLCall(glDeleteVertexArrays(1, &Renderer->DebugVAO));
     GLCall(glDeleteBuffers(1, &Renderer->DebugVBO));
 
@@ -144,17 +154,20 @@ void delete_renderer(renderer *Renderer) {
     delete Renderer;
 }
 
-void start_new_cube_batch(renderer *Renderer) {
+void StartNewCubeBatch(renderer *Renderer)
+{
     Renderer->CubeBufferPtr = Renderer->CubeBuffer;
 }
 
-void close_cube_batch(renderer *Renderer) {
+void CloseCubeBatch(renderer *Renderer)
+{
     GLsizeiptr size = (uint8_t*)Renderer->CubeBufferPtr - (uint8_t*)Renderer->CubeBuffer;
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO));
     GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer));
 }
 
-void flush_cube_batch(renderer *Renderer) {
+void FlushCubeBatch(renderer *Renderer)
+{
     GLCall(glBindVertexArray(Renderer->CubeVAO));
     GLCall(glDrawElements(GL_TRIANGLES, Renderer->IndexCount, GL_UNSIGNED_INT, nullptr));
 
@@ -162,45 +175,55 @@ void flush_cube_batch(renderer *Renderer) {
     Renderer->IndexCount = 0;
 }
 
-void add_to_cube_buffer(renderer *Renderer, const glm::vec3 &Position, const glm::vec3 &Size, const glm::vec4 &Color) {    
+void AddCubeToBuffer(renderer *Renderer, const glm::vec3 &Position, const glm::vec3 &Size, const glm::vec4 &Color)
+{    
     // Are we out of vertex buffer? if then reset everything
-    if (Renderer->IndexCount >= MaxIndexCount) {
-	close_cube_batch(Renderer);
-	flush_cube_batch(Renderer);
-        start_new_cube_batch(Renderer);
+    if (Renderer->IndexCount >= MaxIndexCount)
+    {
+        CloseCubeBatch(Renderer);
+        FlushCubeBatch(Renderer);
+        StartNewCubeBatch(Renderer);
     }
 
     // FRONT
-    Renderer->CubeBufferPtr->Position = { Position.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x, Position.y, Position.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x + Size.x, Position.y, Position.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x + Size.x, Position.y + Size.y, Position.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x, Position.y + Size.y, Position.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
     // BACK
-    Renderer->CubeBufferPtr->Position = { Position.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x, Position.y, Position.z + Size.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x + Size.x, Position.y, Position.z + Size.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x + Size.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x + Size.x, Position.y + Size.y, Position.z + Size.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { Position.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position =
+	{ Position.x, Position.y + Size.y, Position.z + Size.z };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
@@ -208,14 +231,17 @@ void add_to_cube_buffer(renderer *Renderer, const glm::vec3 &Position, const glm
     Renderer->Stats.CubeCount++;
 }
 
-void reset_renderer_stats(renderer *Renderer) {
+void ResetRendererStats(renderer *Renderer)
+{
     // Set all values as 0 for integral data type (byte by byte)
     memset(&Renderer->Stats, 0, sizeof(renderer_stats));
 }
 
 
-// void OLD_STUFF(renderer *Renderer) {    
-//     float vertices[] = {
+// void OLD_STUFF(renderer *Renderer)
+// {    
+//     float vertices[] =
+//     {
 // 	// front
 // 	-1.0f, -1.0f,  1.0, // 0
 // 	1.0f, -1.0f,  1.0f, // 1
@@ -241,7 +267,8 @@ void reset_renderer_stats(renderer *Renderer) {
 // 	-1.0f,  1.0f, -3.0f // 15
 //     };
 
-//     unsigned int indices[] = {
+//     unsigned int indices[] =
+//	 {
 // 	// front
 // 	0, 1, 2, 2, 3, 0,
 // 	// right
@@ -308,12 +335,14 @@ void reset_renderer_stats(renderer *Renderer) {
 //     // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
 //     // unsigned char *data = stbi_load("../assets/container2.png", &width, &height, &nrChannels, 0);
 //     // if (data)
-//     // {
+//     //
+//	     {
 //     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
 //     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 //     // }
 //     // else
-//     // {
+//     //
+//		 {
 //     //     std::cout << "Failed to load texture" << std::endl;
 //     // }
 //     // stbi_image_free(data);
@@ -331,13 +360,15 @@ void reset_renderer_stats(renderer *Renderer) {
 //     // // load image, create texture and generate mipmaps
 //     // data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
 //     // if (data)
-//     // {
+//     //
+//		     {
 //     //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
 //     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
 //     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 //     // }
 //     // else
-//     // {
+//     //
+//			 {
 //     //     std::cout << "Failed to load texture" << std::endl;
 //     // }
 //     // stbi_image_free(data);

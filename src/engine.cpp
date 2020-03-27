@@ -5,25 +5,10 @@
 #include "engine.h"
 #include "resource_manager.h"
 
-/* NOTE: should implement
-   - depth test / z-fighting
-   - stencil test outline object
-   - face culling
-   - white / blanc texture
-   - blending
-   - framebuffer ?
-   - mipmap ?
-   - cubemap / skybox / reflect ?
-   - geometry shader ?
-   - instancing ?
-   - MSAA anti aliasing ?
-   - light system / PBR?
-   - load models
-*/
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-engine* engine_construct() {
+engine* EngineConstruct()
+{
     engine* Result = new engine();
     Result->GlobalState = ENGINE_ACTIVE;
     Result->OverlayState = OVERLAY_DEBUG;
@@ -33,24 +18,27 @@ engine* engine_construct() {
     return Result;
 }
 
-void delete_imgui() {
+void delete_imgui()
+{
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void delete_engine(engine *Engine) {
+void DeleteEngine(engine *Engine)
+{
     delete_imgui();
-    clear_resources();
-    delete_input_state(Engine->InputState);
-    delete_camera(Engine->Camera);
-    delete_renderer(Engine->Renderer);
+    ClearResources();
+    DeleteInputState(Engine->InputState);
+    DeleteCamera(Engine->Camera);
+    DeleteRenderer(Engine->Renderer);
     delete Engine;
 
     glfwTerminate();
 }
 
-void init_imgui(GLFWwindow* window) {
+void init_imgui(GLFWwindow* window)
+{
     const char* glsl_version = "#version 150"; 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -61,7 +49,8 @@ void init_imgui(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-int init_engine_data(engine *Engine, unsigned int width, unsigned int height, int options) {
+int InitEngine(engine *Engine, unsigned int width, unsigned int height, int options)
+{
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -74,7 +63,8 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
@@ -92,12 +82,14 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
 
     if (options & POLYGONE_MODE)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
-    camera *Camera = camera_construct(glm::vec3(0.0f, 5.0f, 10.0f));
-    input_state *InputState = input_state_construct(window, width, height);
 
-    load_shader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
-    shader *DefaultShader = get_shader("default");
+    init_imgui(window);
+    
+    camera *Camera = CameraConstruct(glm::vec3(0.0f, 5.0f, 10.0f));
+    input_state *InputState = InputStateConstruct(window, width, height);
+
+    LoadShader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
+    shader *DefaultShader = GetShader("default");
     unsigned int uniformBlockIndexDefault = glGetUniformBlockIndex(DefaultShader->ID, "Matrices");  
     glUniformBlockBinding(DefaultShader->ID, uniformBlockIndexDefault, 0);
 
@@ -117,39 +109,39 @@ int init_engine_data(engine *Engine, unsigned int width, unsigned int height, in
     Engine->Camera = Camera;
     Engine->Width = width;
     Engine->Height = height;    
-    Engine->Renderer = renderer_construct(get_shader("default"));
+    Engine->Renderer = RendererConstruct(GetShader("default"));
     
     return 0;
 }
 
-void engine_update(engine *Engine, float deltaTime) {
+void EngineUpdate(engine *Engine, float deltaTime)
+{
     glfwPollEvents();
     if (Engine->GlobalState == ENGINE_TERMINATE)
 	glfwSetWindowShouldClose(Engine->Window, GL_TRUE);
 }
 
-void start_rendering(engine *Engine) {
+void StartRendering(engine *Engine)
+{
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 view = get_camera_view_matrix(Engine->Camera);
-    use_shader(Engine->Renderer->Shader);
-    shader_set_uniform4fv(Engine->Renderer->Shader, "view", view);
+    glm::mat4 view = GetCameraViewMatrix(Engine->Camera);
+    UseShader(Engine->Renderer->Shader);
+    ShaderSetUniform4fv(Engine->Renderer->Shader, "view", view);
     
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    shader_set_uniform4fv(Engine->Renderer->Shader, "model", model);
+    ShaderSetUniform4fv(Engine->Renderer->Shader, "model", model);
 }
 
-void stop_rendering(engine *Engine) {
+void StopRendering(engine *Engine)
+{
     glfwSwapBuffers(Engine->Window);
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
-void display_debug_overlay(engine *Engine, float deltaTime) {
+void DisplayDebugOverlay(engine *Engine, float deltaTime)
+{
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -158,6 +150,7 @@ void display_debug_overlay(engine *Engine, float deltaTime) {
     static int corner = 0;
     ImGuiIO& io = ImGui::GetIO();
     if (corner != -1)
+   
     {
 	ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
 	ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
@@ -166,6 +159,7 @@ void display_debug_overlay(engine *Engine, float deltaTime) {
 
     ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
     if (ImGui::Begin("Debug overlay", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+   
     {
 	ImGui::Text("Debug overlay");
 	ImGui::Separator();
@@ -186,14 +180,21 @@ void display_debug_overlay(engine *Engine, float deltaTime) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
 }
 
-// float enforcing_framerate_60fps(float currentFrame) {
+// float enforcing_framerate_60fps(float currentFrame)
+// {
 //     float deltaTime = (float)(std::clock() - currentFrame);
 //     unsigned int waitTime = (unsigned int)(FRAME_MIN_OFFSET_MS - deltaTime);
 
-//     if (waitTime > 0.0f) {
+//     if (waitTime > 0.0f)
+//     {
 // 	Sleep(waitTime);
 //     }
 
 //     deltaTime = (float)(std::clock() - currentFrame);
 //     return deltaTime;
 // }
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}

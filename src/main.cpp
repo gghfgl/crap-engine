@@ -5,6 +5,22 @@
 
 #include "plateform.h"
 
+/* NOTE: should implement
+   - depth test / z-fighting
+   - stencil test outline object
+   - face culling
+   - white / blanc texture
+   - blending
+   - framebuffer ?
+   - mipmap ?
+   - cubemap / skybox / reflect ?
+   - geometry shader ?
+   - instancing ?
+   - MSAA anti aliasing ?
+   - light system / PBR?
+   - load models
+*/
+
 // TODO:
 // * implement frame rate counter ms
 // * implement game entity and level?
@@ -19,68 +35,74 @@
 // * memory profiler
 // * light system PBR?
 
-
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // Initialize engine
-    engine *Engine = engine_construct();
-    init_engine_data(Engine, 1280, 960, NO_DEBUG);
-    init_imgui(Engine->Window);
+    engine *Engine = EngineConstruct();
+    InitEngine(Engine, 1280, 960, NO_DEBUG);
 
-    prepare_debug_rendering(Engine->Renderer);
-    prepare_cube_batch_rendering(Engine->Renderer);
+    PrepareDebugRendering(Engine->Renderer);
+    PrepareCubeBatchRendering(Engine->Renderer);
 
     // needed for enforcing 60fps
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+    float waitTime = 1.0f;
 
-    while (Engine->GlobalState == ENGINE_ACTIVE) {
-	// DEBUG ==============================================================================
-	engine_update(Engine, deltaTime);
+    while (Engine->GlobalState == ENGINE_ACTIVE)
+    {
+	//float currentFrame = (float)glfwGetTime();
+        EngineUpdate(Engine, deltaTime);
 
 	// DeltaTime TODO build a function to auto retrieve this?
 	float currentFrame = (float)glfwGetTime();
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
-	if (Engine->InputState->Keyboard[GLFW_KEY_ESCAPE]) {
+	if (Engine->InputState->Keyboard[GLFW_KEY_ESCAPE])
+	{
 	    Engine->GlobalState = ENGINE_TERMINATE;
 	}
 
-	if (Engine->InputState->Keyboard[GLFW_KEY_W]) {
-	    process_camera_keyboard(Engine->Camera, FORWARD, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_W])
+	{
+	    ProcessCameraKeyboard(Engine->Camera, FORWARD, deltaTime);
 	}
 
-	if (Engine->InputState->Keyboard[GLFW_KEY_S]) {
-	    process_camera_keyboard(Engine->Camera, BACKWARD, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_S])
+	{
+	    ProcessCameraKeyboard(Engine->Camera, BACKWARD, deltaTime);
 	}
 
-	if (Engine->InputState->Keyboard[GLFW_KEY_A]) {
-	    process_camera_keyboard(Engine->Camera, LEFT, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_A])
+	{
+	    ProcessCameraKeyboard(Engine->Camera, LEFT, deltaTime);
 	}
 
-	if (Engine->InputState->Keyboard[GLFW_KEY_D]) {
-	    process_camera_keyboard(Engine->Camera, RIGHT, deltaTime);
+	if (Engine->InputState->Keyboard[GLFW_KEY_D])
+	{
+	    ProcessCameraKeyboard(Engine->Camera, RIGHT, deltaTime);
 	}
 	
-	if (Engine->InputState->MouseLeftButton) {
-	    update_mouse_offset(Engine->InputState);
-	    process_camera_mouse_movement(Engine->Camera, Engine->InputState->MouseOffsetX, Engine->InputState->MouseOffsetY);
+	if (Engine->InputState->MouseLeftButton)
+	{
+	    UpdateMouseOffset(Engine->InputState);
+	    ProcessCameraMouseMovement(Engine->Camera, Engine->InputState->MouseOffsetX, Engine->InputState->MouseOffsetY);
 	}
 
 	// Render
-	start_rendering(Engine);
+        StartRendering(Engine);
 	
-	draw_debug(Engine->Renderer);
-	
-	reset_renderer_stats(Engine->Renderer);
-	start_new_cube_batch(Engine->Renderer);
+        ResetRendererStats(Engine->Renderer); // TODO: put in start rendering?
+        DrawDebug(Engine->Renderer);	
+        StartNewCubeBatch(Engine->Renderer);
 
 	float r = 0.12f;
 	float g = 0.25f;
 	float pos = 2.0f;
-	for (float i = 0.0f; i < 1000.0f; i += 1.0f) {
-	    add_to_cube_buffer(
+	for (float i = 0.0f; i < 1000.0f; i += 1.0f)
+	{
+	    AddCubeToBuffer(
 		Engine->Renderer,
 		{ 0.0f, 0.0f, -pos },
 		{ 2.0f, 2.0f, 2.0f },
@@ -94,8 +116,9 @@ int main(int argc, char *argv[]) {
 	float r2 = 0.12f;
 	float b2 = 0.25f;
 	float pos2 = 2.0f;
-	for (float i = 0.0f; i < 100.0f; i += 1.0f) {
-	    add_to_cube_buffer(
+	for (float i = 0.0f; i < 100.0f; i += 1.0f)
+	{
+	    AddCubeToBuffer(
 		Engine->Renderer,
 		{ pos2, 0.0f, 0.0f },
 		{ 2.0f, 2.0f, 2.0f },
@@ -107,19 +130,30 @@ int main(int argc, char *argv[]) {
 	}
 
 	
-	close_cube_batch(Engine->Renderer);
-	flush_cube_batch(Engine->Renderer);
+        CloseCubeBatch(Engine->Renderer);
+        FlushCubeBatch(Engine->Renderer);
 
-	if (Engine->OverlayState == OVERLAY_DEBUG) {
-	    display_debug_overlay(Engine, deltaTime);
+	if (Engine->OverlayState == OVERLAY_DEBUG)
+	{
+	    DisplayDebugOverlay(Engine, waitTime);
 	}
 
-	stop_rendering(Engine);
-	// DEBUG ==============================================================================
+        StopRendering(Engine);
+
+	// currentFrame = (float)glfwGetTime() - currentFrame;
+	// while (waitTime > 0)
+	// {
+	//     float frame = (float)glfwGetTime() - currentFrame;
+	//     waitTime = 16.0f - frame;
+	//     std::cout << waitTime << std::endl;
+	// }
+
+	// waitTime = 16.0f;
+	// deltaTime = 33.0f;
     }
 
     // Delete
-    delete_engine(Engine);
+    DeleteEngine(Engine);
 
     return 0;
 }

@@ -7,7 +7,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 static input_state *_INPUT_STATE_DATA;
 
-input_state* input_state_construct(GLFWwindow* Window, unsigned int width, unsigned int height) {
+input_state* InputStateConstruct(GLFWwindow* Window, unsigned int width, unsigned int height) {
     glfwSetKeyCallback(Window, key_callback);
     glfwSetMouseButtonCallback(Window, mouse_button_callback);
     glfwSetCursorPosCallback(Window, cursor_position_callback);
@@ -31,11 +31,11 @@ input_state* input_state_construct(GLFWwindow* Window, unsigned int width, unsig
     return _INPUT_STATE_DATA;
 }
 
-void delete_input_state(input_state *InputState) {
+void DeleteInputState(input_state *InputState) {
     delete InputState ;
 }
 
-void update_mouse_offset(input_state *InputState) {
+void UpdateMouseOffset(input_state *InputState) {
     if (InputState->MouseLeftButtonFirstClick) {
 	InputState->MouseLastX = InputState->MousePosX;
 	InputState->MouseLastY = InputState->MousePosY;
