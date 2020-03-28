@@ -8,17 +8,17 @@
 
 // Instantiate static variables
 // std::map<std::string, Texture2D*>    resource_manager::Textures;
-std::map<std::string, shader*> resource_manager::ShadersStorage;
+std::map<std::string, shader*> resource_manager::SHADERS_STORAGE;
 
 shader* GetShader(const std::string& name)
 {
-    return resource_manager::ShadersStorage[name];
+    return resource_manager::SHADERS_STORAGE[name];
 }
 
 void ClearResources()
 {
     // (Properly) delete all shaders
-    for (auto iter : resource_manager::ShadersStorage)
+    for (auto iter : resource_manager::SHADERS_STORAGE)
    
     {
         glDeleteProgram(iter.second->ID);
@@ -81,10 +81,13 @@ shader* load_shader_from_file(const char* vShaderFile, const char* fShaderFile, 
     return Shader;
 }
 
-shader* LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, const std::string& name)
+shader* LoadShader(const char* vShaderFile,
+		   const char* fShaderFile,
+		   const char* gShaderFile,
+		   const std::string& name)
 {
-    resource_manager::ShadersStorage[name] = load_shader_from_file(vShaderFile, fShaderFile, gShaderFile);
-    return resource_manager::ShadersStorage[name];
+    resource_manager::SHADERS_STORAGE[name] = load_shader_from_file(vShaderFile, fShaderFile, gShaderFile);
+    return resource_manager::SHADERS_STORAGE[name];
 }
 
 // Texture2D* ResourceManager::LoadTexture(const char* file, GLboolean alpha, const std::string& name)

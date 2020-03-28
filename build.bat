@@ -17,8 +17,5 @@ set AdditionalLibDir=/LIBPATH:C:\Users\test\Documents\dev\crapengine\dep\lib
 REM robocopy ..\Shaders Shaders /MIR
 REM robocopy ..\data data /MIR
 
-REM Create imgui *.obj before create lib
-REM cl /c /EHsc %AdditionalIncludesDir% "..\dep\includes\IMGUI\*.cpp" /link %AdditionalLibDir% %CommonLinkerFlags%
-
 cl /Feapp.exe %CommonCompilerFlags% %AdditionalIncludesDir% "..\src\main.cpp" /link %AdditionalLibDir% %CommonLinkerFlags%
 popd

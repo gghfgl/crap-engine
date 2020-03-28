@@ -9,6 +9,6 @@
 #include "shader.h"
 
 struct resource_manager {
-    static std::map<std::string, shader*>    ShadersStorage;
-    static std::map<std::string, Texture2D*> TexturesStorage;
+    static std::map<std::string, shader*>    SHADERS_STORAGE;
+    static std::map<std::string, Texture2D*> TEXTURES_STORAGE;
 };

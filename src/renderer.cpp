@@ -4,7 +4,6 @@
 #include "stb_image.h" // TODO remove
 #include "renderer.h"
 
-// DEBUG: OPENGL_DEBUG ===================================================================
 void GLClearError()
 {
     while (glGetError() != GL_NO_ERROR);
@@ -12,16 +11,15 @@ void GLClearError()
 
 bool GLLogCall(const char* function, const char* file, int line)
 {
-    while (GLenum error = glGetError())
-   
+    while (GLenum error = glGetError())   
     {
-	std::cout << "[OpenGL Error] (" << error << "): " << function << " " << file << ":" << line << std::endl;
+	std::cout << "[OpenGL Error] (" << error << "): "
+		  << function << " " << file << ":" << line
+		  << std::endl;
 	return false;
     }
-
     return true;
 }
-// DEBUG: OPENGL_DEBUG ===================================================================
 
 renderer* RendererConstruct(shader *Shader)
 {
@@ -30,7 +28,7 @@ renderer* RendererConstruct(shader *Shader)
     return Result;
 }
 
-void PrepareDebugRendering(renderer *Renderer)
+void PrepareEmbededAxisDebugRendering(renderer *Renderer)
 {    
     float debug_axis[] =
 	{
@@ -138,19 +136,17 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 }
 
-void DeleteRenderer(renderer *Renderer)
+void CleanAndDeleteRenderer(renderer *Renderer)
 {
     GLCall(glDeleteVertexArrays(1, &Renderer->DebugVAO));
     GLCall(glDeleteBuffers(1, &Renderer->DebugVBO));
-
     GLCall(glDeleteVertexArrays(1, &Renderer->CubeVAO));
     GLCall(glDeleteBuffers(1, &Renderer->CubeVBO));
     GLCall(glDeleteBuffers(1, &Renderer->CubeIBO));
 
     // delete texture
-
-    delete[] Renderer->CubeBuffer;
     // delete cubebufferptr?
+    delete[] Renderer->CubeBuffer;
     delete Renderer;
 }
 
@@ -175,7 +171,10 @@ void FlushCubeBatch(renderer *Renderer)
     Renderer->IndexCount = 0;
 }
 
-void AddCubeToBuffer(renderer *Renderer, const glm::vec3 &Position, const glm::vec3 &Size, const glm::vec4 &Color)
+void AddCubeToBuffer(renderer *Renderer,
+		     const glm::vec3 &Position,
+		     const glm::vec3 &Size,
+		     const glm::vec4 &Color)
 {    
     // Are we out of vertex buffer? if then reset everything
     if (Renderer->IndexCount >= MaxIndexCount)

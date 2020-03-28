@@ -30,7 +30,7 @@ camera* CameraConstruct(
     Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
     Result->MovementSpeed = SPEED;
     Result->MouseSensitivity = SENSITIVITY;
-    Result->Zoom = ZOOM;
+    Result->Fov = FOV;
 
     update_camera_vectors(Result);
     return Result;
@@ -51,7 +51,7 @@ camera* CameraConstruct(
     Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
     Result->MovementSpeed = SPEED;
     Result->MouseSensitivity = SENSITIVITY;
-    Result->Zoom = ZOOM;
+    Result->Fov = FOV;
 
     update_camera_vectors(Result);
     return Result;
@@ -79,6 +79,10 @@ void ProcessCameraKeyboard(camera *Camera, camera_movement direction, float delt
 	Camera->Position -= Camera->Right * velocity;
     if (direction == RIGHT)
 	Camera->Position += Camera->Right * velocity;
+    if (direction == UP)
+	Camera->Position += Camera->Up * velocity;
+    if (direction == DOWN)
+	Camera->Position -= Camera->Up * velocity;
 }
 
 void ProcessCameraMouseMovement(camera *Camera, float xoffset, float yoffset, bool constrainPitch = true)
@@ -104,10 +108,10 @@ void ProcessCameraMouseMovement(camera *Camera, float xoffset, float yoffset, bo
 // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 void ProcessMouseScroll(camera *Camera, float yoffset)
 {
-    if (Camera->Zoom >= 1.0f && Camera->Zoom <= 45.0f)
-	Camera->Zoom -= yoffset;
-    if (Camera->Zoom <= 1.0f)
-	Camera->Zoom = 1.0f;
-    if (Camera->Zoom >= 45.0f)
-	Camera->Zoom = 45.0f;
+    if (Camera->Fov >= 1.0f && Camera->Fov <= 45.0f)
+	Camera->Fov -= yoffset;
+    if (Camera->Fov <= 1.0f)
+	Camera->Fov = 1.0f;
+    if (Camera->Fov >= 45.0f)
+	Camera->Fov = 45.0f;
 }
