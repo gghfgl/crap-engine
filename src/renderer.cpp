@@ -156,7 +156,7 @@ void FlushBatchCube(renderer *Renderer)
 
 void AddCubeToBuffer(renderer *Renderer,
 		     const glm::vec3 &Position,
-		     const glm::vec3 &Size,
+		     const glm::vec4 &Size,
 		     const glm::vec4 &Color)
 {    
     // Are we out of vertex buffer? if then reset everything
@@ -167,45 +167,41 @@ void AddCubeToBuffer(renderer *Renderer,
         StartNewBatchCube(Renderer);
     }
 
+    float posX = Position.x + 1.0f / 2.0f - Size.w / 2.0f;
+    float posY = Position.y + 1.0f / 2.0f - Size.w / 2.0f;
+    float posZ = Position.z + 1.0f / 2.0f - Size.w / 2.0f;
+    
     // FRONT
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Position = { posX, posY, posZ };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x + Size.x, Position.y, Position.z };
+    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY, posZ };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x + Size.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY + Size.y * Size.w, posZ };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x, Position.y + Size.y, Position.z };
+    Renderer->CubeBufferPtr->Position = { posX, posY + Size.y * Size.w, posZ };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
     // BACK
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position = { posX, posY, posZ + Size.z * Size.w };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x + Size.x, Position.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY, posZ + Size.z * Size.w };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x + Size.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY + Size.y * Size.w, posZ + Size.z * Size.w };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position =
-	{ Position.x, Position.y + Size.y, Position.z + Size.z };
+    Renderer->CubeBufferPtr->Position = { posX, posY + Size.y * Size.w, posZ + Size.z * Size.w };
     Renderer->CubeBufferPtr->Color = Color;
     Renderer->CubeBufferPtr++;
 

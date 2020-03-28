@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 		AddCubeToBuffer(
 		    Engine->Renderer,
 		    { posX, 0.0f, posZ },
-		    { size, 0.5f, size },
+		    { size, 0.5f, size, 1.0f },
 		    { r, g, b, 1.0f });
 		posZ -= size;
 	    }
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		AddCubeToBuffer(
 		    Engine->Renderer,
 		    { posX, 0.0f, posZ },
-		    { size, 0.5f, size },
+		    { size, 0.5f, size, 1.0f },
 		    { r, g, b, 1.0f });
 		posZ -= size;
 	    }
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 		AddCubeToBuffer(
 		    Engine->Renderer,
 		    { posX, 0.0f, posZ },
-		    { size, 0.5f, size },
+		    { size, 0.5f, size, 1.0f },
 		    { r, g, b, 1.0f });
 		posZ += size;
 	    }
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 		AddCubeToBuffer(
 		    Engine->Renderer,
 		    { posX, 0.0f, posZ },
-		    { size, 0.5f, size },
+		    { size, 0.5f, size, 1.0f },
 		    { r, g, b, 1.0f });
 		posZ += size;
 	    }
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 	AddCubeToBuffer(
 	    Engine->Renderer,
 	    { 3.0f, 0.5f, 0.0f },
-	    { 1.0f, 1.0f, 1.0f },
+	    { 1.0f, 1.0f, 1.0f, 1.0f },
 	    { 0.0f, 0.0f, 0.0f, 1.0f });
         CloseBatchCube(Engine->Renderer);
         FlushBatchCube(Engine->Renderer);
@@ -198,12 +198,18 @@ int main(int argc, char *argv[])
         glDisable(GL_DEPTH_TEST);
 
         StartNewBatchCube(Engine->Renderer);
+//	AddCubeToBuffer(
+// 	    Engine->Renderer,
+// //	    { 2.68f, 0.42f, -0.05f },
+// 	    { 2.95f, 0.45f, -0.05f },
+// 	    { 1.0f, 1.0f, 1.0f, 1.1f },
+// 	    { 0.0f, 0.0f, 0.0f, 1.0f });
+	
 	AddCubeToBuffer(
 	    Engine->Renderer,
-	    { 2.68f, 0.42f, -0.05f },
-	    { 1.0f, 1.0f, 1.0f },
+	    { 3.0f, 0.5f, 0.0f },
+	    { 1.0f, 1.0f, 1.0f, 1.1f },
 	    { 0.0f, 0.0f, 0.0f, 1.0f });
-	
         CloseBatchCube(Engine->Renderer);
         FlushBatchCube(Engine->Renderer);
 

@@ -155,7 +155,7 @@ void StartRenderingStencil(renderer *Renderer, camera *Camera)
     glm::mat4 view = GetCameraViewMatrix(Camera);
     glm::mat4 model = glm::mat4(1.0f);
     //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(scale, scale, scale));
+    //model = glm::scale(model, glm::vec3(scale, scale, scale));
 
     UseShader(Renderer->Stencil);
     ShaderSetUniform4fv(Renderer->Stencil, "view", view);    
