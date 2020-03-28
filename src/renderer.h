@@ -30,6 +30,7 @@ struct renderer_stats {
 
 struct renderer {
     shader *Shader;
+    shader *Stencil;
 
     unsigned int DebugVAO = 0;
     unsigned int DebugVBO = 0;

@@ -4,23 +4,6 @@
 #include "stb_image.h" // TODO remove
 #include "renderer.h"
 
-void GLClearError()
-{
-    while (glGetError() != GL_NO_ERROR);
-}
-
-bool GLLogCall(const char* function, const char* file, int line)
-{
-    while (GLenum error = glGetError())   
-    {
-	std::cout << "[OpenGL Error] (" << error << "): "
-		  << function << " " << file << ":" << line
-		  << std::endl;
-	return false;
-    }
-    return true;
-}
-
 renderer* RendererConstruct(shader *Shader)
 {
     renderer* Result = new renderer();
@@ -42,21 +25,21 @@ void PrepareEmbededAxisDebugRendering(renderer *Renderer)
 	    0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 1.0f, 1.0f
 	};
 
-    GLCall(glGenVertexArrays(1, &Renderer->DebugVAO));
-    GLCall(glBindVertexArray(Renderer->DebugVAO));
+    glGenVertexArrays(1, &Renderer->DebugVAO);
+    glBindVertexArray(Renderer->DebugVAO);
 
-    GLCall(glGenBuffers(1, &Renderer->DebugVBO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->DebugVBO));
-    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(debug_axis), debug_axis, GL_STATIC_DRAW));
+    glGenBuffers(1, &Renderer->DebugVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, Renderer->DebugVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(debug_axis), debug_axis, GL_STATIC_DRAW);
 
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
 
-    GLCall(glEnableVertexAttribArray(1));
-    GLCall(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float))));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
-void DrawDebug(renderer *Renderer)
+void DrawAxisDebug(renderer *Renderer)
 {
     glBindVertexArray(Renderer->DebugVAO);
     glDrawArrays(GL_LINES, 0, 6);
@@ -67,19 +50,19 @@ void PrepareCubeBatchRendering(renderer *Renderer)
 {
     Renderer->CubeBuffer = new vertex[MaxVertexCount];
 
-    GLCall(glGenVertexArrays(1, &Renderer->CubeVAO));
-    GLCall(glBindVertexArray(Renderer->CubeVAO));
+    glGenVertexArrays(1, &Renderer->CubeVAO);
+    glBindVertexArray(Renderer->CubeVAO);
 
-    GLCall(glGenBuffers(1, &Renderer->CubeVBO));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO));
+    glGenBuffers(1, &Renderer->CubeVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
     // DYNAMIC because of no data initialization and set data every frame later
-    GLCall(glBufferData(GL_ARRAY_BUFFER, MaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW));
+    glBufferData(GL_ARRAY_BUFFER, MaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW);
 
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Position)));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Position));
 
-    GLCall(glEnableVertexAttribArray(1));
-    GLCall(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Color)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Color));
 
     // predictable cube layout
     uint32_t indices[MaxIndexCount];
@@ -131,18 +114,18 @@ void PrepareCubeBatchRendering(renderer *Renderer)
 	offset += PerCubeVertex;
     }
 
-    GLCall(glGenBuffers(1, &Renderer->CubeIBO));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Renderer->CubeIBO));
-    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+    glGenBuffers(1, &Renderer->CubeIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Renderer->CubeIBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
 void CleanAndDeleteRenderer(renderer *Renderer)
 {
-    GLCall(glDeleteVertexArrays(1, &Renderer->DebugVAO));
-    GLCall(glDeleteBuffers(1, &Renderer->DebugVBO));
-    GLCall(glDeleteVertexArrays(1, &Renderer->CubeVAO));
-    GLCall(glDeleteBuffers(1, &Renderer->CubeVBO));
-    GLCall(glDeleteBuffers(1, &Renderer->CubeIBO));
+    glDeleteVertexArrays(1, &Renderer->DebugVAO);
+    glDeleteBuffers(1, &Renderer->DebugVBO);
+    glDeleteVertexArrays(1, &Renderer->CubeVAO);
+    glDeleteBuffers(1, &Renderer->CubeVBO);
+    glDeleteBuffers(1, &Renderer->CubeIBO);
 
     // delete texture
     // delete cubebufferptr?
@@ -150,22 +133,22 @@ void CleanAndDeleteRenderer(renderer *Renderer)
     delete Renderer;
 }
 
-void StartNewCubeBatch(renderer *Renderer)
+void StartNewBatchCube(renderer *Renderer)
 {
     Renderer->CubeBufferPtr = Renderer->CubeBuffer;
 }
 
-void CloseCubeBatch(renderer *Renderer)
+void CloseBatchCube(renderer *Renderer)
 {
     GLsizeiptr size = (uint8_t*)Renderer->CubeBufferPtr - (uint8_t*)Renderer->CubeBuffer;
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO));
-    GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer));
+    glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer);
 }
 
-void FlushCubeBatch(renderer *Renderer)
+void FlushBatchCube(renderer *Renderer)
 {
-    GLCall(glBindVertexArray(Renderer->CubeVAO));
-    GLCall(glDrawElements(GL_TRIANGLES, Renderer->IndexCount, GL_UNSIGNED_INT, nullptr));
+    glBindVertexArray(Renderer->CubeVAO);
+    glDrawElements(GL_TRIANGLES, Renderer->IndexCount, GL_UNSIGNED_INT, nullptr);
 
     Renderer->Stats.DrawCount++;
     Renderer->IndexCount = 0;
@@ -179,9 +162,9 @@ void AddCubeToBuffer(renderer *Renderer,
     // Are we out of vertex buffer? if then reset everything
     if (Renderer->IndexCount >= MaxIndexCount)
     {
-        CloseCubeBatch(Renderer);
-        FlushCubeBatch(Renderer);
-        StartNewCubeBatch(Renderer);
+        CloseBatchCube(Renderer);
+        FlushBatchCube(Renderer);
+        StartNewBatchCube(Renderer);
     }
 
     // FRONT
@@ -295,40 +278,40 @@ void ResetRendererStats(renderer *Renderer)
 // 	11, 20, 14, 14, 15, 11
 //     };
     
-//     GLCall(glGenVertexArrays(1, &Renderer->CubeVAO));
-//     GLCall(glBindVertexArray(Renderer->CubeVAO));
+//     glGenVertexArrays(1, &Renderer->CubeVAO);
+//     glBindVertexArray(Renderer->CubeVAO);
 
 //     unsigned int VBO;
-//     GLCall(glGenBuffers(1, &VBO));
-//     GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-//     GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
+//     glGenBuffers(1, &VBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 //     // position attribute
-//     GLCall(glEnableVertexAttribArray(0));
-//     GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+//     glEnableVertexAttribArray(0);
+//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 //     // // texture coord attribute
-//     // GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
-//     // GLCall(glEnableVertexAttribArray(1));
+//     // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+//     // glEnableVertexAttribArray(1);
 
 //     unsigned int IBO;
-//     GLCall(glGenBuffers(1, &IBO));
-//     GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO));
-//     GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+//     glGenBuffers(1, &IBO);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 
 //     // // load and create a texture 
 //     // // -------------------------
 //     // // texture 1
 //     // // ---------
-//     // GLCall(glGenTextures(1, &texture1));
-//     // GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
+//     // glGenTextures(1, &texture1);
+//     // glBindTexture(GL_TEXTURE_2D, texture1);
 //     // // set the texture wrapping parameters
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 //     // // set texture filtering parameters
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 //     // // load image, create texture and generate mipmaps
 //     // int width, height, nrChannels;
 //     // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
@@ -336,8 +319,8 @@ void ResetRendererStats(renderer *Renderer)
 //     // if (data)
 //     //
 //	     {
-//     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
-//     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
+//     //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+//     // 	glGenerateMipmap(GL_TEXTURE_2D);
 //     // }
 //     // else
 //     //
@@ -348,22 +331,22 @@ void ResetRendererStats(renderer *Renderer)
 
 //     // // texture 2
 //     // // ---------
-//     // GLCall(glGenTextures(1, &texture2));
-//     // GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
+//     // glGenTextures(1, &texture2);
+//     // glBindTexture(GL_TEXTURE_2D, texture2);
 //     // // set the texture wrapping parameters
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 //     // // set texture filtering parameters
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-//     // GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 //     // // load image, create texture and generate mipmaps
 //     // data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
 //     // if (data)
 //     //
 //		     {
 //     //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-//     //     GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-//     // 	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
+//     //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+//     // 	glGenerateMipmap(GL_TEXTURE_2D);
 //     // }
 //     // else
 //     //

@@ -36,17 +36,20 @@
 // * memory profiler
 // * light system PBR?
 
+void CrapColors(float *r, float *g, float *b);
+
 int main(int argc, char *argv[])
 {
     engine *Engine = EngineConstructAndInit(1280, 960, DEBUG_MODE);
+    PrepareEmbededAxisDebugRendering(Engine->Renderer);
+    PrepareCubeBatchRendering(Engine->Renderer);
+
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
     float waitTime = 1.0f;
-
-    PrepareEmbededAxisDebugRendering(Engine->Renderer);
-    PrepareCubeBatchRendering(Engine->Renderer);
-
+    bool noWindowFocus = true;
+    static int mapSize = 10;
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
 	float currentFrame = (float)glfwGetTime();
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
 	    ProcessCameraKeyboard(Engine->Camera, UP, deltaTime);	
 	if (Engine->InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
 	    ProcessCameraKeyboard(Engine->Camera, DOWN, deltaTime);	
-	if (Engine->InputState->MouseLeftButton)
+	if (Engine->InputState->MouseLeftButton && noWindowFocus)
 	{
 	    UpdateMouseOffset(Engine->InputState);
 	    ProcessCameraMouseMovement(Engine->Camera,
@@ -77,74 +80,157 @@ int main(int argc, char *argv[])
 	}
 
 	ResetRendererStats(Engine->Renderer);
-        StartRendering(Engine->Renderer->Shader, Engine->Camera);	
+        StartRendering(Engine->Renderer, Engine->Camera);	
 
-        StartNewCubeBatch(Engine->Renderer);
-	float mapSize = 10.0f;
-	float r = 0.0f;
-	float g = 0.0f;
-	float b = 1.0f;
+        StartNewBatchCube(Engine->Renderer);
+    	ImVec2 window_pos = ImVec2(
+    	    (float)Engine->Width - 100,
+	    (float)Engine->Height - 100);
+	ImGui::SetNextWindowPos(ImVec2(10, 150));
+	ImGui::SetNextWindowSize(ImVec2(200, 80));
+	ImGui::Begin("Test", nullptr, ImGuiWindowFlags_NoResize);
+        noWindowFocus = !ImGui::IsWindowFocused();
+	ImGui::Text("Terrain");
+	ImGui::SliderInt("range", &mapSize, 1, 100);
+	ImGui::End();
+
+        float r = 0.0f;
+        float g = 0.0f;
+        float b = 1.0f;
+	float size = 1.0f;
 	float posX = 0.0f;
-	for (float i = 0.0f; i < mapSize; i += 1.0f)
+	for (int i = 0; i < mapSize / 2; i++)
 	{
-	    float posZ = -2.0f;
-	    for (int y = 0; y < mapSize; y++)
+	    float posZ = -size;
+	    for (int y = 0; y < mapSize / 2; y++)
 	    {
-		if (b == 1.0f)
-		{
-		    r = 1.0f;
-		    g = 0.0f;
-		    b = 0.0f;
-		} else if (r == 1.0f)
-		{
-		    r = 0.0f;
-		    g = 1.0f;
-		    b = 0.0f;
-		} else if (g == 1.0f)
-		{
-		    r = 0.0f;
-		    g = 0.0f;
-		    b = 1.0f;
-		}
-		    
+		CrapColors(&r, &g, &b);
 		AddCubeToBuffer(
 		    Engine->Renderer,
 		    { posX, 0.0f, posZ },
-		    { 2.0f, 1.0f, 2.0f },
+		    { size, 0.5f, size },
 		    { r, g, b, 1.0f });
-		posZ -= 2.0f;
+		posZ -= size;
 	    }
-	    posX += 2.0f;
+	    posX += size;
 	}
 
-	// float r2 = 0.12f;
-	// float b2 = 0.25f;
-	// float pos2 = 2.0f;
-	// for (float i = 0.0f; i < 100.0f; i += 1.0f)
-	// {
-	//     AddCubeToBuffer(
-	// 	Engine->Renderer,
-	// 	{ pos2, 0.0f, 0.0f },
-	// 	{ 2.0f, 2.0f, 2.0f },
-	// 	{ r2, 0.0f, b2, 1.0f });
+        posX = -1.0f;
+	for (int i = 0; i < mapSize / 2; i++)
+	{
+	    float posZ = -size;
+	    for (int y = 0; y < mapSize / 2; y++)
+	    {
+		CrapColors(&r, &g, &b);
+		AddCubeToBuffer(
+		    Engine->Renderer,
+		    { posX, 0.0f, posZ },
+		    { size, 0.5f, size },
+		    { r, g, b, 1.0f });
+		posZ -= size;
+	    }
+	    posX -= size;
+	}
 
-	//     r2 += 0.05f;
-	//     b2 += 0.05f;
-	//     pos2 += 2.0f;
-	// }
+	posX = 0.0f;
+	for (int i = 0; i < mapSize / 2; i++)
+	{
+	    float posZ = 0.0f;
+	    for (int y = 0; y < mapSize / 2; y++)
+	    {
+		CrapColors(&r, &g, &b);
+		AddCubeToBuffer(
+		    Engine->Renderer,
+		    { posX, 0.0f, posZ },
+		    { size, 0.5f, size },
+		    { r, g, b, 1.0f });
+		posZ += size;
+	    }
+	    posX += size;
+	}
+
+	posX = -1.0f;
+	for (int i = 0; i < mapSize / 2; i++)
+	{
+	    float posZ = 0.0f;
+	    for (int y = 0; y < mapSize / 2; y++)
+	    {
+		CrapColors(&r, &g, &b);
+		AddCubeToBuffer(
+		    Engine->Renderer,
+		    { posX, 0.0f, posZ },
+		    { size, 0.5f, size },
+		    { r, g, b, 1.0f });
+		posZ += size;
+	    }
+	    posX -= size;
+	}
 	
-        CloseCubeBatch(Engine->Renderer);
-        FlushCubeBatch(Engine->Renderer);
-
+        CloseBatchCube(Engine->Renderer);
+        FlushBatchCube(Engine->Renderer);
 	if (Engine->DebugMode)
 	{
-	    DrawDebug(Engine->Renderer);	
+	    DrawAxisDebug(Engine->Renderer);	
 	    DrawDebugOverlay(Engine->Renderer->Stats, deltaTime);
 	}
 
-        SwapBufferAndFinish(Engine->Window);
+	// NOTE: Stencil rendering
+        StartNewBatchCube(Engine->Renderer);
+
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+
+	AddCubeToBuffer(
+	    Engine->Renderer,
+	    { 3.0f, 0.5f, 0.0f },
+	    { 1.0f, 1.0f, 1.0f },
+	    { 0.0f, 0.0f, 0.0f, 1.0f });
+        CloseBatchCube(Engine->Renderer);
+        FlushBatchCube(Engine->Renderer);
+        StopRendering();
+
+	
+	// NOTE: Stencil rendering
+        StartRenderingStencil(Engine->Renderer, Engine->Camera);
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+
+        StartNewBatchCube(Engine->Renderer);
+	AddCubeToBuffer(
+	    Engine->Renderer,
+	    { 2.68f, 0.42f, -0.05f },
+	    { 1.0f, 1.0f, 1.0f },
+	    { 0.0f, 0.0f, 0.0f, 1.0f });
+	
+        CloseBatchCube(Engine->Renderer);
+        FlushBatchCube(Engine->Renderer);
+
+	StopRenderingStencil();
+	
+	SwapBufferAndFinish(Engine->Window);
     }
 
     DeleteEngine(Engine);
     return 0;
+}
+
+void CrapColors(float *r, float *g, float *b) {
+    if (*b == 1.0f)
+    {
+        *r = 1.0f;
+        *g = 0.0f;
+        *b = 0.0f;
+    } else if (*r == 1.0f)
+    {
+	*r = 0.0f;
+	*g = 1.0f;
+	*b = 0.0f;
+    } else if (*g == 1.0f)
+    {
+	*r = 0.0f;
+	*g = 0.0f;
+	*b = 1.0f;
+    }
 }

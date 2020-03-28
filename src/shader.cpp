@@ -35,7 +35,7 @@ void CheckCompileErrors(unsigned int object, std::string type)
 
 void UseShader(shader *Shader)
 {
-    GLCall(glUseProgram(Shader->ID));
+    glUseProgram(Shader->ID);
 }
 
 void CompileShader(shader *Shader,

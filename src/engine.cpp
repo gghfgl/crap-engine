@@ -41,11 +41,15 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     }
 
     glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
+    glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE); // face culling
     glCullFace(GL_FRONT); // face culling
     //glEnable(GL_MULTISAMPLE); // MSAA enable
-
-    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    
+    glEnable(GL_DEBUG_OUTPUT); // Faster?
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(DebugMessageCallback, NULL);
 
@@ -63,6 +67,8 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
 
     LoadShader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
     shader *DefaultShader = GetShader("default");
+    LoadShader("../shaders/default.vs", "../shaders/stencil.fs", nullptr, "stencil");
+    shader *StencilShader = GetShader("stencil");
 
     unsigned int uniformBlockIndexDefault = glGetUniformBlockIndex(DefaultShader->ID, "Matrices");  
     glUniformBlockBinding(DefaultShader->ID, uniformBlockIndexDefault, 0);
@@ -89,10 +95,10 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     Engine->Camera = Camera;
     Engine->Width = width;
     Engine->Height = height;    
-    Engine->Renderer = RendererConstruct(GetShader("default"));
+    Engine->Renderer = RendererConstruct(DefaultShader);
+    Engine->Renderer->Stencil = StencilShader;
 
     init_imgui(window);
-
     return Engine;
 }
 
@@ -119,35 +125,63 @@ void EnginePollEvents(engine *Engine)
 {
     glfwPollEvents();
     if (Engine->GlobalState == ENGINE_TERMINATE)
-	GLCall(glfwSetWindowShouldClose(Engine->Window, GL_TRUE));
+	glfwSetWindowShouldClose(Engine->Window, GL_TRUE);
 }
 
-void StartRendering(shader *Shader, camera *Camera)
+void StartRendering(renderer *Renderer, camera *Camera)
 {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glm::mat4 view = GetCameraViewMatrix(Camera);
-    UseShader(Shader);
-    ShaderSetUniform4fv(Shader, "view", view);
-    
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    ShaderSetUniform4fv(Shader, "model", model);
+    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+
+    UseShader(Renderer->Shader);
+    ShaderSetUniform4fv(Renderer->Shader, "view", view);    
+    ShaderSetUniform4fv(Renderer->Shader, "model", model);
+
+    glStencilMask(0x00); // dont update the stencil buffer
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void StartRenderingStencil(renderer *Renderer, camera *Camera)
+{
+    // TODO: assume that ClearColor was made before
+    float scale = 1.1f;
+    glm::mat4 view = GetCameraViewMatrix(Camera);
+    glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(scale, scale, scale));
+
+    UseShader(Renderer->Stencil);
+    ShaderSetUniform4fv(Renderer->Stencil, "view", view);    
+    ShaderSetUniform4fv(Renderer->Stencil, "model", model);
+}
+
+void StopRendering()
+{
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
+}
+
+void StopRenderingStencil()
+{
+    glStencilMask(0xFF);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void SwapBufferAndFinish(GLFWwindow *Window)
 {
-    GLCall(glfwSwapBuffers(Window));
-    GLCall(glFinish());
+    glfwSwapBuffers(Window);
+    glFinish();
 }
 
 void DrawDebugOverlay(renderer_stats stats, float deltaTime)
 {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
     const float DISTANCE = 10.0f;
     static int corner = 0;
     ImGuiIO& io = ImGui::GetIO();
@@ -173,28 +207,12 @@ void DrawDebugOverlay(renderer_stats stats, float deltaTime)
 	ImGui::Text("DeltaTime = %.3f ms", deltaTime);
 	ImGui::End();
     }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
-// void GLAPIENTRY DebugMessageCallback(GLenum source,
-// 				GLenum type,
-// 				GLuint id,
-// 				GLenum severity,
-// 				GLsizei length,
-// 				const GLchar* message,
-// 				const void* userParam)
-// {
-//     fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-// 	     ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-// 	     type, severity, message );
-// }
 
 void APIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id,
                             GLenum severity, GLsizei length,
