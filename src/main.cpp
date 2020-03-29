@@ -36,15 +36,19 @@
 // * memory profiler
 // * light system PBR?
 
+int GetIndexByColor(int r, int g, int b);
 void CrapColors(float *r, float *g, float *b);
 void DrawTerrain(engine *Engine, int mapSize);
 void DrawContainer(engine *Engine, float scale);
+
+#define RGB_WHITE (0xFF | (0xFF<<8) | (0xFF<<16))
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 float waitTime = 1.0f;
 bool noWindowFocus = true;
 static int MAPSIZE = 10;
+int iResult = 0;
 
 int main(int argc, char *argv[])
 {
@@ -84,29 +88,41 @@ int main(int argc, char *argv[])
 	ResetRendererStats(Engine->Renderer);
         StartRendering(Engine->Renderer, Engine->Camera);
 
-	{ // NOTE: Draw terrain with slider window
-	    ImVec2 window_pos = ImVec2(
-		(float)Engine->Width - 100,
-		(float)Engine->Height - 100);
-	    ImGui::SetNextWindowPos(ImVec2(10, 150));
-	    ImGui::SetNextWindowSize(ImVec2(200, 80));
-	    ImGui::Begin("Test", nullptr, ImGuiWindowFlags_NoResize);
-	    noWindowFocus = !ImGui::IsWindowFocused();
-	    ImGui::Text("Terrain");
-	    ImGui::SliderInt("range", &MAPSIZE, 0, 100);
-	    ImGui::End();
+	// NOTE: Draw terrain with slider window
+	ImGui::SetNextWindowPos(ImVec2(10, 150));
+	ImGui::SetNextWindowSize(ImVec2(200, 150));
+	ImGui::Begin("data", nullptr, ImGuiWindowFlags_NoResize);
+	noWindowFocus = !ImGui::IsWindowFocused();
+	ImGui::Text("Terrain:");
+	ImGui::Separator();
+	ImGui::SliderInt("range", &MAPSIZE, 0, 100);
+	ImGui::Separator();
+	ImGui::Text("Picking:");
+	ImGui::Separator();
+	ImGui::Text("PixelColor= %d", iResult);
+	ImGui::End();
 
-	    DrawTerrain(Engine, MAPSIZE);
-	}
+	DrawTerrain(Engine, MAPSIZE);
 
 	if (Engine->DebugMode)
 	{
 	    DrawAxisDebug(Engine->Renderer);	
 	    DrawDebugOverlay(Engine->Renderer->Stats, deltaTime);
 	}	    
-        RenderImGui();
+	RenderImGui();
+
 
 	{ // NOTE: Stencil rendering
+	    // TODO: picking right color
+	    BYTE bArray[4];
+	    glReadPixels((int)Engine->InputState->MousePosX, (int)Engine->InputState->MousePosY,
+			 1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
+	    iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
+	    if(iResult == RGB_WHITE)
+	    {
+		std::cout << "TESTEUUUUUUUU" << std::endl;
+	    }
+
 	    glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	    glStencilMask(0xFF);
 
@@ -127,6 +143,11 @@ int main(int argc, char *argv[])
 
     DeleteEngine(Engine);
     return 0;
+}
+
+int GetIndexByColor(int r, int g, int b)
+{
+   return (r)|(g<<8)|(b<<16);
 }
 
 void CrapColors(float *r, float *g, float *b) {
@@ -155,7 +176,7 @@ void DrawContainer(engine *Engine, float scale)
 	Engine->Renderer,
 	{ 3.0f, 0.5f, 0.0f },
 	{ 1.0f, 1.0f, 1.0f, scale },
-	{ 0.0f, 0.0f, 0.0f, 1.0f });
+	{ 1.0f, 1.0f, 1.0f, 1.0f });
     CloseBatchCube(Engine->Renderer);
     FlushBatchCube(Engine->Renderer);
 }
