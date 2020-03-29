@@ -162,7 +162,7 @@ void StartRenderingStencil(renderer *Renderer, camera *Camera)
     ShaderSetUniform4fv(Renderer->Stencil, "model", model);
 }
 
-void StopRendering()
+void RenderImGui()
 {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    

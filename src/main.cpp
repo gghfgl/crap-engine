@@ -37,6 +37,14 @@
 // * light system PBR?
 
 void CrapColors(float *r, float *g, float *b);
+void DrawTerrain(engine *Engine, int mapSize);
+void DrawContainer(engine *Engine, float scale);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+float waitTime = 1.0f;
+bool noWindowFocus = true;
+static int MAPSIZE = 10;
 
 int main(int argc, char *argv[])
 {
@@ -44,12 +52,6 @@ int main(int argc, char *argv[])
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
 
-
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-    float waitTime = 1.0f;
-    bool noWindowFocus = true;
-    static int mapSize = 10;
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
 	float currentFrame = (float)glfwGetTime();
@@ -80,20 +82,87 @@ int main(int argc, char *argv[])
 	}
 
 	ResetRendererStats(Engine->Renderer);
-        StartRendering(Engine->Renderer, Engine->Camera);	
+        StartRendering(Engine->Renderer, Engine->Camera);
 
+	{ // NOTE: Draw terrain with slider window
+	    ImVec2 window_pos = ImVec2(
+		(float)Engine->Width - 100,
+		(float)Engine->Height - 100);
+	    ImGui::SetNextWindowPos(ImVec2(10, 150));
+	    ImGui::SetNextWindowSize(ImVec2(200, 80));
+	    ImGui::Begin("Test", nullptr, ImGuiWindowFlags_NoResize);
+	    noWindowFocus = !ImGui::IsWindowFocused();
+	    ImGui::Text("Terrain");
+	    ImGui::SliderInt("range", &MAPSIZE, 0, 100);
+	    ImGui::End();
+
+	    DrawTerrain(Engine, MAPSIZE);
+	}
+
+	if (Engine->DebugMode)
+	{
+	    DrawAxisDebug(Engine->Renderer);	
+	    DrawDebugOverlay(Engine->Renderer->Stats, deltaTime);
+	}	    
+        RenderImGui();
+
+	{ // NOTE: Stencil rendering
+	    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	    glStencilMask(0xFF);
+
+	    DrawContainer(Engine, 1.0f);
+
+	    StartRenderingStencil(Engine->Renderer, Engine->Camera);
+	    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	    glStencilMask(0x00);
+	    glDisable(GL_DEPTH_TEST);
+
+	    DrawContainer(Engine, 1.1f);
+
+	    StopRenderingStencil();
+	}
+	
+	SwapBufferAndFinish(Engine->Window);
+    }
+
+    DeleteEngine(Engine);
+    return 0;
+}
+
+void CrapColors(float *r, float *g, float *b) {
+    if (*b == 1.0f)
+    {
+        *r = 1.0f;
+        *g = 0.0f;
+        *b = 0.0f;
+    } else if (*r == 1.0f)
+    {
+	*r = 0.0f;
+	*g = 1.0f;
+	*b = 0.0f;
+    } else if (*g == 1.0f)
+    {
+	*r = 0.0f;
+	*g = 0.0f;
+	*b = 1.0f;
+    }
+}
+
+void DrawContainer(engine *Engine, float scale)
+{
+    StartNewBatchCube(Engine->Renderer);
+    AddCubeToBuffer(
+	Engine->Renderer,
+	{ 3.0f, 0.5f, 0.0f },
+	{ 1.0f, 1.0f, 1.0f, scale },
+	{ 0.0f, 0.0f, 0.0f, 1.0f });
+    CloseBatchCube(Engine->Renderer);
+    FlushBatchCube(Engine->Renderer);
+}
+
+void DrawTerrain(engine *Engine, int mapSize)
+{
         StartNewBatchCube(Engine->Renderer);
-    	ImVec2 window_pos = ImVec2(
-    	    (float)Engine->Width - 100,
-	    (float)Engine->Height - 100);
-	ImGui::SetNextWindowPos(ImVec2(10, 150));
-	ImGui::SetNextWindowSize(ImVec2(200, 80));
-	ImGui::Begin("Test", nullptr, ImGuiWindowFlags_NoResize);
-        noWindowFocus = !ImGui::IsWindowFocused();
-	ImGui::Text("Terrain");
-	ImGui::SliderInt("range", &mapSize, 1, 100);
-	ImGui::End();
-
         float r = 0.0f;
         float g = 0.0f;
         float b = 1.0f;
@@ -168,75 +237,4 @@ int main(int argc, char *argv[])
 	
         CloseBatchCube(Engine->Renderer);
         FlushBatchCube(Engine->Renderer);
-	if (Engine->DebugMode)
-	{
-	    DrawAxisDebug(Engine->Renderer);	
-	    DrawDebugOverlay(Engine->Renderer->Stats, deltaTime);
-	}
-
-	// NOTE: Stencil rendering
-        StartNewBatchCube(Engine->Renderer);
-
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-
-	AddCubeToBuffer(
-	    Engine->Renderer,
-	    { 3.0f, 0.5f, 0.0f },
-	    { 1.0f, 1.0f, 1.0f, 1.0f },
-	    { 0.0f, 0.0f, 0.0f, 1.0f });
-        CloseBatchCube(Engine->Renderer);
-        FlushBatchCube(Engine->Renderer);
-        StopRendering();
-
-	
-	// NOTE: Stencil rendering
-        StartRenderingStencil(Engine->Renderer, Engine->Camera);
-
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
-
-        StartNewBatchCube(Engine->Renderer);
-//	AddCubeToBuffer(
-// 	    Engine->Renderer,
-// //	    { 2.68f, 0.42f, -0.05f },
-// 	    { 2.95f, 0.45f, -0.05f },
-// 	    { 1.0f, 1.0f, 1.0f, 1.1f },
-// 	    { 0.0f, 0.0f, 0.0f, 1.0f });
-	
-	AddCubeToBuffer(
-	    Engine->Renderer,
-	    { 3.0f, 0.5f, 0.0f },
-	    { 1.0f, 1.0f, 1.0f, 1.1f },
-	    { 0.0f, 0.0f, 0.0f, 1.0f });
-        CloseBatchCube(Engine->Renderer);
-        FlushBatchCube(Engine->Renderer);
-
-	StopRenderingStencil();
-	
-	SwapBufferAndFinish(Engine->Window);
-    }
-
-    DeleteEngine(Engine);
-    return 0;
-}
-
-void CrapColors(float *r, float *g, float *b) {
-    if (*b == 1.0f)
-    {
-        *r = 1.0f;
-        *g = 0.0f;
-        *b = 0.0f;
-    } else if (*r == 1.0f)
-    {
-	*r = 0.0f;
-	*g = 1.0f;
-	*b = 0.0f;
-    } else if (*g == 1.0f)
-    {
-	*r = 0.0f;
-	*g = 0.0f;
-	*b = 1.0f;
-    }
 }
