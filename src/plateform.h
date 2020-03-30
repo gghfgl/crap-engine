@@ -2,6 +2,7 @@
 
 #include "input.cpp"
 #include "camera.cpp"
+#include "entity.cpp"
 #include "renderer.cpp"
 #include "shader.cpp"
 #include "resource_manager.cpp"

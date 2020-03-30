@@ -3,7 +3,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum camera_movement {
+const float YAW         = -90.0f;
+const float PITCH       =  0.0f;
+const float SPEED       =  10.0f;
+const float SENSITIVITY =  0.1f;
+const float FOV         =  45.0f;
+
+enum camera_movement
+{
     FORWARD,
     BACKWARD,
     LEFT,
@@ -12,13 +19,8 @@ enum camera_movement {
     DOWN
 };
 
-const float YAW         = -90.0f;
-const float PITCH       =  0.0f;
-const float SPEED       =  10.0f;
-const float SENSITIVITY =  0.1f;
-const float FOV         =  45.0f;
-
-struct camera {
+struct camera
+{
     glm::vec3 Position;
     glm::vec3 Front;
     glm::vec3 Up;

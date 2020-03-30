@@ -28,7 +28,6 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     //glfwWindowHint(GLFW_SAMPLES, 4); // MSAA 4 samples
-    glfwSwapInterval(1); // VSync
 
     GLFWwindow* window = glfwCreateWindow(width, height, "CrapEngine", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -39,6 +38,11 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
         std::cout << "Failed to initialize GLAD" << std::endl;
         // return -1;
     }
+
+    if (options & VSYNC)
+	glfwSwapInterval(1); // VSync
+    else
+	glfwSwapInterval(0); // VSync
 
     glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
     glDepthFunc(GL_LESS);
@@ -51,14 +55,12 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     
     glEnable(GL_DEBUG_OUTPUT); // Faster?
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(DebugMessageCallback, NULL);
+    //glDebugMessageCallback(DebugMessageCallback, NULL); // TODO: !!!
 
     engine *Engine = new engine();
+
     if (options & DEBUG_MODE)
-    {
-        Engine->DebugMode = true;
-    }
-    
+        Engine->DebugMode = true;    
     if (options & POLYGONE_MODE)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
@@ -91,6 +93,7 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     
     Engine->GlobalState = ENGINE_ACTIVE;
     Engine->Window = window;
+    Engine->Time = new engine_time();
     Engine->InputState = InputState;
     Engine->Camera = Camera;
     Engine->Width = width;
@@ -116,9 +119,25 @@ void DeleteEngine(engine *Engine)
     DeleteInputState(Engine->InputState);
     DeleteCamera(Engine->Camera);
     CleanAndDeleteRenderer(Engine->Renderer);
+    delete Engine->Time;
     delete Engine;
 
     glfwTerminate();
+}
+
+void UpdateDeltaTimeAndFPS(engine_time *Time)
+{
+   const double currentTime = glfwGetTime();
+   Time->DeltaTime = currentTime - Time->LastFrameTime;
+   Time->LastFrameTime = currentTime;
+   Time->NextFPS++;
+
+   if(currentTime - Time->LastFrameTimeFPS > 1.0)
+   {
+      Time->LastFrameTimeFPS = currentTime;
+      Time->FPS = Time->NextFPS;
+      Time->NextFPS = 0;
+   }
 }
 
 void EnginePollEvents(engine *Engine)
@@ -142,13 +161,22 @@ void StartRendering(renderer *Renderer, camera *Camera)
     ShaderSetUniform4fv(Renderer->Shader, "model", model);
 
     glStencilMask(0x00); // dont update the stencil buffer
+}
 
+void StartImGuiRendering()
+{
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void StartRenderingStencil(renderer *Renderer, camera *Camera)
+void RenderImGui()
+{
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
+}
+
+void StartStencilRendering(renderer *Renderer, camera *Camera)
 {
     // TODO: assume that ClearColor was made before
     float scale = 1.1f;
@@ -162,25 +190,22 @@ void StartRenderingStencil(renderer *Renderer, camera *Camera)
     ShaderSetUniform4fv(Renderer->Stencil, "model", model);
 }
 
-void RenderImGui()
-{
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
-}
-
 void StopRenderingStencil()
 {
     glStencilMask(0xFF);
-    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+
 }
 
 void SwapBufferAndFinish(GLFWwindow *Window)
 {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST); // TODO: do some check?
     glfwSwapBuffers(Window);
     glFinish();
 }
 
-void DrawDebugOverlay(renderer_stats stats, float deltaTime)
+void DrawDebugOverlay(engine *Engine)
 {
     const float DISTANCE = 10.0f;
     static int corner = 0;
@@ -202,9 +227,10 @@ void DrawDebugOverlay(renderer_stats stats, float deltaTime)
 	ImGui::Text((const char*)glGetString(GL_RENDERER));
 	ImGui::Text((const char*)glGetString(GL_VERSION));
 	ImGui::Separator();
-	ImGui::Text("ObjectCount = %d", stats.CubeCount);
-	ImGui::Text("DrawCount = %d", stats.DrawCount);
-	ImGui::Text("DeltaTime = %.3f ms", deltaTime);
+	ImGui::Text("ObjectCount = %d", Engine->Renderer->Stats.CubeCount);
+	ImGui::Text("DrawCount = %d", Engine->Renderer->Stats.DrawCount);
+	ImGui::Text("DeltaTime = %.3f ms", Engine->Time->DeltaTime);
+	ImGui::Text("FPS= %d", Engine->Time->FPS);
 	ImGui::End();
     }
 }
