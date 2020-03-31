@@ -54,10 +54,12 @@ void CreateTestContainers();
 //std::vector<entity_cube> Containers; // TODO: NEXT STEP HERE!!!!! Fill a cube vector 
 std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
 
-bool noWindowFocus = true;
+static bool activeWindow = false;
 static int MAPSIZE = 10;
 BYTE bArray[4];
 int iResult = 0;
+// entity_cube selectedObject;
+int selectedID = 0;
 
 int main(int argc, char *argv[])
 {
@@ -69,6 +71,12 @@ int main(int argc, char *argv[])
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
+	// color picking
+	int invertMouseY = Engine->Height - (int)Engine->InputState->MousePosY;
+	glReadPixels((int)Engine->InputState->MousePosX, invertMouseY,
+		     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
+	iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
+
 	UpdateDeltaTimeAndFPS(Engine->Time);
 	EnginePollEvents(Engine);
 	if (Engine->InputState->Keyboard[GLFW_KEY_ESCAPE])
@@ -85,17 +93,22 @@ int main(int argc, char *argv[])
 	    ProcessCameraKeyboard(Engine->Camera, UP, (float)Engine->Time->DeltaTime);	
 	if (Engine->InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
 	    ProcessCameraKeyboard(Engine->Camera, DOWN, (float)Engine->Time->DeltaTime);	
-	if (Engine->InputState->MouseLeftButton && noWindowFocus)
+	if (Engine->InputState->MouseLeftButton && !activeWindow)
 	{
 	    UpdateMouseOffset(Engine->InputState);
 	    ProcessCameraMouseMovement(Engine->Camera,
 				       Engine->InputState->MouseOffsetX,
 				       Engine->InputState->MouseOffsetY);
+
+	    if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end())
+		selectedID = CONTAINER_ENTITIES[iResult].ID;
+	    else
+	        selectedID = 0;
+
 	}
 
 	ResetRendererStats(Engine->Renderer);
         StartRendering(Engine->Renderer, Engine->Camera);
-	int invertMouseY = Engine->Height - (int)Engine->InputState->MousePosY;
 
 	// NOTE: CLASSIC RENDERING ======================================
 	// debug tools
@@ -109,35 +122,39 @@ int main(int argc, char *argv[])
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
 
-	DrawCubeContainers(Engine->Renderer, CONTAINER_ENTITIES, 1.0f);
+	StartNewBatchCube(Engine->Renderer);
+	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
+	{
+	    DrawCubeContainer(Engine->Renderer, element.second, 1.0f);
+	}
+	CloseBatchCube(Engine->Renderer);
+	FlushBatchCube(Engine->Renderer);
 
-	// color picking
-	glReadPixels((int)Engine->InputState->MousePosX, invertMouseY,
-		     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
-	iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
-
-	unsigned int selectedID = 0;
-	if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end())
-	{	    
+	// TODO: loop through CONTAINER_ENTITIES and use  IsSelected
+	if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() || selectedID != 0)
+	{
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
 	    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 	    glStencilMask(0x00);
 	    glDisable(GL_DEPTH_TEST);
 
-	    std::cout << "picking " << CONTAINER_ENTITIES[iResult].ID << std::endl; 
-	    DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[iResult], 1.1f);
-	    selectedID = CONTAINER_ENTITIES[iResult].ID;
+	    StartNewBatchCube(Engine->Renderer);
+	    DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID != 0 ? selectedID : iResult], 1.1f);
+	    CloseBatchCube(Engine->Renderer);
+	    FlushBatchCube(Engine->Renderer);
 
-	    StopRenderingStencil();
+	    StopRenderingStencil();	    
 	}
 
 	// NOTE: UI RENDERING ======================================
-	StartImGuiRendering();
-	// terrain tool generator
-	ImGui::SetNextWindowPos(ImVec2(10, 150));
+	StartImGuiRendering();	
+	// STATS OVERLAY
+	DrawDebugOverlay(Engine);
+
+	// TERRAIN TOOL
+	ImGui::SetNextWindowPos(ImVec2(10, 160));
 	ImGui::SetNextWindowSize(ImVec2(200, 220));
 	ImGui::Begin("data", nullptr, ImGuiWindowFlags_NoResize);
-	noWindowFocus = !ImGui::IsWindowFocused();
 	ImGui::Text("Terrain:");
 	ImGui::Separator();
 	ImGui::SliderInt("range", &MAPSIZE, 0, 100);
@@ -147,10 +164,67 @@ int main(int argc, char *argv[])
 	ImGui::Text("mX= %d /mYinvert %d", (int)Engine->InputState->MousePosX, invertMouseY);
 	ImGui::Text("r=%d g=%d b=%d", bArray[0], bArray[1], bArray[2]);
 	ImGui::Text("bitValue= %d", iResult);
-	ImGui::Text("selectedID= %d", selectedID);
+	if (ImGui::IsWindowFocused())
+	    activeWindow = true;
+	else
+	    activeWindow = false;
 	ImGui::End();
-	// stats overlay
-	DrawDebugOverlay(Engine);
+
+	// OBJECT PANEL
+	ImGui::SetNextWindowPos(ImVec2(10, 390));
+	ImGui::SetNextWindowSize(ImVec2(420, 300));
+	ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize); // TODO ImGuiWindowFlags_NoResize
+	// left
+	static int selected = 0;
+	ImGui::BeginChild("left pane", ImVec2(150, 0), true);
+
+	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)	 
+	{
+	    char label[128];
+	    sprintf_s(label, "obj %d", element.first);
+	    if (ImGui::Selectable(label, selectedID == element.first))
+		selectedID = element.first;
+	}
+
+	ImGui::EndChild();
+	ImGui::SameLine();
+	// right
+	ImGui::BeginGroup();
+	ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+	ImGui::Text("obj: %d", selected);
+	ImGui::Separator();
+	if (selectedID != 0)
+	{
+	    ImGui::Text("ID: %d", CONTAINER_ENTITIES[selectedID].ID);
+			ImGui::Text("mem: %d", &CONTAINER_ENTITIES[selectedID]);
+	    ImGui::Text("State: %s",
+			(CONTAINER_ENTITIES[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
+	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+			CONTAINER_ENTITIES[selectedID].Position.x,
+			CONTAINER_ENTITIES[selectedID].Position.y,
+			CONTAINER_ENTITIES[selectedID].Position.z);
+
+	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+			CONTAINER_ENTITIES[selectedID].Size.x,
+			CONTAINER_ENTITIES[selectedID].Size.y,
+			CONTAINER_ENTITIES[selectedID].Size.z,
+			CONTAINER_ENTITIES[selectedID].Color.w);
+
+	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+			CONTAINER_ENTITIES[selectedID].Color.r,
+			CONTAINER_ENTITIES[selectedID].Color.g,
+			CONTAINER_ENTITIES[selectedID].Color.b,
+			CONTAINER_ENTITIES[selectedID].Color.a);
+
+			ImGui::Text("IsSelected: %d", CONTAINER_ENTITIES[selectedID].IsSelected);
+	}
+	ImGui::EndChild();
+	ImGui::EndGroup();
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+	    activeWindow = true;
+	else if (!activeWindow)
+	    activeWindow = false;
+	ImGui::End();
 
 	RenderImGui();
 
@@ -207,25 +281,19 @@ void CrapColors(float *r, float *g, float *b) {
 
 void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale)
 {
-    StartNewBatchCube(Renderer);
     AddCubeToBuffer(Renderer,
 		    container.Position,
 		    { container.Size.x, container.Size.y, container.Size.z, scale },
 		    container.Color);
-    CloseBatchCube(Renderer);
-    FlushBatchCube(Renderer);
 }
 
 void DrawCubeContainers(renderer *Renderer, std::unordered_map<int, entity_cube> containers, float scale)
 {
-    StartNewBatchCube(Renderer);
     for (std::pair<int, entity_cube> element : containers)
 	AddCubeToBuffer(Renderer,
 			element.second.Position,
 			{ element.second.Size.x, element.second.Size.y, element.second.Size.z, scale },
 			element.second.Color);
-    CloseBatchCube(Renderer);
-    FlushBatchCube(Renderer);
 }
 
 void DrawTerrain(renderer *Renderer, int mapSize)
