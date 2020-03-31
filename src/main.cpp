@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
 	CloseBatchCube(Engine->Renderer);
 	FlushBatchCube(Engine->Renderer);
 
-	// TODO: loop through CONTAINER_ENTITIES and use  IsSelected
 	if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() || selectedID != 0)
 	{
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
@@ -161,7 +160,7 @@ int main(int argc, char *argv[])
 	ImGui::Separator();
 	ImGui::Text("Picking:");
 	ImGui::Separator();
-	ImGui::Text("mX= %d /mYinvert %d", (int)Engine->InputState->MousePosX, invertMouseY);
+	ImGui::Text("mX= %d / mYinvert %d", (int)Engine->InputState->MousePosX, invertMouseY);
 	ImGui::Text("r=%d g=%d b=%d", bArray[0], bArray[1], bArray[2]);
 	ImGui::Text("bitValue= %d", iResult);
 	if (ImGui::IsWindowFocused())
@@ -196,7 +195,7 @@ int main(int argc, char *argv[])
 	if (selectedID != 0)
 	{
 	    ImGui::Text("ID: %d", CONTAINER_ENTITIES[selectedID].ID);
-			ImGui::Text("mem: %d", &CONTAINER_ENTITIES[selectedID]);
+	    ImGui::Text("mem: %p", &CONTAINER_ENTITIES[selectedID]);
 	    ImGui::Text("State: %s",
 			(CONTAINER_ENTITIES[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
 	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
@@ -215,8 +214,6 @@ int main(int argc, char *argv[])
 			CONTAINER_ENTITIES[selectedID].Color.g,
 			CONTAINER_ENTITIES[selectedID].Color.b,
 			CONTAINER_ENTITIES[selectedID].Color.a);
-
-			ImGui::Text("IsSelected: %d", CONTAINER_ENTITIES[selectedID].IsSelected);
 	}
 	ImGui::EndChild();
 	ImGui::EndGroup();
