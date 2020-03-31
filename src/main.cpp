@@ -7,41 +7,39 @@
 #include "plateform.h"
 
 /* NOTE: should implement
-   - depth test / z-fighting
-   - stencil test outline object
+   - depth test
    - face culling
-   - white / blanc texture
+   - MSAA anti aliasing
+   - frame rate counter ms /  VSYNC viz
+*/
+
+/* TODO:
+   - stencil test outline object + picking object by color
+   - implement game entity and level?
+   - abstract UI debug
+   - move object from slot to slot
+   - set of predef camera position
+   - add click action to container object and open imgui inventory?
+   - move object between inventories
+   - lock camera movement from to terrain space
+   - z-fighting
+   - logger ?
+   - in fuction time profiler (handemade hero fast thread id retrieval)
+   - work on z-buffer to avoid z-fighting colors/ textures
+   - add texture and white default texture to batch rendering cube.
+   - generate terrain (advanced)?
+   - compile and read shader for presetting uniform? the cherno
+   - load models assimp?
+   - batch rendering models?
+   - memory profiler
+   - light system PBR?
    - blending
    - framebuffer ?
    - mipmap ?
    - cubemap / skybox / reflect ?
    - geometry shader ?
    - instancing ?
-   - MSAA anti aliasing ?
-   - light system / PBR?
-   - load models
 */
-
-// TODO:
-// * stencil test outline object + picking object by color
-// * implement game entity and level?
-// * abstract UI debug
-// * move object from slot to slot
-// * set of predef camera position
-// * add click action to container object and open imgui inventory?
-// * move object between inventories
-// * lock camera movement
-// * implement frame rate counter ms VSYNC ?
-// * logger ?
-// * in fuction time profiler (handemade hero fast thread id retrieval)
-// * work on z-buffer to avoid z-fighting colors/ textures
-// * add texture and white default texture to batch rendering cube.
-// * generate terrain (advanced)?
-// * compile and read shader for presetting uniform? the cherno
-// * load models assimp?
-// * batch rendering models?
-// * memory profiler
-// * light system PBR?
 
 glm::vec4 GetColorByIndex(int index);
 void CrapColors(float *r, float *g, float *b);
