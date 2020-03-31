@@ -47,7 +47,6 @@ glm::vec4 GetColorByIndex(int index);
 void CrapColors(float *r, float *g, float *b);
 void DrawTerrain(renderer *Renderer, int mapSize);
 void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
-void DrawCubeContainers(renderer *Renderer, std::unordered_map<int,entity_cube> containers, float scale);
 void CreateTestContainers();
 
 #define RGB_WHITE (0xFF | (0xFF<<8) | (0xFF<<16))
@@ -118,7 +117,6 @@ int main(int argc, char *argv[])
 	DrawTerrain(Engine->Renderer, MAPSIZE);
 
 	// NOTE: STENCIL RENDERING ======================================
-	// TODO: should be under iResult condition?
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
 	glStencilMask(0xFF);
 
@@ -133,9 +131,6 @@ int main(int argc, char *argv[])
 	if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() || selectedID != 0)
 	{
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
-	    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	    glStencilMask(0x00);
-	    glDisable(GL_DEPTH_TEST);
 
 	    StartNewBatchCube(Engine->Renderer);
 	    DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID != 0 ? selectedID : iResult], 1.1f);
@@ -161,7 +156,7 @@ int main(int argc, char *argv[])
 	ImGui::Text("Picking:");
 	ImGui::Separator();
 	ImGui::Text("mX= %d / mYinvert %d", (int)Engine->InputState->MousePosX, invertMouseY);
-	ImGui::Text("r=%d g=%d b=%d", bArray[0], bArray[1], bArray[2]);
+	ImGui::Text("RGB=%d,%d,%d", bArray[0], bArray[1], bArray[2]);
 	ImGui::Text("bitValue= %d", iResult);
 	if (ImGui::IsWindowFocused())
 	    activeWindow = true;
@@ -172,7 +167,7 @@ int main(int argc, char *argv[])
 	// OBJECT PANEL
 	ImGui::SetNextWindowPos(ImVec2(10, 390));
 	ImGui::SetNextWindowSize(ImVec2(420, 300));
-	ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize); // TODO ImGuiWindowFlags_NoResize
+	ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize);
 	// left
 	static int selected = 0;
 	ImGui::BeginChild("left pane", ImVec2(150, 0), true);
@@ -237,10 +232,10 @@ void CreateTestContainers()
 {
     entity_cube containerOne = CreateEntityCube({ 3.0f, 0.5f, 0.0f },
 					     { 1.0f, 1.0f, 1.0f, 1.0f },
-					     { 1.0f, 1.0f, 1.0f, 1.0f });
+					     { 1.0f, 0.0f, 0.0f, 1.0f });
     entity_cube containerTwo = CreateEntityCube({ -3.0f, 0.5f, 0.0f },
 					     { 1.0f, 1.0f, 1.0f, 1.0f },
-					     { 0.5f, 1.0f, 1.0f, 1.0f });
+					     { 0.0f, 0.0f, 1.0f, 1.0f });
     
     if (CONTAINER_ENTITIES.find(containerOne.ID) == CONTAINER_ENTITIES.end())
 	CONTAINER_ENTITIES[containerOne.ID] = containerOne;
@@ -276,6 +271,21 @@ void CrapColors(float *r, float *g, float *b) {
     }
 }
 
+void BlackAndWhite(float *r, float *g, float *b) {
+    if (*r == 1.0f)
+    {
+        *r = 0.0f;
+        *g = 0.0f;
+        *b = 0.0f;
+    }
+    else if (*r == 0.0f)
+    {
+        *r = 1.0f;
+        *g = 1.0f;
+        *b = 1.0f;
+    }
+}
+
 void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale)
 {
     AddCubeToBuffer(Renderer,
@@ -284,20 +294,11 @@ void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale)
 		    container.Color);
 }
 
-void DrawCubeContainers(renderer *Renderer, std::unordered_map<int, entity_cube> containers, float scale)
-{
-    for (std::pair<int, entity_cube> element : containers)
-	AddCubeToBuffer(Renderer,
-			element.second.Position,
-			{ element.second.Size.x, element.second.Size.y, element.second.Size.z, scale },
-			element.second.Color);
-}
-
 void DrawTerrain(renderer *Renderer, int mapSize)
 {
     StartNewBatchCube(Renderer);
-    float r = 0.0f;
-    float g = 0.0f;
+    float r = 1.0f;
+    float g = 1.0f;
     float b = 1.0f;
     float size = 1.0f;
     float posX = 0.0f;
@@ -306,7 +307,8 @@ void DrawTerrain(renderer *Renderer, int mapSize)
 	float posZ = -size;
 	for (int y = 0; y < mapSize / 2; y++)
 	{
-	    CrapColors(&r, &g, &b);
+	    //CrapColors(&r, &g, &b);
+	    BlackAndWhite(&r, &g, &b);
 	    AddCubeToBuffer(
 		Renderer,
 		{ posX, 0.0f, posZ },
@@ -323,7 +325,8 @@ void DrawTerrain(renderer *Renderer, int mapSize)
 	float posZ = -size;
 	for (int y = 0; y < mapSize / 2; y++)
 	{
-	    CrapColors(&r, &g, &b);
+	    //CrapColors(&r, &g, &b);
+	    BlackAndWhite(&r, &g, &b);
 	    AddCubeToBuffer(
 		Renderer,
 		{ posX, 0.0f, posZ },
@@ -334,13 +337,17 @@ void DrawTerrain(renderer *Renderer, int mapSize)
 	posX -= size;
     }
 
+    r = 0.0f;
+    g = 0.0f;
+    b = 0.0f;
     posX = 0.0f;
     for (int i = 0; i < mapSize / 2; i++)
     {
 	float posZ = 0.0f;
 	for (int y = 0; y < mapSize / 2; y++)
 	{
-	    CrapColors(&r, &g, &b);
+	    //CrapColors(&r, &g, &b);
+	    BlackAndWhite(&r, &g, &b);
 	    AddCubeToBuffer(
 		Renderer,
 		{ posX, 0.0f, posZ },
@@ -357,7 +364,8 @@ void DrawTerrain(renderer *Renderer, int mapSize)
 	float posZ = 0.0f;
 	for (int y = 0; y < mapSize / 2; y++)
 	{
-	    CrapColors(&r, &g, &b);
+	    //CrapColors(&r, &g, &b);
+	    BlackAndWhite(&r, &g, &b);
 	    AddCubeToBuffer(
 		Renderer,
 		{ posX, 0.0f, posZ },

@@ -188,6 +188,10 @@ void StartStencilRendering(renderer *Renderer, camera *Camera)
     UseShader(Renderer->Stencil);
     ShaderSetUniform4fv(Renderer->Stencil, "view", view);    
     ShaderSetUniform4fv(Renderer->Stencil, "model", model);
+
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
 }
 
 void StopRenderingStencil()
