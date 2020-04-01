@@ -11,13 +11,13 @@
    - face culling
    - MSAA anti aliasing
    - frame rate counter ms /  VSYNC viz
+   - stencil test outline object + picking object by color
+   - quick abstract UI debug
 */
 
 /* TODO:
-   - stencil test outline object + picking object by color
-   - implement game entity and level?
-   - abstract UI debug
    - move object from slot to slot
+   - read level design from file
    - set of predef camera position
    - add click action to container object and open imgui inventory?
    - move object between inventories
@@ -41,15 +41,7 @@
    - instancing ?
 */
 
-glm::vec4 GetColorByIndex(int index);
-void CrapColors(float *r, float *g, float *b);
-void DrawTerrain(renderer *Renderer, int mapSize);
-void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
-void CreateTestContainers();
-
 #define RGB_WHITE (0xFF | (0xFF<<8) | (0xFF<<16))
-//std::vector<entity_cube> Containers; // TODO: NEXT STEP HERE!!!!! Fill a cube vector 
-std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
 
 static bool activeWindow = false;
 static int MAPSIZE = 10;
@@ -57,6 +49,16 @@ BYTE bArray[4];
 int iResult = 0;
 // entity_cube selectedObject;
 int selectedID = 0;
+//std::vector<entity_cube> Containers; // TODO: NEXT STEP HERE!!!!! Fill a cube vector 
+std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
+
+glm::vec4 GetColorByIndex(int index);
+void CrapColors(float *r, float *g, float *b);
+void DrawTerrain(renderer *Renderer, int mapSize);
+void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
+void CreateTestContainers();
+void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, BYTE pickRGB[], int pickValue, bool &focus);
+void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus);
 
 int main(int argc, char *argv[])
 {
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
 
-    CreateTestContainers();
+    CreateTestContainers(); // quick way to create stuff
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
@@ -74,6 +76,7 @@ int main(int argc, char *argv[])
 		     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
 	iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
 
+	// I/O
 	UpdateDeltaTimeAndFPS(Engine->Time);
 	EnginePollEvents(Engine);
 	if (Engine->InputState->Keyboard[GLFW_KEY_ESCAPE])
@@ -104,6 +107,7 @@ int main(int argc, char *argv[])
 
 	}
 
+	// NOTE: START RENDERING ======================================
 	ResetRendererStats(Engine->Renderer);
         StartRendering(Engine->Renderer, Engine->Camera);
 
@@ -131,7 +135,11 @@ int main(int argc, char *argv[])
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
 
 	    StartNewBatchCube(Engine->Renderer);
-	    DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID != 0 ? selectedID : iResult], 1.1f);
+
+	    if (selectedID != 0)
+		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
+	    if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() && iResult != selectedID)
+		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[iResult], 1.1f);
 	    CloseBatchCube(Engine->Renderer);
 	    FlushBatchCube(Engine->Renderer);
 
@@ -140,81 +148,14 @@ int main(int argc, char *argv[])
 
 	// NOTE: UI RENDERING ======================================
 	StartImGuiRendering();	
-	// STATS OVERLAY
+
 	DrawDebugOverlay(Engine);
-
-	// TERRAIN TOOL
-	ImGui::SetNextWindowPos(ImVec2(10, 160));
-	ImGui::SetNextWindowSize(ImVec2(200, 220));
-	ImGui::Begin("data", nullptr, ImGuiWindowFlags_NoResize);
-	ImGui::Text("Terrain:");
-	ImGui::Separator();
-	ImGui::SliderInt("range", &MAPSIZE, 0, 100);
-	ImGui::Separator();
-	ImGui::Text("Picking:");
-	ImGui::Separator();
-	ImGui::Text("mX= %d / mYinvert %d", (int)Engine->InputState->MousePosX, invertMouseY);
-	ImGui::Text("RGB=%d,%d,%d", bArray[0], bArray[1], bArray[2]);
-	ImGui::Text("bitValue= %d", iResult);
-	if (ImGui::IsWindowFocused())
-	    activeWindow = true;
-	else
-	    activeWindow = false;
-	ImGui::End();
-
-	// OBJECT PANEL
-	ImGui::SetNextWindowPos(ImVec2(10, 390));
-	ImGui::SetNextWindowSize(ImVec2(420, 300));
-	ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize);
-	// left
-	static int selected = 0;
-	ImGui::BeginChild("left pane", ImVec2(150, 0), true);
-
-	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)	 
-	{
-	    char label[128];
-	    sprintf_s(label, "obj %d", element.first);
-	    if (ImGui::Selectable(label, selectedID == element.first))
-		selectedID = element.first;
-	}
-
-	ImGui::EndChild();
-	ImGui::SameLine();
-	// right
-	ImGui::BeginGroup();
-	ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-	ImGui::Text("obj: %d", selected);
-	ImGui::Separator();
-	if (selectedID != 0)
-	{
-	    ImGui::Text("ID: %d", CONTAINER_ENTITIES[selectedID].ID);
-	    ImGui::Text("mem: %p", &CONTAINER_ENTITIES[selectedID]);
-	    ImGui::Text("State: %s",
-			(CONTAINER_ENTITIES[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
-	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
-			CONTAINER_ENTITIES[selectedID].Position.x,
-			CONTAINER_ENTITIES[selectedID].Position.y,
-			CONTAINER_ENTITIES[selectedID].Position.z);
-
-	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
-			CONTAINER_ENTITIES[selectedID].Size.x,
-			CONTAINER_ENTITIES[selectedID].Size.y,
-			CONTAINER_ENTITIES[selectedID].Size.z,
-			CONTAINER_ENTITIES[selectedID].Color.w);
-
-	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
-			CONTAINER_ENTITIES[selectedID].Color.r,
-			CONTAINER_ENTITIES[selectedID].Color.g,
-			CONTAINER_ENTITIES[selectedID].Color.b,
-			CONTAINER_ENTITIES[selectedID].Color.a);
-	}
-	ImGui::EndChild();
-	ImGui::EndGroup();
-	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
-	    activeWindow = true;
-	else if (!activeWindow)
-	    activeWindow = false;
-	ImGui::End();
+        DrawTerrainTool(Engine,
+			MAPSIZE,
+			(int)Engine->InputState->MousePosX, invertMouseY,
+			bArray, iResult,
+			activeWindow);
+        DrawObjectPanel(CONTAINER_ENTITIES, activeWindow);	
 
 	RenderImGui();
 
@@ -226,14 +167,97 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void DrawTerrainTool(engine *Engine,
+		     int &mapSize,
+		     int mPosX, int mPosY,
+		     BYTE pickRGB[], int pickValue,
+		     bool &focus)
+{
+    ImGui::SetNextWindowPos(ImVec2(10, 160));
+    ImGui::SetNextWindowSize(ImVec2(200, 220));
+    ImGui::Begin("data", nullptr, ImGuiWindowFlags_NoResize);
+    ImGui::Text("Terrain:");
+    ImGui::Separator();
+    ImGui::SliderInt("range", &mapSize, 0, 100);
+    ImGui::Separator();
+    ImGui::Text("Picking:");
+    ImGui::Separator();
+    ImGui::Text("mX= %d / mYinvert %d", mPosX, mPosY);
+    ImGui::Text("RGB=%d,%d,%d", pickRGB[0], pickRGB[1], pickRGB[2]);
+    ImGui::Text("bitValue= %d", pickValue);
+    if (ImGui::IsWindowFocused())
+	focus = true;
+    else
+	focus = false;
+    ImGui::End();
+}
+
+void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus)
+{
+    ImGui::SetNextWindowPos(ImVec2(10, 390));
+    ImGui::SetNextWindowSize(ImVec2(420, 300));
+    ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize);
+
+    // left
+    static int selected = 0;
+    ImGui::BeginChild("left pane", ImVec2(150, 0), true);
+
+    for (std::pair<int, entity_cube> element : objects)	 
+    {
+	char label[128];
+	sprintf_s(label, "obj %d", element.first);
+	if (ImGui::Selectable(label, selectedID == element.first))
+	    selectedID = element.first;
+    }
+
+    ImGui::EndChild();
+    ImGui::SameLine();
+
+    // right
+    ImGui::BeginGroup();
+    ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+    ImGui::Text("obj: %d", selected);
+    ImGui::Separator();
+    if (selectedID != 0)
+    {
+	ImGui::Text("ID: %d", objects[selectedID].ID);
+	ImGui::Text("mem: %p", &objects[selectedID]);
+	ImGui::Text("State: %s",
+		    (objects[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
+	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+		    objects[selectedID].Position.x,
+		    objects[selectedID].Position.y,
+		    objects[selectedID].Position.z);
+
+	ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+		    objects[selectedID].Size.x,
+		    objects[selectedID].Size.y,
+		    objects[selectedID].Size.z,
+		    objects[selectedID].Color.w);
+
+	ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+		    objects[selectedID].Color.r,
+		    objects[selectedID].Color.g,
+		    objects[selectedID].Color.b,
+		    objects[selectedID].Color.a);
+    }
+    ImGui::EndChild();
+    ImGui::EndGroup();
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+	focus = true;
+    else if (!focus)
+	focus = false;
+    ImGui::End();
+}
+
 void CreateTestContainers()
 {
     entity_cube containerOne = CreateEntityCube({ 3.0f, 0.5f, 0.0f },
-					     { 1.0f, 1.0f, 1.0f, 1.0f },
-					     { 1.0f, 0.0f, 0.0f, 1.0f });
+						{ 1.0f, 1.0f, 1.0f, 1.0f },
+						{ 1.0f, 0.0f, 0.0f, 1.0f });
     entity_cube containerTwo = CreateEntityCube({ -3.0f, 0.5f, 0.0f },
-					     { 1.0f, 1.0f, 1.0f, 1.0f },
-					     { 0.0f, 0.0f, 1.0f, 1.0f });
+						{ 1.0f, 1.0f, 1.0f, 1.0f },
+						{ 0.0f, 0.0f, 1.0f, 1.0f });
     
     if (CONTAINER_ENTITIES.find(containerOne.ID) == CONTAINER_ENTITIES.end())
 	CONTAINER_ENTITIES[containerOne.ID] = containerOne;
