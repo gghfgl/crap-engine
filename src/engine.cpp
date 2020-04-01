@@ -96,6 +96,7 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     Engine->Time = new engine_time();
     Engine->InputState = InputState;
     Engine->Camera = Camera;
+    Engine->ProjMatrix = projection;
     Engine->Width = width;
     Engine->Height = height;    
     Engine->Renderer = RendererConstruct(DefaultShader);

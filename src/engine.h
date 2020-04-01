@@ -42,6 +42,7 @@ struct engine
     input_state *InputState;
     renderer    *Renderer;
     camera      *Camera;
+    glm::mat4    ProjMatrix;
     unsigned int Width, Height;
     unsigned int UBO;
 };

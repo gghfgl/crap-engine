@@ -11,12 +11,14 @@
    - face culling
    - MSAA anti aliasing
    - frame rate counter ms /  VSYNC viz
-   - stencil test outline object + picking object by color
+   - stencil test outline object + picking object by color (GPU)
    - quick abstract UI debug
 */
 
 /* TODO:
+   - stencil test outline object + picking object by ray casting (CPU)
    - move object from slot to slot
+   - trace line from mouse to objects / terrain slots?
    - read level design from file
    - set of predef camera position
    - add click action to container object and open imgui inventory?
@@ -40,7 +42,7 @@
    - geometry shader ?
    - instancing ?
 */
-
+	
 #define RGB_WHITE (0xFF | (0xFF<<8) | (0xFF<<16))
 
 static bool activeWindow = false;
@@ -59,6 +61,8 @@ void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
 void CreateTestContainers();
 void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, BYTE pickRGB[], int pickValue, bool &focus);
 void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus);
+void ScreenPosToWorldRay(int mouseX, int mouseY, int screenWidth, int screenHeight, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, glm::vec3& out_origin, glm::vec3& out_direction);
+bool TestRayOBBIntersection(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance);
 
 int main(int argc, char *argv[])
 {
@@ -66,6 +70,22 @@ int main(int argc, char *argv[])
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
 
+    // TODO: =========================================
+    unsigned int TestVAO, TestVBO;
+    glGenVertexArrays(1, &TestVAO);
+    glBindVertexArray(TestVAO);
+
+    glGenBuffers(1, &TestVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, TestVBO);
+    glBufferData(GL_ARRAY_BUFFER, 14 * sizeof(float), nullptr, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+    // ================================================
+    
     CreateTestContainers(); // quick way to create stuff
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
@@ -76,6 +96,71 @@ int main(int argc, char *argv[])
 		     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
 	iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
 
+	// // mouse ray casting
+	// // transform to NDC
+	// float mx = (2.0f * (float)Engine->InputState->MousePosX) / Engine->Width - 1.0f;
+	// float my = 1.0f - (2.0f * (float)Engine->InputState->MousePosY) / Engine->Height;
+	// float mz = 1.0f;
+	// glm::vec3 ray_nds = glm::vec3(mx, my, mz);
+	// // transform to clip coord
+	// glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+	// // transform to camera coord
+	// glm::vec4 ray_eye = inverse(Engine->ProjMatrix) * ray_clip;
+	// // manually unproject xy
+	// ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+	// // transform to world coord
+	// glm::vec4 test = inverse(GetCameraViewMatrix(Engine->Camera)) * ray_eye;
+        // glm::vec3 ray_world = glm::vec3(test.x, test.y, test.z);
+        // // don't forget to normalise the vector at some point
+	// ray_world = normalize(ray_world);
+
+	//// ====
+	
+	glm::vec3 ray_origin;
+	glm::vec3 ray_direction;
+	ScreenPosToWorldRay(
+	    (int)Engine->InputState->MousePosX, invertMouseY,
+	    Engine->Width, Engine->Height, 
+	    GetCameraViewMatrix(Engine->Camera), 
+	    Engine->ProjMatrix, 
+	    ray_origin, 
+	    ray_direction);
+	// std::cout << "x=" << ray_direction.x
+	// 	  << " y=" << ray_direction.y
+	// 	  << " z=" << ray_direction.z
+	// 	  << std::endl;
+
+	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
+	{
+	    float intersection_distance; // Output of TestRayOBBIntersection()
+	    glm::vec3 aabb_min(-1.0f, -1.0f, -1.0f);
+	    glm::vec3 aabb_max( 1.0f,  1.0f,  1.0f);
+
+	    // The ModelMatrix transforms :
+	    // - the mesh to its desired position and orientation
+	    // - but also the AABB (defined with aabb_min and aabb_max) into an OBB
+	    // glm::mat4 RotationMatrix = glm::toMat4(orientations[i]);
+	    glm::mat4 model = glm::mat4(1.0f);
+	    glm::mat4 TranslationMatrix = glm::translate(model, element.second.Position);
+	    glm::mat4 ModelMatrix = TranslationMatrix;
+
+	    if (TestRayOBBIntersection(
+		    ray_origin, 
+		    ray_direction, 
+		    aabb_min, 
+		    aabb_max,
+		    ModelMatrix,
+		    intersection_distance))
+	    {
+		std::cout << "x=" << ray_direction.x
+			  << " y=" << ray_direction.y
+			  << " z=" << ray_direction.z
+			  << std::endl;
+	    }
+	}
+	
+
+	
 	// I/O
 	UpdateDeltaTimeAndFPS(Engine->Time);
 	EnginePollEvents(Engine);
@@ -110,6 +195,19 @@ int main(int argc, char *argv[])
 	// NOTE: START RENDERING ======================================
 	ResetRendererStats(Engine->Renderer);
         StartRendering(Engine->Renderer, Engine->Camera);
+
+	// TODO: debug ray casting
+	float test_ray[] =
+	    {
+		ray_origin.x, ray_origin.y, ray_origin.z, 1.0f, 0.0f, 0.0f, 1.0f,
+		ray_direction.x, ray_direction.y, ray_direction.z, 1.0f, 0.0f, 0.0f, 1.0f,
+	    };
+
+	glBindBuffer(GL_ARRAY_BUFFER, TestVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(test_ray), test_ray);
+	glBindVertexArray(TestVAO);
+	glDrawArrays(GL_LINES, 0, 2);
+	//Renderer->Stats.DrawCount++;
 
 	// NOTE: CLASSIC RENDERING ======================================
 	// debug tools
@@ -399,4 +497,165 @@ void DrawTerrain(renderer *Renderer, int mapSize)
     }
     CloseBatchCube(Renderer);
     FlushBatchCube(Renderer);
+}
+
+void ScreenPosToWorldRay(
+    int mouseX, int mouseY,             // Mouse position, in pixels, from bottom-left corner of the window
+    int screenWidth, int screenHeight,  // Window size, in pixels
+    glm::mat4 ViewMatrix,               // Camera position and orientation
+    glm::mat4 ProjectionMatrix,         // Camera parameters (ratio, field of view, near and far planes)
+    glm::vec3& out_origin,              // Ouput : Origin of the ray. /!\ Starts at the near plane, so if you want the ray to start at the camera's position instead, ignore this.
+    glm::vec3& out_direction            // Ouput : Direction, in world space, of the ray that goes "through" the mouse.
+    ){
+    // The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
+    glm::vec4 lRayStart_NDC(
+	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
+	(2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
+	-1.0f, // The near plane maps to Z=-1 in Normalized Device Coordinates
+	1.0f);
+
+    glm::vec4 lRayEnd_NDC(
+	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
+	(2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
+	0.0f,
+	1.0f);
+
+    // The Projection matrix goes from Camera Space to NDC.
+    // So inverse(ProjectionMatrix) goes from NDC to Camera Space.
+    glm::mat4 InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
+	
+    // The View Matrix goes from World Space to Camera Space.
+    // So inverse(ViewMatrix) goes from Camera Space to World Space.
+    glm::mat4 InverseViewMatrix = glm::inverse(ViewMatrix);
+	
+    // glm::vec4 lRayStart_camera = InverseProjectionMatrix * lRayStart_NDC;    lRayStart_camera/=lRayStart_camera.w;
+    // glm::vec4 lRayStart_world  = InverseViewMatrix       * lRayStart_camera; lRayStart_world /=lRayStart_world .w;
+    // glm::vec4 lRayEnd_camera   = InverseProjectionMatrix * lRayEnd_NDC;      lRayEnd_camera  /=lRayEnd_camera  .w;
+    // glm::vec4 lRayEnd_world    = InverseViewMatrix       * lRayEnd_camera;   lRayEnd_world   /=lRayEnd_world   .w;
+
+    // Faster way (just one inverse)
+    glm::mat4 M = glm::inverse(ProjectionMatrix * ViewMatrix);
+    glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
+    glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
+
+    glm::vec3 lRayDir_world(lRayEnd_world - lRayStart_world);
+    lRayDir_world = glm::normalize(lRayDir_world);
+
+    out_origin = glm::vec3(lRayStart_world);
+    out_direction = glm::normalize(lRayDir_world);
+}
+
+bool TestRayOBBIntersection(
+	glm::vec3 ray_origin,        // Ray origin, in world space
+	glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
+	glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
+	glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
+	glm::mat4 ModelMatrix,       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
+	float& intersection_distance // Output : distance between ray_origin and the intersection with the OBB
+    ){	
+
+    // std::cout << "x= " << ModelMatrix[3].x
+    // 	      << " y= " << ModelMatrix[3].y
+    // 	      << " z= " << ModelMatrix[3].z
+    // 	      << std::endl;
+
+// Intersection method from Real-Time Rendering and Essential Mathematics for Games	
+    float tMin = 0.0f;
+    float tMax = 100000.0f;
+    glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
+    glm::vec3 delta = OBBposition_worldspace - ray_origin;
+
+    // Test intersection with the 2 planes perpendicular to the OBB's X axis
+    {
+	glm::vec3 xaxis(ModelMatrix[0].x, ModelMatrix[0].y, ModelMatrix[0].z);
+	float e = glm::dot(xaxis, delta);
+	float f = glm::dot(ray_direction, xaxis);
+
+	if ( fabs(f) > 0.001f ){ // Standard case
+
+	    float t1 = (e+aabb_min.x)/f; // Intersection with the "left" plane
+	    float t2 = (e+aabb_max.x)/f; // Intersection with the "right" plane
+	    // t1 and t2 now contain distances betwen ray origin and ray-plane intersections
+	    
+	    // We want t1 to represent the nearest intersection, 
+	    // so if it's not the case, invert t1 and t2
+	    if (t1>t2){
+		float w=t1;t1=t2;t2=w; // swap t1 and t2
+	    }
+
+	    // tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
+	    if ( t2 < tMax )
+		tMax = t2;
+	    // tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
+	    if ( t1 > tMin )
+		tMin = t1;
+
+	    // And here's the trick :
+	    // If "far" is closer than "near", then there is NO intersection.
+	    // See the images in the tutorials for the visual explanation.
+	    if (tMax < tMin )
+		return false;
+
+	}else{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
+	    if(-e+aabb_min.x > 0.0f || -e+aabb_max.x < 0.0f)
+		return false;
+	}
+    }
+
+    // Test intersection with the 2 planes perpendicular to the OBB's Y axis
+    // Exactly the same thing than above.
+    {
+	glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
+	float e = glm::dot(yaxis, delta);
+	float f = glm::dot(ray_direction, yaxis);
+
+	if ( fabs(f) > 0.001f ){
+
+	    float t1 = (e+aabb_min.y)/f;
+	    float t2 = (e+aabb_max.y)/f;
+
+	    if (t1>t2){float w=t1;t1=t2;t2=w;}
+
+	    if ( t2 < tMax )
+		tMax = t2;
+	    if ( t1 > tMin )
+		tMin = t1;
+	    if (tMin > tMax)
+		return false;
+
+	}else{
+	    if(-e+aabb_min.y > 0.0f || -e+aabb_max.y < 0.0f)
+		return false;
+	}
+    }
+
+    // Test intersection with the 2 planes perpendicular to the OBB's Z axis
+    // Exactly the same thing than above.
+    {
+	glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
+	float e = glm::dot(zaxis, delta);
+	float f = glm::dot(ray_direction, zaxis);
+
+	if ( fabs(f) > 0.001f ){
+
+	    float t1 = (e+aabb_min.z)/f;
+	    float t2 = (e+aabb_max.z)/f;
+
+	    if (t1>t2){float w=t1;t1=t2;t2=w;}
+
+	    if ( t2 < tMax )
+		tMax = t2;
+	    if ( t1 > tMin )
+		tMin = t1;
+	    if (tMin > tMax)
+		return false;
+
+	}else{
+	    if(-e+aabb_min.z > 0.0f || -e+aabb_max.z < 0.0f)
+		return false;
+	}
+    }
+
+    intersection_distance = tMin;
+    return true;
 }
