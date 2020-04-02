@@ -430,64 +430,18 @@ void DrawTerrain(renderer *Renderer, int mapSize)
     FlushBatchCube(Renderer);
 }
 
-void ScreenPosToWorldRay(
-    int mouseX, int mouseY,             // Mouse position, in pixels, from bottom-left corner of the window
-    int screenWidth, int screenHeight,  // Window size, in pixels
-    glm::mat4 ViewMatrix,               // Camera position and orientation
-    glm::mat4 ProjectionMatrix,         // Camera parameters (ratio, field of view, near and far planes)
-    glm::vec3& out_origin,              // Ouput : Origin of the ray. /!\ Starts at the near plane, so if you want the ray to start at the camera's position instead, ignore this.
-    glm::vec3& out_direction            // Ouput : Direction, in world space, of the ray that goes "through" the mouse.
-    ){
-    // The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
-    glm::vec4 lRayStart_NDC(
-	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
-        (2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
-	-1.0f, // The near plane maps to Z=-1 in Normalized Device Coordinates
-	1.0f);
-
-    glm::vec4 lRayEnd_NDC(
-	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
-        (2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
-	0.0f,
-	1.0f);
-
-    // The Projection matrix goes from Camera Space to NDC.
-    // So inverse(ProjectionMatrix) goes from NDC to Camera Space.
-    glm::mat4 InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
-	
-    // The View Matrix goes from World Space to Camera Space.
-    // So inverse(ViewMatrix) goes from Camera Space to World Space.
-    glm::mat4 InverseViewMatrix = glm::inverse(ViewMatrix);
-	
-    // glm::vec4 lRayStart_camera = InverseProjectionMatrix * lRayStart_NDC;    lRayStart_camera/=lRayStart_camera.w;
-    // glm::vec4 lRayStart_world  = InverseViewMatrix       * lRayStart_camera; lRayStart_world /=lRayStart_world .w;
-    // glm::vec4 lRayEnd_camera   = InverseProjectionMatrix * lRayEnd_NDC;      lRayEnd_camera  /=lRayEnd_camera  .w;
-    // glm::vec4 lRayEnd_world    = InverseViewMatrix       * lRayEnd_camera;   lRayEnd_world   /=lRayEnd_world   .w;
-
-    // Faster way (just one inverse)
-    glm::mat4 M = glm::inverse(ProjectionMatrix * ViewMatrix);
-    glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
-    glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
-
-    glm::vec3 lRayDir_world(lRayEnd_world - lRayStart_world);
-    lRayDir_world = glm::normalize(lRayDir_world);
-
-    out_origin = glm::vec3(lRayStart_world);
-    out_direction = glm::normalize(lRayDir_world);
-}
-
 glm::vec3 MouseRayDirectionWorld(float mouseX,float mouseY,
-			    int width, int height,
-			    glm::mat4 projectionMatrix,
-			    glm::mat4 viewMatrix)
+				 int width, int height,
+				 glm::mat4 projectionMatrix,
+				 glm::mat4 viewMatrix)
 {
     // transform to NDC
     float mx = (2.0f * mouseX) / width - 1.0f;
     float my = 1.0f - (2.0f * mouseY) / height;
     float mz = 1.0f;
-    glm::vec3 rayNDS = glm::vec3(mx, my, mz);
+    glm::vec3 rayNDC = glm::vec3(mx, my, mz);
     // transform to clip coord
-    glm::vec4 rayClip = glm::vec4(rayNDS.x, rayNDS.y, -1.0, 1.0);
+    glm::vec4 rayClip = glm::vec4(rayNDC.x, rayNDC.y, -1.0, 1.0);
     // transform to camera coord
     glm::vec4 rayEye = inverse(projectionMatrix) * rayClip;
     // manually unproject xy
@@ -500,15 +454,15 @@ glm::vec3 MouseRayDirectionWorld(float mouseX,float mouseY,
 }
 
 bool TestRaySphereIntersection(glm::vec3 rayOriginWorld,
-		glm::vec3 rayDirectionWorld,
-		glm::vec3 sphereCenterWorld,
-		float sphereRadius,
-		float* intersectionDistance)
+			       glm::vec3 rayDirectionWorld,
+			       glm::vec3 sphereCenterWorld,
+			       float sphereRadius,
+			       float* intersectionDistance)
 {
     // work out components of quadratic
-    glm::vec3 distToSphere     = rayOriginWorld - sphereCenterWorld;
-    float b                 = dot( rayDirectionWorld, distToSphere );
-    float c                 = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
+    glm::vec3 distToSphere = rayOriginWorld - sphereCenterWorld;
+    float b = dot( rayDirectionWorld, distToSphere );
+    float c = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
     float b_squared_minus_c = b * b - c;
     // check for "imaginary" answer. == ray completely misses sphere
     if ( b_squared_minus_c < 0.0f ) { return false; }
@@ -539,21 +493,14 @@ bool TestRaySphereIntersection(glm::vec3 rayOriginWorld,
     return false;
 }
 
-bool TestRayOBBIntersection(
-	glm::vec3 ray_origin,        // Ray origin, in world space
-	glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
-	glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
-	glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
-	glm::mat4 ModelMatrix,       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
-	float& intersection_distance // Output : distance between ray_origin and the intersection with the OBB
+bool TestRayOBBIntersection(glm::vec3 ray_origin,        // Ray origin, in world space
+			    glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
+			    glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
+			    glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
+			    glm::mat4 ModelMatrix,       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
+			    float& intersection_distance // Output : distance between ray_origin and the intersection with the OBB
     ){	
-
-    // std::cout << "x= " << ModelMatrix[3].x
-    // 	      << " y= " << ModelMatrix[3].y
-    // 	      << " z= " << ModelMatrix[3].z
-    // 	      << std::endl;
-
-// Intersection method from Real-Time Rendering and Essential Mathematics for Games	
+    // Intersection method from Real-Time Rendering and Essential Mathematics for Games	
     float tMin = 0.0f;
     float tMax = 100000.0f;
     glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
