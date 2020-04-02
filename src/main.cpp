@@ -51,6 +51,7 @@ BYTE bArray[4];
 int iResult = 0;
 // entity_cube selectedObject;
 int selectedID = 0;
+int hoveredID = 0;
 //std::vector<entity_cube> Containers; // TODO: NEXT STEP HERE!!!!! Fill a cube vector 
 std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
 
@@ -59,107 +60,65 @@ void CrapColors(float *r, float *g, float *b);
 void DrawTerrain(renderer *Renderer, int mapSize);
 void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
 void CreateTestContainers();
-void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, BYTE pickRGB[], int pickValue, bool &focus);
+void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, bool &focus);
 void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus);
-void ScreenPosToWorldRay(int mouseX, int mouseY, int screenWidth, int screenHeight, glm::mat4 ViewMatrix, glm::mat4 ProjectionMatrix, glm::vec3& out_origin, glm::vec3& out_direction);
-bool TestRayOBBIntersection(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance);
+//bool TestRayOBBIntersection(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance);
+bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float sphereRadius, float* intersectionDistance);
 
 int main(int argc, char *argv[])
 {
     engine *Engine = EngineConstructAndInit(1280, 960, DEBUG_MODE | VSYNC);
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
-
-    // TODO: =========================================
-    unsigned int TestVAO, TestVBO;
-    glGenVertexArrays(1, &TestVAO);
-    glBindVertexArray(TestVAO);
-
-    glGenBuffers(1, &TestVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, TestVBO);
-    glBufferData(GL_ARRAY_BUFFER, 14 * sizeof(float), nullptr, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
-    // ================================================
     
     CreateTestContainers(); // quick way to create stuff
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
 	// color picking
-	int invertMouseY = Engine->Height - (int)Engine->InputState->MousePosY;
-	glReadPixels((int)Engine->InputState->MousePosX, invertMouseY,
-		     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
-	iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
+	// int invertMouseY = Engine->Height - (int)Engine->InputState->MousePosY;
+	// glReadPixels((int)Engine->InputState->MousePosX, invertMouseY,
+	// 	     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
+	// iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
 
-	// // mouse ray casting
-	// // transform to NDC
-	// float mx = (2.0f * (float)Engine->InputState->MousePosX) / Engine->Width - 1.0f;
-	// float my = 1.0f - (2.0f * (float)Engine->InputState->MousePosY) / Engine->Height;
-	// float mz = 1.0f;
-	// glm::vec3 ray_nds = glm::vec3(mx, my, mz);
-	// // transform to clip coord
-	// glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
-	// // transform to camera coord
-	// glm::vec4 ray_eye = inverse(Engine->ProjMatrix) * ray_clip;
-	// // manually unproject xy
-	// ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-	// // transform to world coord
-	// glm::vec4 test = inverse(GetCameraViewMatrix(Engine->Camera)) * ray_eye;
-        // glm::vec3 ray_world = glm::vec3(test.x, test.y, test.z);
-        // // don't forget to normalise the vector at some point
-	// ray_world = normalize(ray_world);
+	// TODO mouse ray casting
+	// transform to NDC
+	float mx = (2.0f * (float)Engine->InputState->MousePosX) / Engine->Width - 1.0f;
+	float my = 1.0f - (2.0f * (float)Engine->InputState->MousePosY) / Engine->Height;
+	float mz = 1.0f;
+	glm::vec3 ray_nds = glm::vec3(mx, my, mz);
+	// transform to clip coord
+	glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+	// transform to camera coord
+	glm::vec4 ray_eye = inverse(Engine->ProjMatrix) * ray_clip;
+	// manually unproject xy
+	ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+	// transform to world coord
+	glm::vec4 test = inverse(GetCameraViewMatrix(Engine->Camera)) * ray_eye;
+        glm::vec3 ray_world = glm::vec3(test.x, test.y, test.z);
+        // don't forget to normalise the vector at some point
+	ray_world = normalize(ray_world);
 
-	//// ====
-	
-	glm::vec3 ray_origin;
-	glm::vec3 ray_direction;
-	ScreenPosToWorldRay(
-	    (int)Engine->InputState->MousePosX, invertMouseY,
-	    Engine->Width, Engine->Height, 
-	    GetCameraViewMatrix(Engine->Camera), 
-	    Engine->ProjMatrix, 
-	    ray_origin, 
-	    ray_direction);
-	// std::cout << "x=" << ray_direction.x
-	// 	  << " y=" << ray_direction.y
-	// 	  << " z=" << ray_direction.z
-	// 	  << std::endl;
-
+	//std::cout << "x=" << ray_world.x << " y=" << ray_world.y  << " z=" << ray_world.z << std::endl;
 	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
 	{
-	    float intersection_distance; // Output of TestRayOBBIntersection()
-	    glm::vec3 aabb_min(-1.0f, -1.0f, -1.0f);
-	    glm::vec3 aabb_max( 1.0f,  1.0f,  1.0f);
-
-	    // The ModelMatrix transforms :
-	    // - the mesh to its desired position and orientation
-	    // - but also the AABB (defined with aabb_min and aabb_max) into an OBB
-	    // glm::mat4 RotationMatrix = glm::toMat4(orientations[i]);
-	    glm::mat4 model = glm::mat4(1.0f);
-	    glm::mat4 TranslationMatrix = glm::translate(model, element.second.Position);
-	    glm::mat4 ModelMatrix = TranslationMatrix;
-
-	    if (TestRayOBBIntersection(
-		    ray_origin, 
-		    ray_direction, 
-		    aabb_min, 
-		    aabb_max,
-		    ModelMatrix,
-		    intersection_distance))
+	    float intersection = 0.0f;
+	    glm::vec3 sphere_pos = glm::vec3(
+		element.second.Position.x + element.second.Size.w / 2,
+		element.second.Position.y + element.second.Size.w / 2,
+		element.second.Position.z + element.second.Size.w / 2);
+	    
+	    if (RaySphereIntersection(Engine->Camera->Position, ray_world, sphere_pos, 0.5f, &intersection))
 	    {
-		std::cout << "x=" << ray_direction.x
-			  << " y=" << ray_direction.y
-			  << " z=" << ray_direction.z
-			  << std::endl;
+	        hoveredID = element.second.ID;
+		break;
+	    }
+	    else
+	    {
+		hoveredID = 0;
 	    }
 	}
-	
-
+        //// ====
 	
 	// I/O
 	UpdateDeltaTimeAndFPS(Engine->Time);
@@ -185,8 +144,8 @@ int main(int argc, char *argv[])
 				       Engine->InputState->MouseOffsetX,
 				       Engine->InputState->MouseOffsetY);
 
-	    if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end())
-		selectedID = CONTAINER_ENTITIES[iResult].ID;
+	    if (hoveredID != 0)
+		selectedID = hoveredID;
 	    else
 	        selectedID = 0;
 
@@ -195,19 +154,6 @@ int main(int argc, char *argv[])
 	// NOTE: START RENDERING ======================================
 	ResetRendererStats(Engine->Renderer);
         StartRendering(Engine->Renderer, Engine->Camera);
-
-	// TODO: debug ray casting
-	float test_ray[] =
-	    {
-		ray_origin.x, ray_origin.y, ray_origin.z, 1.0f, 0.0f, 0.0f, 1.0f,
-		ray_direction.x, ray_direction.y, ray_direction.z, 1.0f, 0.0f, 0.0f, 1.0f,
-	    };
-
-	glBindBuffer(GL_ARRAY_BUFFER, TestVBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(test_ray), test_ray);
-	glBindVertexArray(TestVAO);
-	glDrawArrays(GL_LINES, 0, 2);
-	//Renderer->Stats.DrawCount++;
 
 	// NOTE: CLASSIC RENDERING ======================================
 	// debug tools
@@ -228,7 +174,7 @@ int main(int argc, char *argv[])
 	CloseBatchCube(Engine->Renderer);
 	FlushBatchCube(Engine->Renderer);
 
-	if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() || selectedID != 0)
+	if (hoveredID != 0 || selectedID != 0)
 	{
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
 
@@ -236,8 +182,8 @@ int main(int argc, char *argv[])
 
 	    if (selectedID != 0)
 		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
-	    if (CONTAINER_ENTITIES.find(iResult) != CONTAINER_ENTITIES.end() && iResult != selectedID)
-		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[iResult], 1.1f);
+	    if (hoveredID != 0)
+		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[hoveredID], 1.1f);
 	    CloseBatchCube(Engine->Renderer);
 	    FlushBatchCube(Engine->Renderer);
 
@@ -250,13 +196,13 @@ int main(int argc, char *argv[])
 	DrawDebugOverlay(Engine);
         DrawTerrainTool(Engine,
 			MAPSIZE,
-			(int)Engine->InputState->MousePosX, invertMouseY,
-			bArray, iResult,
-			activeWindow);
+			(int)Engine->InputState->MousePosX,
+			(int)Engine->InputState->MousePosX,
+        		activeWindow);
         DrawObjectPanel(CONTAINER_ENTITIES, activeWindow);	
 
 	RenderImGui();
-
+	
 	// NOTE: SWAP BUFFER ======================================
 	SwapBufferAndFinish(Engine->Window);
     }
@@ -268,7 +214,6 @@ int main(int argc, char *argv[])
 void DrawTerrainTool(engine *Engine,
 		     int &mapSize,
 		     int mPosX, int mPosY,
-		     BYTE pickRGB[], int pickValue,
 		     bool &focus)
 {
     ImGui::SetNextWindowPos(ImVec2(10, 160));
@@ -281,8 +226,6 @@ void DrawTerrainTool(engine *Engine,
     ImGui::Text("Picking:");
     ImGui::Separator();
     ImGui::Text("mX= %d / mYinvert %d", mPosX, mPosY);
-    ImGui::Text("RGB=%d,%d,%d", pickRGB[0], pickRGB[1], pickRGB[2]);
-    ImGui::Text("bitValue= %d", pickValue);
     if (ImGui::IsWindowFocused())
 	focus = true;
     else
@@ -510,13 +453,13 @@ void ScreenPosToWorldRay(
     // The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
     glm::vec4 lRayStart_NDC(
 	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
-	(2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
+        (2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
 	-1.0f, // The near plane maps to Z=-1 in Normalized Device Coordinates
 	1.0f);
 
     glm::vec4 lRayEnd_NDC(
 	(2.0f * (float)mouseX) / (float)screenWidth - 1.0f,
-	(2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
+        (2.0f * (float)mouseY) / (float)screenHeight - 1.0f,
 	0.0f,
 	1.0f);
 
@@ -658,4 +601,45 @@ bool TestRayOBBIntersection(
 
     intersection_distance = tMin;
     return true;
+}
+
+// TODO
+bool RaySphereIntersection(glm::vec3 rayOriginWorld,
+		glm::vec3 rayDirectionWorld,
+		glm::vec3 sphereCenterWorld,
+		float sphereRadius,
+		float* intersectionDistance)
+{
+    // work out components of quadratic
+    glm::vec3 distToSphere     = rayOriginWorld - sphereCenterWorld;
+    float b                 = dot( rayDirectionWorld, distToSphere );
+    float c                 = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
+    float b_squared_minus_c = b * b - c;
+    // check for "imaginary" answer. == ray completely misses sphere
+    if ( b_squared_minus_c < 0.0f ) { return false; }
+    // check for ray hitting twice (in and out of the sphere)
+    if ( b_squared_minus_c > 0.0f ) {
+	// get the 2 intersection distances along ray
+	float t_a              = -b + sqrt( b_squared_minus_c );
+	float t_b              = -b - sqrt( b_squared_minus_c );
+	*intersectionDistance = t_b;
+	// if behind viewer, throw one or both away
+	if ( t_a < 0.0 ) {
+	    if ( t_b < 0.0 ) { return false; }
+	} else if ( t_b < 0.0 ) {
+	    *intersectionDistance = t_a;
+	}
+
+	return true;
+    }
+    // check for ray hitting once (skimming the surface)
+    if ( 0.0f == b_squared_minus_c ) {
+	// if behind viewer, throw away
+	float t = -b + sqrt( b_squared_minus_c );
+	if ( t < 0.0f ) { return false; }
+	*intersectionDistance = t;
+	return true;
+    }
+    // note: could also check if ray origin is inside sphere radius
+    return false;
 }
