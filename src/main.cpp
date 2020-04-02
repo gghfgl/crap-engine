@@ -13,10 +13,12 @@
    - frame rate counter ms /  VSYNC viz
    - stencil test outline object + picking object by color (GPU)
    - quick abstract UI debug
+   - stencil test outline object + picking object by ray casting (CPU)
 */
 
 /* TODO:
-   - stencil test outline object + picking object by ray casting (CPU)
+   - draw ray casting debug sphere ? or next
+   - add Ray casting OBB test
    - move object from slot to slot
    - trace line from mouse to objects / terrain slots?
    - read level design from file
@@ -63,7 +65,8 @@ void CreateTestContainers();
 void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, bool &focus);
 void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus);
 //bool TestRayOBBIntersection(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance);
-bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float sphereRadius, float* intersectionDistance);
+glm::vec3 MouseRayDirectionWorld(float mouseX, float mouseY, int width, int height, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
+bool TestRaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float sphereRadius, float* intersectionDistance);
 
 int main(int argc, char *argv[])
 {
@@ -71,7 +74,7 @@ int main(int argc, char *argv[])
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
     
-    CreateTestContainers(); // quick way to create stuff
+    CreateTestContainers(); // quick way to create test cube
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
@@ -81,44 +84,30 @@ int main(int argc, char *argv[])
 	// 	     1, 1, GL_RGB, GL_UNSIGNED_BYTE, bArray);
 	// iResult = GetIndexByColor(bArray[0], bArray[1], bArray[2]);
 
-	// TODO mouse ray casting
-	// transform to NDC
-	float mx = (2.0f * (float)Engine->InputState->MousePosX) / Engine->Width - 1.0f;
-	float my = 1.0f - (2.0f * (float)Engine->InputState->MousePosY) / Engine->Height;
-	float mz = 1.0f;
-	glm::vec3 ray_nds = glm::vec3(mx, my, mz);
-	// transform to clip coord
-	glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
-	// transform to camera coord
-	glm::vec4 ray_eye = inverse(Engine->ProjMatrix) * ray_clip;
-	// manually unproject xy
-	ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-	// transform to world coord
-	glm::vec4 test = inverse(GetCameraViewMatrix(Engine->Camera)) * ray_eye;
-        glm::vec3 ray_world = glm::vec3(test.x, test.y, test.z);
-        // don't forget to normalise the vector at some point
-	ray_world = normalize(ray_world);
+	// Ray casting test TODO: multi thread?
+	glm::vec3 rayWorld = MouseRayDirectionWorld((float)Engine->InputState->MousePosX,
+						    (float)Engine->InputState->MousePosY,
+						    Engine->Width,
+						    Engine->Height,
+						    Engine->ProjMatrix,
+						    GetCameraViewMatrix(Engine->Camera));
 
-	//std::cout << "x=" << ray_world.x << " y=" << ray_world.y  << " z=" << ray_world.z << std::endl;
 	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
 	{
-	    float intersection = 0.0f;
-	    glm::vec3 sphere_pos = glm::vec3(
+	    float rayIntersection = 0.0f;
+	    glm::vec3 spherePos = glm::vec3(
 		element.second.Position.x + element.second.Size.w / 2,
 		element.second.Position.y + element.second.Size.w / 2,
 		element.second.Position.z + element.second.Size.w / 2);
 	    
-	    if (RaySphereIntersection(Engine->Camera->Position, ray_world, sphere_pos, 0.5f, &intersection))
+	    if (TestRaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
 	    {
 	        hoveredID = element.second.ID;
 		break;
 	    }
 	    else
-	    {
 		hoveredID = 0;
-	    }
 	}
-        //// ====
 	
 	// I/O
 	UpdateDeltaTimeAndFPS(Engine->Time);
@@ -179,7 +168,6 @@ int main(int argc, char *argv[])
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
 
 	    StartNewBatchCube(Engine->Renderer);
-
 	    if (selectedID != 0)
 		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
 	    if (hoveredID != 0)
@@ -488,6 +476,69 @@ void ScreenPosToWorldRay(
     out_direction = glm::normalize(lRayDir_world);
 }
 
+glm::vec3 MouseRayDirectionWorld(float mouseX,float mouseY,
+			    int width, int height,
+			    glm::mat4 projectionMatrix,
+			    glm::mat4 viewMatrix)
+{
+    // transform to NDC
+    float mx = (2.0f * mouseX) / width - 1.0f;
+    float my = 1.0f - (2.0f * mouseY) / height;
+    float mz = 1.0f;
+    glm::vec3 rayNDS = glm::vec3(mx, my, mz);
+    // transform to clip coord
+    glm::vec4 rayClip = glm::vec4(rayNDS.x, rayNDS.y, -1.0, 1.0);
+    // transform to camera coord
+    glm::vec4 rayEye = inverse(projectionMatrix) * rayClip;
+    // manually unproject xy
+    rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0, 0.0);
+    // transform to world coord
+    glm::vec4 stepWorld = inverse(viewMatrix) * rayEye;
+    glm::vec3 rayWorld = glm::vec3(stepWorld.x, stepWorld.y, stepWorld.z);
+    // don't forget to normalise the vector at some point
+    return normalize(rayWorld);
+}
+
+bool TestRaySphereIntersection(glm::vec3 rayOriginWorld,
+		glm::vec3 rayDirectionWorld,
+		glm::vec3 sphereCenterWorld,
+		float sphereRadius,
+		float* intersectionDistance)
+{
+    // work out components of quadratic
+    glm::vec3 distToSphere     = rayOriginWorld - sphereCenterWorld;
+    float b                 = dot( rayDirectionWorld, distToSphere );
+    float c                 = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
+    float b_squared_minus_c = b * b - c;
+    // check for "imaginary" answer. == ray completely misses sphere
+    if ( b_squared_minus_c < 0.0f ) { return false; }
+    // check for ray hitting twice (in and out of the sphere)
+    if ( b_squared_minus_c > 0.0f ) {
+	// get the 2 intersection distances along ray
+	float t_a              = -b + sqrt( b_squared_minus_c );
+	float t_b              = -b - sqrt( b_squared_minus_c );
+	*intersectionDistance = t_b;
+	// if behind viewer, throw one or both away
+	if ( t_a < 0.0 ) {
+	    if ( t_b < 0.0 ) { return false; }
+	} else if ( t_b < 0.0 ) {
+	    *intersectionDistance = t_a;
+	}
+
+	return true;
+    }
+    // check for ray hitting once (skimming the surface)
+    if ( 0.0f == b_squared_minus_c ) {
+	// if behind viewer, throw away
+	float t = -b + sqrt( b_squared_minus_c );
+	if ( t < 0.0f ) { return false; }
+	*intersectionDistance = t;
+	return true;
+    }
+    // note: could also check if ray origin is inside sphere radius
+    return false;
+}
+
 bool TestRayOBBIntersection(
 	glm::vec3 ray_origin,        // Ray origin, in world space
 	glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
@@ -601,45 +652,4 @@ bool TestRayOBBIntersection(
 
     intersection_distance = tMin;
     return true;
-}
-
-// TODO
-bool RaySphereIntersection(glm::vec3 rayOriginWorld,
-		glm::vec3 rayDirectionWorld,
-		glm::vec3 sphereCenterWorld,
-		float sphereRadius,
-		float* intersectionDistance)
-{
-    // work out components of quadratic
-    glm::vec3 distToSphere     = rayOriginWorld - sphereCenterWorld;
-    float b                 = dot( rayDirectionWorld, distToSphere );
-    float c                 = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
-    float b_squared_minus_c = b * b - c;
-    // check for "imaginary" answer. == ray completely misses sphere
-    if ( b_squared_minus_c < 0.0f ) { return false; }
-    // check for ray hitting twice (in and out of the sphere)
-    if ( b_squared_minus_c > 0.0f ) {
-	// get the 2 intersection distances along ray
-	float t_a              = -b + sqrt( b_squared_minus_c );
-	float t_b              = -b - sqrt( b_squared_minus_c );
-	*intersectionDistance = t_b;
-	// if behind viewer, throw one or both away
-	if ( t_a < 0.0 ) {
-	    if ( t_b < 0.0 ) { return false; }
-	} else if ( t_b < 0.0 ) {
-	    *intersectionDistance = t_a;
-	}
-
-	return true;
-    }
-    // check for ray hitting once (skimming the surface)
-    if ( 0.0f == b_squared_minus_c ) {
-	// if behind viewer, throw away
-	float t = -b + sqrt( b_squared_minus_c );
-	if ( t < 0.0f ) { return false; }
-	*intersectionDistance = t;
-	return true;
-    }
-    // note: could also check if ray origin is inside sphere radius
-    return false;
 }
