@@ -53,7 +53,7 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     
-    glEnable(GL_DEBUG_OUTPUT); // Faster?
+    //glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     //glDebugMessageCallback(DebugMessageCallback, NULL); // TODO: !!!
 
@@ -88,9 +88,6 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-
-
-    
     Engine->GlobalState = ENGINE_ACTIVE;
     Engine->Window = window;
     Engine->Time = new engine_time();

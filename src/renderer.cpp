@@ -11,6 +11,20 @@ renderer* RendererConstruct(shader *Shader)
     return Result;
 }
 
+void CleanAndDeleteRenderer(renderer *Renderer)
+{
+    glDeleteVertexArrays(1, &Renderer->DebugVAO);
+    glDeleteBuffers(1, &Renderer->DebugVBO);
+    glDeleteVertexArrays(1, &Renderer->CubeVAO);
+    glDeleteBuffers(1, &Renderer->CubeVBO);
+    glDeleteBuffers(1, &Renderer->CubeIBO);
+
+    // delete texture
+    // delete cubebufferptr?
+    delete[] Renderer->CubeBuffer;
+    delete Renderer;
+}
+
 void PrepareEmbededAxisDebugRendering(renderer *Renderer)
 {    
     float debug_axis[] =
@@ -55,7 +69,7 @@ void PrepareCubeBatchRendering(renderer *Renderer)
 
     glGenBuffers(1, &Renderer->CubeVBO);
     glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
-    // DYNAMIC because of no data initialization and set data every frame later
+    // DYNAMIC because of no data initialization and set subdata every frame later
     glBufferData(GL_ARRAY_BUFFER, MaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(0);
@@ -117,20 +131,6 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     glGenBuffers(1, &Renderer->CubeIBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Renderer->CubeIBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-}
-
-void CleanAndDeleteRenderer(renderer *Renderer)
-{
-    glDeleteVertexArrays(1, &Renderer->DebugVAO);
-    glDeleteBuffers(1, &Renderer->DebugVBO);
-    glDeleteVertexArrays(1, &Renderer->CubeVAO);
-    glDeleteBuffers(1, &Renderer->CubeVBO);
-    glDeleteBuffers(1, &Renderer->CubeIBO);
-
-    // delete texture
-    // delete cubebufferptr?
-    delete[] Renderer->CubeBuffer;
-    delete Renderer;
 }
 
 void StartNewBatchCube(renderer *Renderer)
