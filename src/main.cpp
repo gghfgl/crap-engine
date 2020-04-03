@@ -48,8 +48,7 @@
 */
 	
 static bool  globalActiveWindow        = false;
-static int   globalMapSize             = 10;
-static int   globalSliderMapSize       = 10;
+static int   globalSliderMapSize       = 130;
 unsigned int globalContainerSelectedID = 0;
 unsigned int globalContainerHoveredID  = 0;
 unsigned int globalTerrainHoveredID    = 0;
@@ -78,9 +77,7 @@ int main(int argc, char *argv[])
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
-	if (globalSliderMapSize % 2 == 0)
-	    globalMapSize = globalSliderMapSize;
-	CreateTestTerrain(globalMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOT_RELATIONSHIPS);
+	CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOT_RELATIONSHIPS);
 
 	// Ray casting test
 	glm::vec3 rayWorld = MouseRayDirectionWorld((float)Engine->InputState->MousePosX,
@@ -236,13 +233,13 @@ int main(int argc, char *argv[])
 void CreateTestContainers()
 {
     entity_cube containerOne = EntityCubeConstruct(1,
-						   { 3.0f, 0.5f, 0.0f },
+						   { 3.0f, 0.5f, -2.0f },
 						   { 1.0f, 1.0f, 1.0f },
 						   1.0f,
 						   { 1.0f, 0.0f, 0.0f, 1.0f },
 						   ENTITY_STATE_DYNAMIC);
     entity_cube containerTwo = EntityCubeConstruct(2,
-						   { -3.0f, 0.5f, 0.0f },
+						   { 5.0f, 0.5f, -4.0f },
 						   { 1.0f, 1.0f, 1.0f },
 						   1.0f,
 						   { 0.0f, 0.0f, 1.0f, 1.0f },
@@ -266,14 +263,15 @@ void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrai
     float posX = 0.0f;
     bool slot = true;
     unsigned int id = 1;
-    for (int i = 0; i < mapSize / 2; i++)
+    int side = (int)std::sqrt(mapSize);
+    for (int i = 0; i < side; i++)
     {
 	float posZ = -size.z;
-	for (int y = 0; y < mapSize / 2; y++)
+	for (int y = 0; y < side; y++)
 	{
 	    glm::vec4 c = color;
 	    entity_state s = state;
-	    if (slot)
+	    if (slot && i % 4 == 1)
 	    {
 		c = colorH;
 		s = ENTITY_STATE_SLOT;
@@ -289,75 +287,75 @@ void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrai
 	posX += size.x;
     }
 
-    posX = -1.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = -size.z;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    glm::vec4 c = color;
-	    entity_state s = state;
-	    if (slot)
-	    {
-		c = colorH;
-		s = ENTITY_STATE_SLOT;
-	    }
+    // posX = -1.0f;
+    // for (int i = 0; i < mapSize / 2; i++)
+    // {
+    // 	float posZ = -size.z;
+    // 	for (int y = 0; y < mapSize / 2; y++)
+    // 	{
+    // 	    glm::vec4 c = color;
+    // 	    entity_state s = state;
+    // 	    if (slot)
+    // 	    {
+    // 		c = colorH;
+    // 		s = ENTITY_STATE_SLOT;
+    // 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-	    terrain[t.ID] = t;
-	    posZ -= size.z;
-	    slot = !slot;
-	    id++;
-	}
-	posX -= size.x;
-    }
+    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+    // 	    terrain[t.ID] = t;
+    // 	    posZ -= size.z;
+    // 	    slot = !slot;
+    // 	    id++;
+    // 	}
+    // 	posX -= size.x;
+    // }
 
-    slot = false;
-    posX = 0.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = 0.0f;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    glm::vec4 c = color;
-	    entity_state s = state;
-	    if (slot)
-	    {
-		c = colorH;
-		s = ENTITY_STATE_SLOT;
-	    }
+    // slot = false;
+    // posX = 0.0f;
+    // for (int i = 0; i < mapSize / 2; i++)
+    // {
+    // 	float posZ = 0.0f;
+    // 	for (int y = 0; y < mapSize / 2; y++)
+    // 	{
+    // 	    glm::vec4 c = color;
+    // 	    entity_state s = state;
+    // 	    if (slot)
+    // 	    {
+    // 		c = colorH;
+    // 		s = ENTITY_STATE_SLOT;
+    // 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-	    terrain[t.ID] = t;
-	    posZ += size.z;
-	    slot = !slot;
-	    id++;
-	}
-	posX += size.x;
-    }
+    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+    // 	    terrain[t.ID] = t;
+    // 	    posZ += size.z;
+    // 	    slot = !slot;
+    // 	    id++;
+    // 	}
+    // 	posX += size.x;
+    // }
 
-    posX = -1.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = 0.0f;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    glm::vec4 c = color;
-	    entity_state s = state;
-	    if (slot)
-	    {
-		c = colorH;
-		s = ENTITY_STATE_SLOT;
-	    }
+    // posX = -1.0f;
+    // for (int i = 0; i < mapSize / 2; i++)
+    // {
+    // 	float posZ = 0.0f;
+    // 	for (int y = 0; y < mapSize / 2; y++)
+    // 	{
+    // 	    glm::vec4 c = color;
+    // 	    entity_state s = state;
+    // 	    if (slot)
+    // 	    {
+    // 		c = colorH;
+    // 		s = ENTITY_STATE_SLOT;
+    // 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-	    terrain[t.ID] = t;
-	    posZ += size.z;
-	    slot = !slot;
-	    id++;
-	}
-	posX -= size.x;
-    }
+    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+    // 	    terrain[t.ID] = t;
+    // 	    posZ += size.z;
+    // 	    slot = !slot;
+    // 	    id++;
+    // 	}
+    // 	posX -= size.x;
+    // }
 }
 
 void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float scale)
@@ -385,27 +383,8 @@ void DrawSettingsPanel(engine *Engine,
     // World
     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	ImGui::Text("slots: %d/%d", 0, slots.size());
-	ImGui::SliderInt("floor", &mapSize, 0, 100);
-	ImGui::Separator();
-    }
-
-    // Slots
-    if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Columns(2);
-	for (std::pair<int, int> element : slots)
-	{
-	    char buf1[32];
-	    sprintf_s(buf1, "%03d", element.first);
-	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
-	    ImGui::NextColumn();
-	    char buf2[32];
-	    sprintf_s(buf2, "%03d", element.second);
-	    ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f));
-	    ImGui::NextColumn();
-	}
-	ImGui::Columns(1);
+	ImGui::Text("slots: %03d/%03d", 0, slots.size());
+	ImGui::SliderInt("floor", &mapSize, 0, 400);
 	ImGui::Separator();
     }
 
@@ -414,14 +393,14 @@ void DrawSettingsPanel(engine *Engine,
     {
     static int selected = 0;
     ImGui::BeginChild("left pane", ImVec2(120, 150));
-
     for (std::pair<int, entity_cube> element : containers)	 
     {
     	char label[128];
-    	sprintf_s(label, "obj %d", element.first);
+    	sprintf_s(label, "obj %03d", element.first);
     	if (ImGui::Selectable(label, (int)globalContainerSelectedID == element.first))
     	    globalContainerSelectedID = element.first;
     }
+
     ImGui::EndChild();
     ImGui::SameLine();
 
@@ -451,6 +430,51 @@ void DrawSettingsPanel(engine *Engine,
     }
     ImGui::EndChild();
     ImGui::Separator();
+    }
+
+    // Slots
+    if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
+        const char* item_current = NULL;            // Here our selection is a single pointer stored outside the object.
+
+	ImGui::Columns(2);
+	for (std::pair<int, int> sl : slots)
+	{
+	    char buf1[32];
+	    sprintf_s(buf1, "%03d", sl.first);
+	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
+	    ImGui::NextColumn();
+
+	    // char buf2[32];
+	    // sprintf_s(buf2, "%03d", element.second);
+	    // ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f));
+	    // ImGui::NextColumn();
+
+	    if (ImGui::BeginCombo("test", item_current)) // The second parameter is the label previewed before opening the combo.
+	    {
+		for (std::pair<int, entity_cube> ct : containers)	 
+		{
+		    ImGui::ColorButton("color", ImVec4(ct.second.Color.r,
+						       ct.second.Color.g,
+						       ct.second.Color.b,
+						       ct.second.Color.a));
+		    ImGui::SameLine();
+		    bool is_selected = (item_current == items[1]);
+		    if (ImGui::Selectable(items[1], is_selected))
+			item_current = items[1];
+		    if (is_selected)
+			ImGui::SetItemDefaultFocus();   // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+		}
+
+		ImGui::EndCombo();
+	    }
+
+	    ImGui::NextColumn();
+	}
+
+	ImGui::Columns(1);
+	ImGui::Separator();
     }
 
     if (ImGui::IsWindowFocused())
