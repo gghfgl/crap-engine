@@ -3,6 +3,7 @@
 #include "entity.h"
 
 entity_cube EntityCubeConstruct(unsigned int id,
+				const char* name,
 				glm::vec3 position,
 				glm::vec3 size,
 				float scale,
@@ -11,6 +12,7 @@ entity_cube EntityCubeConstruct(unsigned int id,
 {
     entity_cube Entity;
     Entity.ID = id;
+    Entity.Name = name;
     Entity.Position = position;
     Entity.Size = size;
     Entity.Scale = scale;

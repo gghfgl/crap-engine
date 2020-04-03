@@ -58,6 +58,7 @@ std::unordered_map<int, entity_cube> GAME_CONTAINER_ENTITIES;
 std::unordered_map<int, int> GAME_SLOT_RELATIONSHIPS;
 
 void DrawSettingsPanel(engine *Engine, int &mapSize, std::unordered_map<int, entity_cube> &objects, std::unordered_map<int, int> &slots, bool &focus);
+void AttribContainerToSlot(std::unordered_map<int, int> &slots, std::unordered_map<int, entity_cube> &containers, int selectedSlot, int selectedItem);
 
 void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrain, std::unordered_map<int, int> &slots);
 void CreateTestContainers();
@@ -169,6 +170,7 @@ int main(int argc, char *argv[])
 	    if (globalTerrainHoveredID != 0 && globalTerrainHoveredID == element.second.ID)
 	    {
 		entity_cube hoveredSlot = EntityCubeConstruct(element.second.ID,
+							      nullptr,
 							      element.second.Position,
 							      { 1.0f, 0.5f, 1.0f },
 							      element.second.Scale,
@@ -233,12 +235,14 @@ int main(int argc, char *argv[])
 void CreateTestContainers()
 {
     entity_cube containerOne = EntityCubeConstruct(1,
+						   "Container1",
 						   { 3.0f, 0.5f, -2.0f },
 						   { 1.0f, 1.0f, 1.0f },
 						   1.0f,
 						   { 1.0f, 0.0f, 0.0f, 1.0f },
 						   ENTITY_STATE_DYNAMIC);
     entity_cube containerTwo = EntityCubeConstruct(2,
+						   "Container2",
 						   { 5.0f, 0.5f, -4.0f },
 						   { 1.0f, 1.0f, 1.0f },
 						   1.0f,
@@ -254,7 +258,7 @@ void CreateTestContainers()
 void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrain, std::unordered_map<int, int> &slots)
 {
     terrain.clear();
-    slots.clear();
+    //slots.clear(); // TODO: carefull overflow
     glm::vec4 color = { 0.2f, 0.2f, 0.2f, 1.0f };
     glm::vec4 colorH = { 0.25f, 0.25f, 0.25f, 1.0f };
     glm::vec3 size = { 1.0f, 0.5f, 1.0f };
@@ -275,10 +279,11 @@ void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrai
 	    {
 		c = colorH;
 		s = ENTITY_STATE_SLOT;
-		slots[id] = 0;
+		if (slots[id] == 0)
+		    slots[id] = 0;
 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+	    entity_cube t = EntityCubeConstruct(id, nullptr, { posX, 0.0f, posZ }, size, scale, c, s);
 	    terrain[t.ID] = t;
 	    posZ -= size.z;
 	    slot = !slot;
@@ -286,76 +291,6 @@ void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrai
 	}
 	posX += size.x;
     }
-
-    // posX = -1.0f;
-    // for (int i = 0; i < mapSize / 2; i++)
-    // {
-    // 	float posZ = -size.z;
-    // 	for (int y = 0; y < mapSize / 2; y++)
-    // 	{
-    // 	    glm::vec4 c = color;
-    // 	    entity_state s = state;
-    // 	    if (slot)
-    // 	    {
-    // 		c = colorH;
-    // 		s = ENTITY_STATE_SLOT;
-    // 	    }
-
-    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-    // 	    terrain[t.ID] = t;
-    // 	    posZ -= size.z;
-    // 	    slot = !slot;
-    // 	    id++;
-    // 	}
-    // 	posX -= size.x;
-    // }
-
-    // slot = false;
-    // posX = 0.0f;
-    // for (int i = 0; i < mapSize / 2; i++)
-    // {
-    // 	float posZ = 0.0f;
-    // 	for (int y = 0; y < mapSize / 2; y++)
-    // 	{
-    // 	    glm::vec4 c = color;
-    // 	    entity_state s = state;
-    // 	    if (slot)
-    // 	    {
-    // 		c = colorH;
-    // 		s = ENTITY_STATE_SLOT;
-    // 	    }
-
-    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-    // 	    terrain[t.ID] = t;
-    // 	    posZ += size.z;
-    // 	    slot = !slot;
-    // 	    id++;
-    // 	}
-    // 	posX += size.x;
-    // }
-
-    // posX = -1.0f;
-    // for (int i = 0; i < mapSize / 2; i++)
-    // {
-    // 	float posZ = 0.0f;
-    // 	for (int y = 0; y < mapSize / 2; y++)
-    // 	{
-    // 	    glm::vec4 c = color;
-    // 	    entity_state s = state;
-    // 	    if (slot)
-    // 	    {
-    // 		c = colorH;
-    // 		s = ENTITY_STATE_SLOT;
-    // 	    }
-
-    // 	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
-    // 	    terrain[t.ID] = t;
-    // 	    posZ += size.z;
-    // 	    slot = !slot;
-    // 	    id++;
-    // 	}
-    // 	posX -= size.x;
-    // }
 }
 
 void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float scale)
@@ -384,7 +319,8 @@ void DrawSettingsPanel(engine *Engine,
     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::Text("slots: %03d/%03d", 0, slots.size());
-	ImGui::SliderInt("floor", &mapSize, 0, 400);
+	if (ImGui::SliderInt("floor", &mapSize, 0, 400))
+	    slots.clear();
 	ImGui::Separator();
     }
 
@@ -396,7 +332,7 @@ void DrawSettingsPanel(engine *Engine,
     for (std::pair<int, entity_cube> element : containers)	 
     {
     	char label[128];
-    	sprintf_s(label, "obj %03d", element.first);
+    	sprintf_s(label, "obj: <%s>", element.second.Name);
     	if (ImGui::Selectable(label, (int)globalContainerSelectedID == element.first))
     	    globalContainerSelectedID = element.first;
     }
@@ -407,8 +343,9 @@ void DrawSettingsPanel(engine *Engine,
     ImGui::BeginChild("right pane", ImVec2(0, 150));
     if (globalContainerSelectedID != 0)
     {
-    	ImGui::Text("ID: %d", containers[globalContainerSelectedID].ID);
     	ImGui::Text("mem: %p", &containers[globalContainerSelectedID]);
+    	ImGui::Text("ID: %03d", containers[globalContainerSelectedID].ID);
+    	ImGui::Text("Name: %s", containers[globalContainerSelectedID].Name);
     	ImGui::Text("State: %s",
     		    (containers[globalContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
     	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
@@ -433,11 +370,11 @@ void DrawSettingsPanel(engine *Engine,
     }
 
     // Slots
+    static int selectedItem = -1;
+    static int selectedSlot = 0;
+    
     if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
-        const char* item_current = NULL;            // Here our selection is a single pointer stored outside the object.
-
 	ImGui::Columns(2);
 	for (std::pair<int, int> sl : slots)
 	{
@@ -446,29 +383,18 @@ void DrawSettingsPanel(engine *Engine,
 	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
 	    ImGui::NextColumn();
 
-	    // char buf2[32];
-	    // sprintf_s(buf2, "%03d", element.second);
-	    // ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f));
-	    // ImGui::NextColumn();
+	    char buf2[32];
+	    if (sl.second == 0)
+		sprintf_s(buf2, "%03d<empty>", sl.first);
+	    else
+		sprintf_s(buf2, "%03d", sl.second);
 
-	    if (ImGui::BeginCombo("test", item_current)) // The second parameter is the label previewed before opening the combo.
+	    if (ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f)))
 	    {
-		for (std::pair<int, entity_cube> ct : containers)	 
-		{
-		    ImGui::ColorButton("color", ImVec4(ct.second.Color.r,
-						       ct.second.Color.g,
-						       ct.second.Color.b,
-						       ct.second.Color.a));
-		    ImGui::SameLine();
-		    bool is_selected = (item_current == items[1]);
-		    if (ImGui::Selectable(items[1], is_selected))
-			item_current = items[1];
-		    if (is_selected)
-			ImGui::SetItemDefaultFocus();   // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-		}
-
-		ImGui::EndCombo();
+		selectedSlot = sl.first;
+		ImGui::OpenPopup("objects_popup");
 	    }
+
 
 	    ImGui::NextColumn();
 	}
@@ -477,11 +403,50 @@ void DrawSettingsPanel(engine *Engine,
 	ImGui::Separator();
     }
 
+
+    if (ImGui::BeginPopup("objects_popup"))
+    {
+	ImGui::Text("slot-%03d", selectedSlot);
+	ImGui::Separator();
+	for (std::pair<int, entity_cube> ct : containers)	 
+	{
+	    if (ImGui::Selectable(containers[ct.first].Name))
+		AttribContainerToSlot(slots, containers, selectedSlot, selectedItem);
+	        selectedItem = ct.first; // TODO set slot in array
+	}
+	ImGui::EndPopup();
+    }
+
+    
     if (ImGui::IsWindowFocused())
 	focus = true;
     else
 	focus = false;
     ImGui::End();
+}
+
+void AttribContainerToSlot(std::unordered_map<int, int> &slots,
+			   std::unordered_map<int, entity_cube> &containers,
+			   int selectedSlot,
+			   int selectedItem)
+{
+    for (std::pair<int, int> sl : slots)
+    {
+	if (sl.second == selectedItem)
+	{
+	    slots[sl.first] = 0;
+	    break;
+	}
+    }
+
+    if (slots.find(selectedSlot) != slots.end())
+    {
+	if (containers.find(selectedItem) != containers.end())
+	{
+	    slots[selectedSlot] = selectedItem;
+	}
+    }
+    
 }
 
 // TODO: move to entity (entity_sphere...)

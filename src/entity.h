@@ -10,6 +10,7 @@ enum entity_state
 struct entity_cube
 {
     unsigned int ID;
+    const char* Name;
     glm::vec3 Position;
     glm::vec3 Size;
     float Scale;
