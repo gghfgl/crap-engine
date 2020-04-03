@@ -18,8 +18,8 @@ void update_camera_vectors(camera *Camera)
 camera* CameraConstruct(
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-    float yaw = YAW,
-    float pitch = PITCH
+    float yaw = globalYawSetting,
+    float pitch = globalPitchSetting
     )
 {
     camera* Result = new camera();
@@ -28,9 +28,9 @@ camera* CameraConstruct(
     Result->Yaw = yaw;
     Result->Pitch = pitch;
     Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
-    Result->MovementSpeed = SPEED;
-    Result->MouseSensitivity = SENSITIVITY;
-    Result->Fov = FOV;
+    Result->MovementSpeed = globalSpeedSetting;
+    Result->MouseSensitivity = globalSensitivitySetting;
+    Result->Fov = globalFovSetting;
 
     update_camera_vectors(Result);
     return Result;
@@ -49,9 +49,9 @@ camera* CameraConstruct(
     Result->Yaw = yaw;
     Result->Pitch = pitch;
     Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
-    Result->MovementSpeed = SPEED;
-    Result->MouseSensitivity = SENSITIVITY;
-    Result->Fov = FOV;
+    Result->MovementSpeed = globalSpeedSetting;
+    Result->MouseSensitivity = globalSensitivitySetting;
+    Result->Fov = globalFovSetting;
 
     update_camera_vectors(Result);
     return Result;

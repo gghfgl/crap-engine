@@ -55,9 +55,8 @@ unsigned int selectedID = 0;
 unsigned int hoveredID = 0;
 unsigned int terrainHoveredID = 0;
 static int SLOTS_COUNT = 0;
-
-std::unordered_map<int, entity_cube> TERRAIN_ENTITIES;
-std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
+std::unordered_map<int, entity_cube> GAME_TERRAIN_ENTITIES;
+std::unordered_map<int, entity_cube> GAME_CONTAINER_ENTITIES;
 
 glm::vec4 GetColorByIndex(int index);
 void CrapColors(float *r, float *g, float *b);
@@ -78,8 +77,7 @@ int main(int argc, char *argv[])
     PrepareEmbededAxisDebugRendering(Engine->Renderer);
     PrepareCubeBatchRendering(Engine->Renderer);
     
-    // TODO: CreateTerrain(MAPSIZE) with slot parameter (default settings should come from file)
-    CreateTestContainers(); // quick way to create test cube (should come from file)
+    CreateTestContainers();
     //CreateTestSpheres(0.5f, 20, 20); // dirty way to create spheres
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
@@ -96,17 +94,17 @@ int main(int argc, char *argv[])
 						    Engine->ProjMatrix,
 						    GetCameraViewMatrix(Engine->Camera));
 
-	for (std::pair<int, entity_cube> element : TERRAIN_ENTITIES)
+	for (std::pair<int, entity_cube> element : GAME_TERRAIN_ENTITIES)
 	{
 	    float rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
-		element.second.Position.x + element.second.Size.w / 2,
-		element.second.Position.y + element.second.Size.w / 2,
-		element.second.Position.z + element.second.Size.w / 2);
+		element.second.Position.x + element.second.Scale / 2,
+		element.second.Position.y + element.second.Scale / 2,
+		element.second.Position.z + element.second.Scale / 2);
 	    
 	    if (RaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
 	    {
-		if (element.second.State == ENTITY_SLOT)
+		if (element.second.State == ENTITY_STATE_SLOT)
 		{
 		    terrainHoveredID = element.second.ID;
 		    break;
@@ -116,13 +114,13 @@ int main(int argc, char *argv[])
 		terrainHoveredID = 0;
 	}
 
-	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
+	for (std::pair<int, entity_cube> element : GAME_CONTAINER_ENTITIES)
 	{
 	    float rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
-		element.second.Position.x + element.second.Size.w / 2,
-		element.second.Position.y + element.second.Size.w / 2,
-		element.second.Position.z + element.second.Size.w / 2);
+		element.second.Position.x + element.second.Scale / 2,
+		element.second.Position.y + element.second.Scale / 2,
+		element.second.Position.z + element.second.Scale / 2);
 	    
 	    if (RaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
 	    {
@@ -173,13 +171,14 @@ int main(int argc, char *argv[])
 	    DrawAxisDebug(Engine->Renderer);	
 
 	StartNewBatchCube(Engine->Renderer);
-	for (std::pair<int, entity_cube> element : TERRAIN_ENTITIES)
+	for (std::pair<int, entity_cube> element : GAME_TERRAIN_ENTITIES)
 	{
 	    if (terrainHoveredID != 0 && terrainHoveredID == element.second.ID)
 	    {
 		entity_cube hoveredSlot = EntityCubeConstruct(element.second.ID,
 							      element.second.Position,
-							      { 1.0f, 0.5f, 1.0f, 1.0f },
+							      { 1.0f, 0.5f, 1.0f },
+							      element.second.Scale,
 							      { 0.7f, 0.7f, 0.7f, 1.0f },
 							      element.second.State);
 
@@ -196,7 +195,7 @@ int main(int argc, char *argv[])
 	glStencilMask(0xFF);
 
 	StartNewBatchCube(Engine->Renderer);
-	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
+	for (std::pair<int, entity_cube> element : GAME_CONTAINER_ENTITIES)
 	{
 	    PushEntityCubeToBuffer(Engine->Renderer, element.second, 1.0f);
 	}
@@ -209,9 +208,9 @@ int main(int argc, char *argv[])
 
 	    StartNewBatchCube(Engine->Renderer);
 	    if (selectedID != 0)
-		PushEntityCubeToBuffer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
+		PushEntityCubeToBuffer(Engine->Renderer, GAME_CONTAINER_ENTITIES[selectedID], 1.1f);
 	    if (hoveredID != 0)
-		PushEntityCubeToBuffer(Engine->Renderer, CONTAINER_ENTITIES[hoveredID], 1.1f);
+		PushEntityCubeToBuffer(Engine->Renderer, GAME_CONTAINER_ENTITIES[hoveredID], 1.1f);
 	    CloseBatchCube(Engine->Renderer);
 	    FlushBatchCube(Engine->Renderer);
 
@@ -226,7 +225,7 @@ int main(int argc, char *argv[])
 			  sliderMapSize,
 			  (int)Engine->InputState->MousePosX,
 			  (int)Engine->InputState->MousePosY,
-			  CONTAINER_ENTITIES,
+			  GAME_CONTAINER_ENTITIES,
 			  activeWindow);	
 
 	RenderImGui();
@@ -243,29 +242,32 @@ void CreateTestContainers()
 {
     entity_cube containerOne = EntityCubeConstruct(1,
 						   { 3.0f, 0.5f, 0.0f },
-						   { 1.0f, 1.0f, 1.0f, 1.0f },
+						   { 1.0f, 1.0f, 1.0f },
+						   1.0f,
 						   { 1.0f, 0.0f, 0.0f, 1.0f },
-						   ENTITY_DYNAMIC);
+						   ENTITY_STATE_DYNAMIC);
     entity_cube containerTwo = EntityCubeConstruct(2,
 						   { -3.0f, 0.5f, 0.0f },
-						   { 1.0f, 1.0f, 1.0f, 1.0f },
+						   { 1.0f, 1.0f, 1.0f },
+						   1.0f,
 						   { 0.0f, 0.0f, 1.0f, 1.0f },
-						   ENTITY_DYNAMIC);
+						   ENTITY_STATE_DYNAMIC);
     
-    if (CONTAINER_ENTITIES.find(containerOne.ID) == CONTAINER_ENTITIES.end())
-	CONTAINER_ENTITIES[containerOne.ID] = containerOne;
-    if (CONTAINER_ENTITIES.find(containerTwo.ID) == CONTAINER_ENTITIES.end())
-	CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
+    if (GAME_CONTAINER_ENTITIES.find(containerOne.ID) == GAME_CONTAINER_ENTITIES.end())
+	GAME_CONTAINER_ENTITIES[containerOne.ID] = containerOne;
+    if (GAME_CONTAINER_ENTITIES.find(containerTwo.ID) == GAME_CONTAINER_ENTITIES.end())
+	GAME_CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
 }
 
 void CreateTestTerrain(int mapSize, int &slotsCount)
 {
     slotsCount = 0;
-    TERRAIN_ENTITIES.clear();
+    GAME_TERRAIN_ENTITIES.clear();
     glm::vec4 color = { 0.2f, 0.2f, 0.2f, 1.0f };
     glm::vec4 colorH = { 0.25f, 0.25f, 0.25f, 1.0f };
-    glm::vec4 size = { 1.0f, 0.5f, 1.0f, 1.0f };
-    entity_state state = ENTITY_STATIC;
+    glm::vec3 size = { 1.0f, 0.5f, 1.0f };
+    float scale = 1.0f;
+    entity_state state = ENTITY_STATE_STATIC;
     float posX = 0.0f;
     bool slot = true;
     unsigned int id = 1;
@@ -279,12 +281,12 @@ void CreateTestTerrain(int mapSize, int &slotsCount)
 	    if (slot)
 	    {
 		c = colorH;
-		s = ENTITY_SLOT;
+		s = ENTITY_STATE_SLOT;
 		slotsCount++;
 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
-	    TERRAIN_ENTITIES[t.ID] = t;
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+	    GAME_TERRAIN_ENTITIES[t.ID] = t;
 	    posZ -= size.z;
 	    slot = !slot;
 	    id++;
@@ -303,12 +305,12 @@ void CreateTestTerrain(int mapSize, int &slotsCount)
 	    if (slot)
 	    {
 		c = colorH;
-		s = ENTITY_SLOT;
+		s = ENTITY_STATE_SLOT;
 		slotsCount++;
 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
-	    TERRAIN_ENTITIES[t.ID] = t;
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+	    GAME_TERRAIN_ENTITIES[t.ID] = t;
 	    posZ -= size.z;
 	    slot = !slot;
 	    id++;
@@ -328,12 +330,12 @@ void CreateTestTerrain(int mapSize, int &slotsCount)
 	    if (slot)
 	    {
 		c = colorH;
-		s = ENTITY_SLOT;
+		s = ENTITY_STATE_SLOT;
 		slotsCount++;
 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
-	    TERRAIN_ENTITIES[t.ID] = t;
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+	    GAME_TERRAIN_ENTITIES[t.ID] = t;
 	    posZ += size.z;
 	    slot = !slot;
 	    id++;
@@ -352,12 +354,12 @@ void CreateTestTerrain(int mapSize, int &slotsCount)
 	    if (slot)
 	    {
 		c = colorH;
-		s = ENTITY_SLOT;
+		s = ENTITY_STATE_SLOT;
 		slotsCount++;
 	    }
 
-	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
-	    TERRAIN_ENTITIES[t.ID] = t;
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, scale, c, s);
+	    GAME_TERRAIN_ENTITIES[t.ID] = t;
 	    posZ += size.z;
 	    slot = !slot;
 	    id++;
@@ -366,12 +368,13 @@ void CreateTestTerrain(int mapSize, int &slotsCount)
     }
 }
 
-void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float scale)
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float scale)
 {
     AddCubeToBuffer(Renderer,
-		    container.Position,
-		    { container.Size.x, container.Size.y, container.Size.z, scale },
-		    container.Color);
+		    cube.Position,
+		    { cube.Size.x, cube.Size.y, cube.Size.z },
+		    cube.Scale * scale,
+		    cube.Color);
 }
 
 void DrawSettingsPanel(engine *Engine,
@@ -392,18 +395,18 @@ void DrawSettingsPanel(engine *Engine,
 
     if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	ImGui::Text("maxCube/draw: %d", MaxCubeCount);
+	ImGui::Text("maxCube/draw: %d", globalMaxCubeCount); // TODO
 	ImGui::Text("cubes: %d", Engine->Renderer->Stats.CubeCount);
-	ImGui::Text("drawCalls: %d", Engine->Renderer->Stats.DrawCount);
+	ImGui::Text("draws: %d", Engine->Renderer->Stats.DrawCount);
     }
 
     if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	ImGui::Text("yaw: %.2f", YAW);
-	ImGui::Text("pitch: %.2f", PITCH);
-	ImGui::Text("speed: %.2f", SPEED);
-	ImGui::Text("sensitivity: %.2f", SENSITIVITY);
-	ImGui::Text("fov: %.2f", FOV);
+	ImGui::Text("yaw: %.2f", globalYawSetting); // TODO
+	ImGui::Text("pitch: %.2f", globalPitchSetting); // TODO
+	ImGui::Text("speed: %.2f", globalSpeedSetting); // TODO
+	ImGui::Text("sensitivity: %.2f", globalSensitivitySetting); // TODO
+	ImGui::Text("fov: %.2f", globalFovSetting); // TODO
     }
 
     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
@@ -441,7 +444,7 @@ void DrawSettingsPanel(engine *Engine,
     	ImGui::Text("ID: %d", objects[selectedID].ID);
     	ImGui::Text("mem: %p", &objects[selectedID]);
     	ImGui::Text("State: %s",
-    		    (objects[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
+    		    (objects[selectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
     	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
     		    objects[selectedID].Position.x,
     		    objects[selectedID].Position.y,

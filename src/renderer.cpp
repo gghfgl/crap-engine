@@ -1,7 +1,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "stb_image.h" // TODO remove
 #include "renderer.h"
 
 renderer* RendererConstruct(shader *Shader)
@@ -62,7 +61,7 @@ void DrawAxisDebug(renderer *Renderer)
 
 void PrepareCubeBatchRendering(renderer *Renderer)
 {
-    Renderer->CubeBuffer = new vertex[MaxVertexCount];
+    Renderer->CubeBuffer = new vertex[globalMaxVertexCount];
 
     glGenVertexArrays(1, &Renderer->CubeVAO);
     glBindVertexArray(Renderer->CubeVAO);
@@ -70,7 +69,7 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     glGenBuffers(1, &Renderer->CubeVBO);
     glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
     // DYNAMIC because of no data initialization and set subdata every frame later
-    glBufferData(GL_ARRAY_BUFFER, MaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, globalMaxVertexCount * sizeof(vertex), nullptr, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Position));
@@ -79,9 +78,9 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Color));
 
     // predictable cube layout
-    uint32_t indices[MaxIndexCount];
+    uint32_t indices[globalMaxIndexCount];
     uint32_t offset = 0;
-    for (int i = 0; i < MaxIndexCount; i += PerCubeIndices)
+    for (int i = 0; i < globalMaxIndexCount; i += globalPerCubeIndices)
     { // 8 = nb of vertex needed for 1 cube
 	indices[i + 0] = 0 + offset;
 	indices[i + 1] = 1 + offset;
@@ -125,7 +124,7 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     	indices[i + 34] = 7 + offset;
 	indices[i + 35] = 3 + offset;
 
-	offset += PerCubeVertex;
+	offset += globalPerCubeVertex;
     }
 
     glGenBuffers(1, &Renderer->CubeIBO);
@@ -155,57 +154,58 @@ void FlushBatchCube(renderer *Renderer)
 }
 
 void AddCubeToBuffer(renderer *Renderer,
-		     const glm::vec3 &Position,
-		     const glm::vec4 &Size,
-		     const glm::vec4 &Color)
+		     const glm::vec3 &position,
+		     const glm::vec3 &size,
+		     const float &scale,
+		     const glm::vec4 &color)
 {    
     // Are we out of vertex buffer? if then reset everything
-    if (Renderer->IndexCount >= MaxIndexCount)
+    if (Renderer->IndexCount >= globalMaxIndexCount)
     {
         CloseBatchCube(Renderer);
         FlushBatchCube(Renderer);
         StartNewBatchCube(Renderer);
     }
 
-    float posX = Position.x + 1.0f / 2.0f - Size.w / 2.0f;
-    float posY = Position.y + 1.0f / 2.0f - Size.w / 2.0f;
-    float posZ = Position.z + 1.0f / 2.0f - Size.w / 2.0f;
+    float posX = position.x + 1.0f / 2.0f - scale / 2.0f;
+    float posY = position.y + 1.0f / 2.0f - scale / 2.0f;
+    float posZ = position.z + 1.0f / 2.0f - scale / 2.0f;
     
     // FRONT
     Renderer->CubeBufferPtr->Position = { posX, posY, posZ };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY, posZ };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX + size.x * scale, posY, posZ };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY + Size.y * Size.w, posZ };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX + size.x * scale, posY + size.y * scale, posZ };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX, posY + Size.y * Size.w, posZ };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX, posY + size.y * scale, posZ };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
     // BACK
-    Renderer->CubeBufferPtr->Position = { posX, posY, posZ + Size.z * Size.w };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX, posY, posZ + size.z * scale };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY, posZ + Size.z * Size.w };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX + size.x * scale, posY, posZ + size.z * scale };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX + Size.x * Size.w, posY + Size.y * Size.w, posZ + Size.z * Size.w };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX + size.x * scale, posY + size.y * scale, posZ + size.z * scale };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->CubeBufferPtr->Position = { posX, posY + Size.y * Size.w, posZ + Size.z * Size.w };
-    Renderer->CubeBufferPtr->Color = Color;
+    Renderer->CubeBufferPtr->Position = { posX, posY + size.y * scale, posZ + size.z * scale };
+    Renderer->CubeBufferPtr->Color = color;
     Renderer->CubeBufferPtr++;
 
-    Renderer->IndexCount += PerCubeIndices; // 36
+    Renderer->IndexCount += globalPerCubeIndices; // 36
     Renderer->Stats.CubeCount++;
 }
 

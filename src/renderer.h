@@ -4,11 +4,11 @@
 
 #include "shader.h"
 
-static const size_t PerCubeVertex = 8;
-static const size_t PerCubeIndices = 36;
-static const size_t MaxCubeCount = 500;
-static const size_t MaxVertexCount = MaxCubeCount * PerCubeVertex;
-static const size_t MaxIndexCount = MaxCubeCount * PerCubeIndices;
+static const size_t globalPerCubeVertex  = 8;
+static const size_t globalPerCubeIndices = 36;
+static const size_t globalMaxCubeCount   = 500;
+static const size_t globalMaxVertexCount = globalMaxCubeCount * globalPerCubeVertex;
+static const size_t globalMaxIndexCount  = globalMaxCubeCount * globalPerCubeIndices;
 
 struct vertex
 {
