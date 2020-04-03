@@ -3,11 +3,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-const float globalYawSetting         = -90.0f;
-const float globalPitchSetting       =  0.0f;
-const float globalSpeedSetting       =  10.0f;
-const float globalSensitivitySetting =  0.1f;
-const float globalFovSetting         =  45.0f;
+const float globalDefaultYawSetting         = -90.0f;
+const float globalDefaultPitchSetting       =  0.0f;
+const float globalDefaultSpeedSetting       =  10.0f;
+const float globalDefaultSensitivitySetting =  0.1f;
+const float globalDefaultFovSetting         =  45.0f;
 
 enum camera_movement
 {
@@ -19,6 +19,15 @@ enum camera_movement
     DOWN
 };
 
+struct camera_settings
+{
+    float Yaw;
+    float Pitch;
+    float Speed;
+    float Sensitivity;
+    float Fov;    
+};
+
 struct camera
 {
     glm::vec3 Position;
@@ -27,11 +36,5 @@ struct camera
     glm::vec3 Right;
     glm::vec3 WorldUp;
 
-    // Euler Angles
-    float Yaw;
-    float Pitch;
-
-    float MovementSpeed;
-    float MouseSensitivity;
-    float Fov;
+    camera_settings *Settings;
 };

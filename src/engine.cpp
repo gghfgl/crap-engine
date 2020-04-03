@@ -81,7 +81,7 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, Engine->UBO, 0, sizeof(glm::mat4));
 
     glm::mat4 projection = glm::perspective(
-	glm::radians(Camera->Fov),
+	glm::radians(Camera->Settings->Fov),
 	(float)width / (float)height,
 	0.1f, 100.0f);
     glBindBuffer(GL_UNIFORM_BUFFER, Engine->UBO);
@@ -161,6 +161,14 @@ void StartRendering(renderer *Renderer, camera *Camera)
     glStencilMask(0x00); // dont update the stencil buffer
 }
 
+void SwapBufferAndFinish(GLFWwindow *Window)
+{
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST); // TODO: do some check?
+    glfwSwapBuffers(Window);
+    glFinish();
+}
+
 void StartImGuiRendering()
 {
     ImGui_ImplOpenGL3_NewFrame();
@@ -199,14 +207,6 @@ void StopRenderingStencil()
 
 }
 
-void SwapBufferAndFinish(GLFWwindow *Window)
-{
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST); // TODO: do some check?
-    glfwSwapBuffers(Window);
-    glFinish();
-}
-
 void DrawDebugOverlay(engine *Engine)
 {
     // const float DISTANCE = 10.0f;
@@ -234,6 +234,33 @@ void DrawDebugOverlay(engine *Engine)
 	ImGui::SameLine();
 	ImGui::Text("fps: %d", Engine->Time->FPS);
 	ImGui::End();
+    }
+}
+
+static void ShowEngineSettingsWindow(engine *Engine)
+{
+    if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("screen: %d x %d", Engine->Width, Engine->Height);
+	ImGui::Text("mouseX: %d / mouseY: %d",
+		    (int)Engine->InputState->MousePosX,
+		    (int)Engine->InputState->MousePosY);
+    }
+
+    if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("maxCube/draw: %d", globalMaxCubeCount);
+	ImGui::Text("cubes: %d", Engine->Renderer->Stats.CubeCount);
+	ImGui::Text("draws: %d", Engine->Renderer->Stats.DrawCount);
+    }
+
+    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("yaw: %.2f", Engine->Camera->Settings->Yaw);
+	ImGui::Text("pitch: %.2f", Engine->Camera->Settings->Pitch);
+	ImGui::Text("speed: %.2f", Engine->Camera->Settings->Speed);
+	ImGui::Text("sensitivity: %.2f", Engine->Camera->Settings->Sensitivity);
+	ImGui::Text("fov: %.2f", Engine->Camera->Settings->Fov);
     }
 }
 
