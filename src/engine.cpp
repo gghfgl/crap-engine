@@ -184,7 +184,7 @@ void RenderImGui()
 
 void StartStencilRendering(renderer *Renderer, camera *Camera)
 {
-    // TODO: assume that ClearColor was made before
+    // NOTE: assume that ClearColor was made before
     float scale = 1.1f;
     glm::mat4 view = GetCameraViewMatrix(Camera);
     glm::mat4 model = glm::mat4(1.0f);
@@ -245,6 +245,7 @@ static void ShowEngineSettingsWindow(engine *Engine)
 	ImGui::Text("mouseX: %d / mouseY: %d",
 		    (int)Engine->InputState->MousePosX,
 		    (int)Engine->InputState->MousePosY);
+	ImGui::Separator();
     }
 
     if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
@@ -252,6 +253,7 @@ static void ShowEngineSettingsWindow(engine *Engine)
 	ImGui::Text("maxCube/draw: %d", globalMaxCubeCount);
 	ImGui::Text("cubes: %d", Engine->Renderer->Stats.CubeCount);
 	ImGui::Text("draws: %d", Engine->Renderer->Stats.DrawCount);
+	ImGui::Separator();
     }
 
     if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
@@ -261,6 +263,13 @@ static void ShowEngineSettingsWindow(engine *Engine)
 	ImGui::Text("speed: %.2f", Engine->Camera->Settings->Speed);
 	ImGui::Text("sensitivity: %.2f", Engine->Camera->Settings->Sensitivity);
 	ImGui::Text("fov: %.2f", Engine->Camera->Settings->Fov);
+	ImVec2 bSize(100, 20);
+	ImGui::Button("Reset Default", bSize);
+	ImGui::SameLine();
+	ImGui::Button("Reset Front", bSize);
+	ImGui::SameLine();
+	ImGui::Button("Reset Up", bSize);
+	ImGui::Separator();
     }
 }
 
