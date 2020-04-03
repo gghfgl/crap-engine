@@ -50,22 +50,26 @@
 
 static bool activeWindow = false;
 static int MAPSIZE = 10;
-int selectedID = 0;
-int hoveredID = 0;
+static int sliderMapSize = 10;
+unsigned int selectedID = 0;
+unsigned int hoveredID = 0;
+unsigned int terrainHoveredID = 0;
+static int SLOTS_COUNT = 0;
 
+std::unordered_map<int, entity_cube> TERRAIN_ENTITIES;
 std::unordered_map<int, entity_cube> CONTAINER_ENTITIES;
 
 glm::vec4 GetColorByIndex(int index);
 void CrapColors(float *r, float *g, float *b);
-void DrawTerrain(renderer *Renderer, int mapSize);
-void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale);
-void DrawTerrainTool(engine *Engine, int &mapSize, int mPosX, int mPosY, bool &focus);
-void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus);
+void DrawSettingsPanel(engine *Engine, int &mapSize, int mPosX, int mPosY, std::unordered_map<int, entity_cube> &objects, bool &focus);
 glm::vec3 MouseRayDirectionWorld(float mouseX, float mouseY, int width, int height, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
-bool TestRaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float sphereRadius, float* intersectionDistance);
+bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float sphereRadius, float* intersectionDistance);
 
-void CreateTestContainers();
-void CreateTestSpheres(float radius, int slacks, int slices);
+void CreateTestTerrain(int mapSize, int &slotsCount); // NOTE: entity_cube
+void CreateTestContainers(); // NOTE: entity_cube
+void CreateTestSpheres(float radius, int slacks, int slices); // NOTE: sphere
+
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float scale);
 void DrawSpheres();
 
 int main(int argc, char *argv[])
@@ -80,6 +84,10 @@ int main(int argc, char *argv[])
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {
+	if (sliderMapSize % 2 == 0)
+	    MAPSIZE = sliderMapSize;
+	CreateTestTerrain(MAPSIZE, SLOTS_COUNT);
+
 	// Ray casting test
 	glm::vec3 rayWorld = MouseRayDirectionWorld((float)Engine->InputState->MousePosX,
 						    (float)Engine->InputState->MousePosY,
@@ -87,6 +95,26 @@ int main(int argc, char *argv[])
 						    Engine->Height,
 						    Engine->ProjMatrix,
 						    GetCameraViewMatrix(Engine->Camera));
+
+	for (std::pair<int, entity_cube> element : TERRAIN_ENTITIES)
+	{
+	    float rayIntersection = 0.0f;
+	    glm::vec3 spherePos = glm::vec3(
+		element.second.Position.x + element.second.Size.w / 2,
+		element.second.Position.y + element.second.Size.w / 2,
+		element.second.Position.z + element.second.Size.w / 2);
+	    
+	    if (RaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
+	    {
+		if (element.second.State == ENTITY_SLOT)
+		{
+		    terrainHoveredID = element.second.ID;
+		    break;
+		}
+	    }
+	    else
+		terrainHoveredID = 0;
+	}
 
 	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
 	{
@@ -96,7 +124,7 @@ int main(int argc, char *argv[])
 		element.second.Position.y + element.second.Size.w / 2,
 		element.second.Position.z + element.second.Size.w / 2);
 	    
-	    if (TestRaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
+	    if (RaySphereIntersection(Engine->Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
 	    {
 	        hoveredID = element.second.ID;
 		break;
@@ -144,11 +172,24 @@ int main(int argc, char *argv[])
 	if (Engine->DebugMode)
 	    DrawAxisDebug(Engine->Renderer);	
 
-	// TODO: loop through TERRAIN_ENTITIES and draw (add to buffer)
-	// terrain cubes. {inside batch fuctions}
-	
-	DrawTerrain(Engine->Renderer, MAPSIZE);
-	// DrawSpheres();
+	StartNewBatchCube(Engine->Renderer);
+	for (std::pair<int, entity_cube> element : TERRAIN_ENTITIES)
+	{
+	    if (terrainHoveredID != 0 && terrainHoveredID == element.second.ID)
+	    {
+		entity_cube hoveredSlot = EntityCubeConstruct(element.second.ID,
+							      element.second.Position,
+							      { 1.0f, 0.5f, 1.0f, 1.0f },
+							      { 0.7f, 0.7f, 0.7f, 1.0f },
+							      element.second.State);
+
+		PushEntityCubeToBuffer(Engine->Renderer, hoveredSlot, 1.0f);
+	    } else
+		PushEntityCubeToBuffer(Engine->Renderer, element.second, 1.0f);
+	}
+	//DrawSpheres();
+	CloseBatchCube(Engine->Renderer);
+	FlushBatchCube(Engine->Renderer);
 
 	// NOTE: STENCIL RENDERING ======================================
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -157,37 +198,36 @@ int main(int argc, char *argv[])
 	StartNewBatchCube(Engine->Renderer);
 	for (std::pair<int, entity_cube> element : CONTAINER_ENTITIES)
 	{
-	    DrawCubeContainer(Engine->Renderer, element.second, 1.0f);
+	    PushEntityCubeToBuffer(Engine->Renderer, element.second, 1.0f);
 	}
 	CloseBatchCube(Engine->Renderer);
 	FlushBatchCube(Engine->Renderer);
 
-	// TODO: add terrain slot hovered stencil draw
 	if (hoveredID != 0 || selectedID != 0)
 	{
 	    StartStencilRendering(Engine->Renderer, Engine->Camera);
 
 	    StartNewBatchCube(Engine->Renderer);
 	    if (selectedID != 0)
-		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
+		PushEntityCubeToBuffer(Engine->Renderer, CONTAINER_ENTITIES[selectedID], 1.1f);
 	    if (hoveredID != 0)
-		DrawCubeContainer(Engine->Renderer, CONTAINER_ENTITIES[hoveredID], 1.1f);
+		PushEntityCubeToBuffer(Engine->Renderer, CONTAINER_ENTITIES[hoveredID], 1.1f);
 	    CloseBatchCube(Engine->Renderer);
 	    FlushBatchCube(Engine->Renderer);
 
 	    StopRenderingStencil();	    
 	}
-
+	
 	// NOTE: UI RENDERING ======================================
 	StartImGuiRendering();	
 
 	DrawDebugOverlay(Engine);
-        DrawTerrainTool(Engine,
-			MAPSIZE,
-			(int)Engine->InputState->MousePosX,
-			(int)Engine->InputState->MousePosX,
-        		activeWindow);
-        DrawObjectPanel(CONTAINER_ENTITIES, activeWindow);	
+        DrawSettingsPanel(Engine,
+			  sliderMapSize,
+			  (int)Engine->InputState->MousePosX,
+			  (int)Engine->InputState->MousePosY,
+			  CONTAINER_ENTITIES,
+			  activeWindow);	
 
 	RenderImGui();
 	
@@ -199,44 +239,192 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void DrawTerrainTool(engine *Engine,
-		     int &mapSize,
-		     int mPosX, int mPosY,
-		     bool &focus)
+void CreateTestContainers()
 {
-    ImGui::SetNextWindowPos(ImVec2(10, 160));
-    ImGui::SetNextWindowSize(ImVec2(200, 220));
-    ImGui::Begin("data", nullptr, ImGuiWindowFlags_NoResize);
-    ImGui::Text("Terrain:");
-    ImGui::Separator();
-    ImGui::SliderInt("range", &mapSize, 0, 100);
-    ImGui::Separator();
-    ImGui::Text("Picking:");
-    ImGui::Separator();
-    ImGui::Text("mX= %d / mYinvert %d", mPosX, mPosY);
-    if (ImGui::IsWindowFocused())
-	focus = true;
-    else
-	focus = false;
-    ImGui::End();
+    entity_cube containerOne = EntityCubeConstruct(1,
+						   { 3.0f, 0.5f, 0.0f },
+						   { 1.0f, 1.0f, 1.0f, 1.0f },
+						   { 1.0f, 0.0f, 0.0f, 1.0f },
+						   ENTITY_DYNAMIC);
+    entity_cube containerTwo = EntityCubeConstruct(2,
+						   { -3.0f, 0.5f, 0.0f },
+						   { 1.0f, 1.0f, 1.0f, 1.0f },
+						   { 0.0f, 0.0f, 1.0f, 1.0f },
+						   ENTITY_DYNAMIC);
+    
+    if (CONTAINER_ENTITIES.find(containerOne.ID) == CONTAINER_ENTITIES.end())
+	CONTAINER_ENTITIES[containerOne.ID] = containerOne;
+    if (CONTAINER_ENTITIES.find(containerTwo.ID) == CONTAINER_ENTITIES.end())
+	CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
 }
 
-void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus)
+void CreateTestTerrain(int mapSize, int &slotsCount)
 {
-    ImGui::SetNextWindowPos(ImVec2(10, 390));
-    ImGui::SetNextWindowSize(ImVec2(420, 300));
-    ImGui::Begin("Objects", nullptr, ImGuiWindowFlags_NoResize);
+    slotsCount = 0;
+    TERRAIN_ENTITIES.clear();
+    glm::vec4 color = { 0.2f, 0.2f, 0.2f, 1.0f };
+    glm::vec4 colorH = { 0.25f, 0.25f, 0.25f, 1.0f };
+    glm::vec4 size = { 1.0f, 0.5f, 1.0f, 1.0f };
+    entity_state state = ENTITY_STATIC;
+    float posX = 0.0f;
+    bool slot = true;
+    unsigned int id = 1;
+    for (int i = 0; i < mapSize / 2; i++)
+    {
+	float posZ = -size.z;
+	for (int y = 0; y < mapSize / 2; y++)
+	{
+	    glm::vec4 c = color;
+	    entity_state s = state;
+	    if (slot)
+	    {
+		c = colorH;
+		s = ENTITY_SLOT;
+		slotsCount++;
+	    }
 
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
+	    TERRAIN_ENTITIES[t.ID] = t;
+	    posZ -= size.z;
+	    slot = !slot;
+	    id++;
+	}
+	posX += size.x;
+    }
+
+    posX = -1.0f;
+    for (int i = 0; i < mapSize / 2; i++)
+    {
+	float posZ = -size.z;
+	for (int y = 0; y < mapSize / 2; y++)
+	{
+	    glm::vec4 c = color;
+	    entity_state s = state;
+	    if (slot)
+	    {
+		c = colorH;
+		s = ENTITY_SLOT;
+		slotsCount++;
+	    }
+
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
+	    TERRAIN_ENTITIES[t.ID] = t;
+	    posZ -= size.z;
+	    slot = !slot;
+	    id++;
+	}
+	posX -= size.x;
+    }
+
+    slot = false;
+    posX = 0.0f;
+    for (int i = 0; i < mapSize / 2; i++)
+    {
+	float posZ = 0.0f;
+	for (int y = 0; y < mapSize / 2; y++)
+	{
+	    glm::vec4 c = color;
+	    entity_state s = state;
+	    if (slot)
+	    {
+		c = colorH;
+		s = ENTITY_SLOT;
+		slotsCount++;
+	    }
+
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
+	    TERRAIN_ENTITIES[t.ID] = t;
+	    posZ += size.z;
+	    slot = !slot;
+	    id++;
+	}
+	posX += size.x;
+    }
+
+    posX = -1.0f;
+    for (int i = 0; i < mapSize / 2; i++)
+    {
+	float posZ = 0.0f;
+	for (int y = 0; y < mapSize / 2; y++)
+	{
+	    glm::vec4 c = color;
+	    entity_state s = state;
+	    if (slot)
+	    {
+		c = colorH;
+		s = ENTITY_SLOT;
+		slotsCount++;
+	    }
+
+	    entity_cube t = EntityCubeConstruct(id, { posX, 0.0f, posZ }, size, c, s);
+	    TERRAIN_ENTITIES[t.ID] = t;
+	    posZ += size.z;
+	    slot = !slot;
+	    id++;
+	}
+	posX -= size.x;
+    }
+}
+
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float scale)
+{
+    AddCubeToBuffer(Renderer,
+		    container.Position,
+		    { container.Size.x, container.Size.y, container.Size.z, scale },
+		    container.Color);
+}
+
+void DrawSettingsPanel(engine *Engine,
+		       int &mapSize,
+		       int mPosX, int mPosY,
+		       std::unordered_map<int, entity_cube> &objects,
+		       bool &focus)
+{
+    ImGui::SetNextWindowPos(ImVec2(10, 10));
+    ImGui::SetNextWindowSize(ImVec2(410, 700));
+    ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize);
+
+    if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("screen: %d x %d", Engine->Width, Engine->Height);
+	ImGui::Text("mouseX: %d / mouseY: %d", mPosX, mPosY);
+    }
+
+    if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("maxCube/draw: %d", MaxCubeCount);
+	ImGui::Text("cubes: %d", Engine->Renderer->Stats.CubeCount);
+	ImGui::Text("drawCalls: %d", Engine->Renderer->Stats.DrawCount);
+    }
+
+    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("yaw: %.2f", YAW);
+	ImGui::Text("pitch: %.2f", PITCH);
+	ImGui::Text("speed: %.2f", SPEED);
+	ImGui::Text("sensitivity: %.2f", SENSITIVITY);
+	ImGui::Text("fov: %.2f", FOV);
+    }
+
+    if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("slots: %d/%d", 0, SLOTS_COUNT);
+	ImGui::SliderInt("floor", &mapSize, 0, 100);
+	ImGui::Separator();
+    }
+
+    if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
     // left
     static int selected = 0;
     ImGui::BeginChild("left pane", ImVec2(150, 0), true);
 
     for (std::pair<int, entity_cube> element : objects)	 
     {
-	char label[128];
-	sprintf_s(label, "obj %d", element.first);
-	if (ImGui::Selectable(label, selectedID == element.first))
-	    selectedID = element.first;
+    	char label[128];
+    	sprintf_s(label, "obj %d", element.first);
+    	if (ImGui::Selectable(label, (int)selectedID == element.first))
+    	    selectedID = element.first;
     }
 
     ImGui::EndChild();
@@ -244,56 +432,41 @@ void DrawObjectPanel(std::unordered_map<int, entity_cube> &objects, bool &focus)
 
     // right
     ImGui::BeginGroup();
-    ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+    //ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+    ImGui::BeginChild("item view");
     ImGui::Text("obj: %d", selectedID);
     ImGui::Separator();
     if (selectedID != 0)
     {
-	ImGui::Text("ID: %d", objects[selectedID].ID);
-	ImGui::Text("mem: %p", &objects[selectedID]);
-	ImGui::Text("State: %s",
-		    (objects[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
-	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
-		    objects[selectedID].Position.x,
-		    objects[selectedID].Position.y,
-		    objects[selectedID].Position.z);
+    	ImGui::Text("ID: %d", objects[selectedID].ID);
+    	ImGui::Text("mem: %p", &objects[selectedID]);
+    	ImGui::Text("State: %s",
+    		    (objects[selectedID].State == ENTITY_STATIC ? "STATIC" : "DYNAMIC"));
+    	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+    		    objects[selectedID].Position.x,
+    		    objects[selectedID].Position.y,
+    		    objects[selectedID].Position.z);
 
-	ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
-		    objects[selectedID].Size.x,
-		    objects[selectedID].Size.y,
-		    objects[selectedID].Size.z,
-		    objects[selectedID].Color.w);
+    	ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+    		    objects[selectedID].Size.x,
+    		    objects[selectedID].Size.y,
+    		    objects[selectedID].Size.z,
+    		    objects[selectedID].Color.w);
 
-	ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
-		    objects[selectedID].Color.r,
-		    objects[selectedID].Color.g,
-		    objects[selectedID].Color.b,
-		    objects[selectedID].Color.a);
+    	ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+    		    objects[selectedID].Color.r,
+    		    objects[selectedID].Color.g,
+    		    objects[selectedID].Color.b,
+    		    objects[selectedID].Color.a);
     }
     ImGui::EndChild();
     ImGui::EndGroup();
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+    }
+    if (ImGui::IsWindowFocused())
 	focus = true;
-    else if (!focus)
+    else
 	focus = false;
     ImGui::End();
-}
-
-void CreateTestContainers()
-{
-    entity_cube containerOne = CreateEntityCube(1,
-						{ 3.0f, 0.5f, 0.0f },
-						{ 1.0f, 1.0f, 1.0f, 1.0f },
-						{ 1.0f, 0.0f, 0.0f, 1.0f });
-    entity_cube containerTwo = CreateEntityCube(2,
-						{ -3.0f, 0.5f, 0.0f },
-						{ 1.0f, 1.0f, 1.0f, 1.0f },
-						{ 0.0f, 0.0f, 1.0f, 1.0f });
-    
-    if (CONTAINER_ENTITIES.find(containerOne.ID) == CONTAINER_ENTITIES.end())
-	CONTAINER_ENTITIES[containerOne.ID] = containerOne;
-    if (CONTAINER_ENTITIES.find(containerTwo.ID) == CONTAINER_ENTITIES.end())
-	CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
 }
 
 glm::vec4 GetColorByIndex(int index)
@@ -339,99 +512,6 @@ void BlackAndWhite(float *r, float *g, float *b) {
     }
 }
 
-void DrawCubeContainer(renderer *Renderer, entity_cube container, float scale)
-{
-    AddCubeToBuffer(Renderer,
-		    container.Position,
-		    { container.Size.x, container.Size.y, container.Size.z, scale },
-		    container.Color);
-}
-
-void DrawTerrain(renderer *Renderer, int mapSize)
-{
-    StartNewBatchCube(Renderer);
-    float r = 1.0f;
-    float g = 1.0f;
-    float b = 1.0f;
-    float size = 1.0f;
-    float posX = 0.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = -size;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    //CrapColors(&r, &g, &b);
-	    BlackAndWhite(&r, &g, &b);
-	    AddCubeToBuffer(
-		Renderer,
-		{ posX, 0.0f, posZ },
-		{ size, 0.5f, size, 1.0f },
-		{ r, g, b, 1.0f });
-	    posZ -= size;
-	}
-	posX += size;
-    }
-
-    posX = -1.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = -size;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    //CrapColors(&r, &g, &b);
-	    BlackAndWhite(&r, &g, &b);
-	    AddCubeToBuffer(
-		Renderer,
-		{ posX, 0.0f, posZ },
-		{ size, 0.5f, size, 1.0f },
-		{ r, g, b, 1.0f });
-	    posZ -= size;
-	}
-	posX -= size;
-    }
-
-    r = 0.0f;
-    g = 0.0f;
-    b = 0.0f;
-    posX = 0.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = 0.0f;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    //CrapColors(&r, &g, &b);
-	    BlackAndWhite(&r, &g, &b);
-	    AddCubeToBuffer(
-		Renderer,
-		{ posX, 0.0f, posZ },
-		{ size, 0.5f, size, 1.0f },
-		{ r, g, b, 1.0f });
-	    posZ += size;
-	}
-	posX += size;
-    }
-
-    posX = -1.0f;
-    for (int i = 0; i < mapSize / 2; i++)
-    {
-	float posZ = 0.0f;
-	for (int y = 0; y < mapSize / 2; y++)
-	{
-	    //CrapColors(&r, &g, &b);
-	    BlackAndWhite(&r, &g, &b);
-	    AddCubeToBuffer(
-		Renderer,
-		{ posX, 0.0f, posZ },
-		{ size, 0.5f, size, 1.0f },
-		{ r, g, b, 1.0f });
-	    posZ += size;
-	}
-	posX -= size;
-    }
-    CloseBatchCube(Renderer);
-    FlushBatchCube(Renderer);
-}
-
 glm::vec3 MouseRayDirectionWorld(float mouseX,float mouseY,
 				 int width, int height,
 				 glm::mat4 projectionMatrix,
@@ -455,7 +535,7 @@ glm::vec3 MouseRayDirectionWorld(float mouseX,float mouseY,
     return normalize(rayWorld);
 }
 
-bool TestRaySphereIntersection(glm::vec3 rayOriginWorld,
+bool RaySphereIntersection(glm::vec3 rayOriginWorld,
 			       glm::vec3 rayDirectionWorld,
 			       glm::vec3 sphereCenterWorld,
 			       float sphereRadius,

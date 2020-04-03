@@ -209,30 +209,30 @@ void SwapBufferAndFinish(GLFWwindow *Window)
 
 void DrawDebugOverlay(engine *Engine)
 {
-    const float DISTANCE = 10.0f;
-    static int corner = 0;
+    // const float DISTANCE = 10.0f;
+    // static int corner = 0;
     ImGuiIO& io = ImGui::GetIO();
-    if (corner != -1)   
-    {
-    	ImVec2 window_pos = ImVec2(
-    	    (corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE,
-    	    (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
-    	ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
-    	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-    }
+    // if (corner != -1)   
+    // {
+    // 	ImVec2 window_pos = ImVec2(
+    // 	    (corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE,
+    // 	    (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
+    // 	ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+    // 	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+    // }
 
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 210, 10));
     ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-    if (ImGui::Begin("Debug overlay", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))   
+    if (ImGui::Begin("Debug overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))   
     {
 	ImGui::Text("Debug overlay");
 	ImGui::Separator();
 	ImGui::Text((const char*)glGetString(GL_RENDERER));
 	ImGui::Text((const char*)glGetString(GL_VERSION));
 	ImGui::Separator();
-	ImGui::Text("ObjectCount = %d", Engine->Renderer->Stats.CubeCount);
-	ImGui::Text("DrawCount = %d", Engine->Renderer->Stats.DrawCount);
-	ImGui::Text("DeltaTime = %.3f ms", Engine->Time->DeltaTime);
-	ImGui::Text("FPS= %d", Engine->Time->FPS);
+	ImGui::Text("dt: %.3f ms", Engine->Time->DeltaTime);
+	ImGui::SameLine();
+	ImGui::Text("fps: %d", Engine->Time->FPS);
 	ImGui::End();
     }
 }

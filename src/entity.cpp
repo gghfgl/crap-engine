@@ -7,7 +7,11 @@ unsigned int GetIndexByColor(int r, int g, int b)
     return (r)|(g<<8)|(b<<16);
 }
 
-entity_cube CreateEntityCube(unsigned int id, glm::vec3 position, glm::vec4 size, glm::vec4 color)
+entity_cube EntityCubeConstruct(unsigned int id,
+			     glm::vec3 position,
+			     glm::vec4 size,
+			     glm::vec4 color,
+			     entity_state state=ENTITY_STATIC)
 {
     entity_cube Entity;
     // Entity.ID = (int)time(0);
@@ -19,6 +23,7 @@ entity_cube CreateEntityCube(unsigned int id, glm::vec3 position, glm::vec4 size
     Entity.Position = position;
     Entity.Size = size;
     Entity.Color = color;
+    Entity.State = state;
 
     return Entity;
 }
