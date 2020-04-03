@@ -5,7 +5,7 @@
 #include "engine.h"
 #include "resource_manager.h"
 
-void GLAPIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+void GLAPIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void init_imgui(GLFWwindow* window)
@@ -39,7 +39,7 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
         // return -1;
     }
 
-    if (options & VSYNC)
+    if (options & VSYNC) // TODO: on the fly setting
 	glfwSwapInterval(1); // VSync
     else
 	glfwSwapInterval(0); // VSync
@@ -48,20 +48,20 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE); // face culling
     glCullFace(GL_FRONT); // face culling
-    //glEnable(GL_MULTISAMPLE); // MSAA enable
+    //glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     
-    //glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO
+    //glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    //glDebugMessageCallback(DebugMessageCallback, NULL); // TODO: !!!
+    //glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
 
     engine *Engine = new engine();
 
-    if (options & DEBUG_MODE)
+    if (options & DEBUG_MODE) // TODO: on the fly setting
         Engine->DebugMode = true;    
-    if (options & POLYGONE_MODE)
+    if (options & POLYGONE_MODE) // TODO: on the fly setting
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
     camera *Camera = CameraConstruct(glm::vec3(0.0f, 5.0f, 10.0f));
@@ -242,9 +242,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void APIENTRY DebugMessageCallback(GLenum source, GLenum type, GLuint id,
-                            GLenum severity, GLsizei length,
-                            const GLchar *msg, const void *data)
+void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id,
+				   GLenum severity, GLsizei length,
+				   const GLchar *msg, const void *data)
 {
     char* _source;
     char* _type;

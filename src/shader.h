@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-std::unordered_map<std::string, unsigned int> _UNIFORM_LOCATION_CACHE;
+std::unordered_map<std::string, unsigned int> globalUniformLocationCache;
 
 struct shader {
     unsigned int ID; 

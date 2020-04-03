@@ -85,11 +85,11 @@ void CompileShader(shader *Shader,
 
 unsigned int get_uniform_location_cache(shader *Shader, const char* name)
 {
-    if (_UNIFORM_LOCATION_CACHE.find(name) != _UNIFORM_LOCATION_CACHE.end())
-	return _UNIFORM_LOCATION_CACHE[name];
+    if (globalUniformLocationCache.find(name) != globalUniformLocationCache.end())
+	return globalUniformLocationCache[name];
 
     unsigned int location = glGetUniformLocation(Shader->ID, name);
-    _UNIFORM_LOCATION_CACHE[name] = location;
+    globalUniformLocationCache[name] = location;
 
     return location;
 }
