@@ -10,7 +10,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void init_imgui(GLFWwindow* window)
 {
-    const char* glsl_version = "#version 150"; 
+    const char* glsl_version = "#version 450"; 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;

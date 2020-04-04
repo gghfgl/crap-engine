@@ -45,6 +45,7 @@
    - cubemap / skybox / reflect ?
    - geometry shader ?
    - instancing ?
+   - learn about compiler (unit, etc ...)
 */
 	
 static bool  globalActiveWindow        = false;
@@ -319,7 +320,7 @@ void DrawSettingsPanel(engine *Engine,
     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::Text("slots: %03d/%03d", 0, slots.size());
-	if (ImGui::SliderInt("floor", &mapSize, 0, 400))
+	if (ImGui::SliderInt("floor", &mapSize, 0, 1000))
 	    slots.clear();
 	ImGui::Separator();
     }
@@ -403,7 +404,6 @@ void DrawSettingsPanel(engine *Engine,
 	ImGui::Separator();
     }
 
-
     if (ImGui::BeginPopup("objects_popup"))
     {
 	ImGui::Text("slot-%03d", selectedSlot);
@@ -411,8 +411,7 @@ void DrawSettingsPanel(engine *Engine,
 	for (std::pair<int, entity_cube> ct : containers)	 
 	{
 	    if (ImGui::Selectable(containers[ct.first].Name))
-		AttribContainerToSlot(slots, containers, selectedSlot, selectedItem);
-	        selectedItem = ct.first; // TODO set slot in array
+		AttribContainerToSlot(slots, containers, selectedSlot, ct.first);
 	}
 	ImGui::EndPopup();
     }

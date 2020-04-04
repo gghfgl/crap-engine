@@ -6,7 +6,7 @@
 
 static const size_t globalPerCubeVertex  = 8;
 static const size_t globalPerCubeIndices = 36;
-static const size_t globalMaxCubeCount   = 500;
+static const size_t globalMaxCubeCount   = 1000;
 static const size_t globalMaxVertexCount = globalMaxCubeCount * globalPerCubeVertex;
 static const size_t globalMaxIndexCount  = globalMaxCubeCount * globalPerCubeIndices;
 
