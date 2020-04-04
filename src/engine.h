@@ -16,10 +16,10 @@ enum engine_state
 
 enum init_flag
 {
-    NO_FLAG       = 0x0,
-    POLYGONE_MODE = 0x01,
-    DEBUG_MODE    = 0x02,
-    VSYNC         = 0x08
+    NO_FLAG       = 0,
+    POLYGONE_MODE = 1 << 0,
+    DEBUG_MODE    = 1 << 1,
+    VSYNC         = 1 << 2
 };
 
 struct engine_time

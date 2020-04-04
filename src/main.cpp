@@ -18,24 +18,25 @@
 */
 
 /* TODO:
-   - fit shader version with gl version ?
-   - draw ray casting debug sphere ? or next
-   - add Ray casting OBB test for cubes
-   - move object from slot to slot
-   - trace line from mouse to objects / terrain slots?
-   - read level design from file
+   - draw ray casting debug sphere see TODO in renderer
+   - add Ray casting OBB test with debug bounding box draw
+   - position objects from slot attruibution array
+   - add texture and white default texture to batch rendering cube.
+
    - set of predef camera position
+   - lock/unlock camera movement from to terrain space
+   - load models assimp?
+   - read level design from file
+
    - add click action to container object and open imgui inventory?
-   - move object between inventories
-   - lock camera movement from to terrain space
-   - z-fighting
-   - logger ?
    - in fuction time profiler (handemade hero fast thread id retrieval)
    - work on z-buffer to avoid z-fighting colors/ textures
-   - add texture and white default texture to batch rendering cube.
+   - move object between inventories
+   - z-fighting
+   - logger ?
+   - put engine settings in file with update and reload program?
    - generate terrain (advanced)?
    - compile and read shader for presetting uniform? the cherno
-   - load models assimp?
    - batch rendering models?
    - memory profiler
    - light system PBR?
@@ -328,52 +329,52 @@ void DrawSettingsPanel(engine *Engine,
     // Containers
     if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-    static int selected = 0;
-    ImGui::BeginChild("left pane", ImVec2(120, 150));
-    for (std::pair<int, entity_cube> element : containers)	 
-    {
-    	char label[128];
-    	sprintf_s(label, "obj: <%s>", element.second.Name);
-    	if (ImGui::Selectable(label, (int)globalContainerSelectedID == element.first))
-    	    globalContainerSelectedID = element.first;
-    }
+	static int selected = 0;
+	ImGui::BeginChild("left pane", ImVec2(120, 150));
+	for (std::pair<int, entity_cube> element : containers)	 
+	{
+	    char label[128];
+	    sprintf_s(label, "obj: <%s>", element.second.Name);
+	    if (ImGui::Selectable(label, (int)globalContainerSelectedID == element.first))
+		globalContainerSelectedID = element.first;
+	}
 
-    ImGui::EndChild();
-    ImGui::SameLine();
+	ImGui::EndChild();
+	ImGui::SameLine();
 
-    ImGui::BeginChild("right pane", ImVec2(0, 150));
-    if (globalContainerSelectedID != 0)
-    {
-    	ImGui::Text("mem: %p", &containers[globalContainerSelectedID]);
-    	ImGui::Text("ID: %03d", containers[globalContainerSelectedID].ID);
-    	ImGui::Text("Name: %s", containers[globalContainerSelectedID].Name);
-    	ImGui::Text("State: %s",
-    		    (containers[globalContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
-    	ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
-    		    containers[globalContainerSelectedID].Position.x,
-    		    containers[globalContainerSelectedID].Position.y,
-    		    containers[globalContainerSelectedID].Position.z);
+	ImGui::BeginChild("right pane", ImVec2(0, 150));
+	if (globalContainerSelectedID != 0)
+	{
+	    ImGui::Text("mem: %p", &containers[globalContainerSelectedID]);
+	    ImGui::Text("ID: %03d", containers[globalContainerSelectedID].ID);
+	    ImGui::Text("Name: %s", containers[globalContainerSelectedID].Name);
+	    ImGui::Text("State: %s",
+			(containers[globalContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
+	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+			containers[globalContainerSelectedID].Position.x,
+			containers[globalContainerSelectedID].Position.y,
+			containers[globalContainerSelectedID].Position.z);
 
-    	ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
-    		    containers[globalContainerSelectedID].Size.x,
-    		    containers[globalContainerSelectedID].Size.y,
-    		    containers[globalContainerSelectedID].Size.z,
-    		    containers[globalContainerSelectedID].Color.w);
+	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+			containers[globalContainerSelectedID].Size.x,
+			containers[globalContainerSelectedID].Size.y,
+			containers[globalContainerSelectedID].Size.z,
+			containers[globalContainerSelectedID].Color.w);
 
-    	ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
-    		    containers[globalContainerSelectedID].Color.r,
-    		    containers[globalContainerSelectedID].Color.g,
-    		    containers[globalContainerSelectedID].Color.b,
-    		    containers[globalContainerSelectedID].Color.a);
-    }
-    ImGui::EndChild();
-    ImGui::Separator();
+	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+			containers[globalContainerSelectedID].Color.r,
+			containers[globalContainerSelectedID].Color.g,
+			containers[globalContainerSelectedID].Color.b,
+			containers[globalContainerSelectedID].Color.a);
+	}
+
+	ImGui::EndChild();
+	ImGui::Separator();
     }
 
     // Slots
     static int selectedItem = -1;
     static int selectedSlot = 0;
-    
     if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::Columns(2);
@@ -396,7 +397,6 @@ void DrawSettingsPanel(engine *Engine,
 		ImGui::OpenPopup("objects_popup");
 	    }
 
-
 	    ImGui::NextColumn();
 	}
 
@@ -415,9 +415,8 @@ void DrawSettingsPanel(engine *Engine,
 	}
 	ImGui::EndPopup();
     }
-
     
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	focus = true;
     else
 	focus = false;

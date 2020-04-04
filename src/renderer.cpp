@@ -153,6 +153,16 @@ void FlushBatchCube(renderer *Renderer)
     Renderer->IndexCount = 0;
 }
 
+// TODO: PrepareSphereBatchRendering()
+
+// TODO: AddSphereToBuffer()
+
+// TODO: StartNewBatchSphere()
+
+// TODO: CloseBatchSphere()
+
+// TODO: FlushBatchSphere()
+
 void AddCubeToBuffer(renderer *Renderer,
 		     const glm::vec3 &position,
 		     const glm::vec3 &size,
