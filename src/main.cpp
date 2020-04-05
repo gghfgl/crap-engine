@@ -16,6 +16,7 @@
 /* TODO:
    - clean renderer construct with shader array?
    - fill engine boolean for Imgui settings
+   - stencil outlie probleme z buffer
    - draw ray casting debug sphere see TODO in renderer
    - add Ray casting OBB test with debug bounding box draw
    - position objects from slot attruibution array
