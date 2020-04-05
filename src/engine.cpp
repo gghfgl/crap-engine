@@ -1,9 +1,4 @@
-#include "IMGUI/imgui.h"
-#include "IMGUI/imgui_impl_glfw.h"
-#include "IMGUI/imgui_impl_opengl3.h"
-
 #include "engine.h"
-#include "resource_manager.h"
 
 void GLAPIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -13,14 +8,34 @@ void init_imgui(GLFWwindow* window)
     const char* glsl_version = "#version 450"; 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-engine* EngineConstructAndInit(unsigned int width, unsigned int height, int options=NO_FLAG)
+void delete_imgui()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void WrapImGuiNewFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void WrapImGuiRender()
+{
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
+}
+
+engine* EngineConstruct(unsigned int width, unsigned int height, int options=NO_FLAG)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -57,73 +72,34 @@ engine* EngineConstructAndInit(unsigned int width, unsigned int height, int opti
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     //glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
 
-    engine *Engine = new engine();
-
-    if (options & DEBUG_MODE) // TODO: on the fly setting
-        Engine->DebugMode = true;    
     if (options & POLYGONE_MODE) // TODO: on the fly setting
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
-    camera *Camera = CameraConstruct(glm::vec3(0.0f, 5.0f, 10.0f));
-    input_state *InputState = InputStateConstruct(window, width, height);
 
-    LoadShader("../shaders/default.vs", "../shaders/default.fs", nullptr, "default");
-    shader *DefaultShader = GetShader("default");
-    LoadShader("../shaders/default.vs", "../shaders/stencil.fs", nullptr, "stencil");
-    shader *StencilShader = GetShader("stencil");
-
-    unsigned int uniformBlockIndexDefault = glGetUniformBlockIndex(DefaultShader->ID, "Matrices");  
-    glUniformBlockBinding(DefaultShader->ID, uniformBlockIndexDefault, 0);
-    glGenBuffers(1, &Engine->UBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, Engine->UBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, Engine->UBO, 0, sizeof(glm::mat4));
-
-    glm::mat4 projection = glm::perspective(
-	glm::radians(Camera->Settings->Fov),
-	(float)width / (float)height,
-	0.1f, 100.0f);
-    glBindBuffer(GL_UNIFORM_BUFFER, Engine->UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
+    engine *Engine = new engine();
     Engine->GlobalState = ENGINE_ACTIVE;
+    Engine->GPUModel = (const char*)glGetString(GL_RENDERER);
+    Engine->OpenglVersion = (const char*)glGetString(GL_VERSION);
     Engine->Window = window;
     Engine->Time = new engine_time();
-    Engine->InputState = InputState;
-    Engine->Camera = Camera;
-    Engine->ProjMatrix = projection;
-    Engine->Width = width;
-    Engine->Height = height;    
-    Engine->Renderer = RendererConstruct(DefaultShader);
-    Engine->Renderer->Stencil = StencilShader;
 
     init_imgui(window);
     return Engine;
 }
 
-void delete_imgui()
-{
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-}
-
-void DeleteEngine(engine *Engine)
+void EngineDelete(engine *Engine)
 {
     delete_imgui();
-    ClearResources();
-    DeleteInputState(Engine->InputState);
-    DeleteCamera(Engine->Camera);
-    CleanAndDeleteRenderer(Engine->Renderer);
     delete Engine->Time;
     delete Engine;
-
     glfwTerminate();
 }
 
-void UpdateDeltaTimeAndFPS(engine_time *Time)
+void EngineGetWindowSize(engine *Engine, int *width, int *height)
+{
+    glfwGetWindowSize(Engine->Window, width, height);
+}
+
+void EngineUpdateTime(engine_time *Time)
 {
    const double currentTime = glfwGetTime();
    Time->DeltaTime = currentTime - Time->LastFrameTime;
@@ -138,137 +114,48 @@ void UpdateDeltaTimeAndFPS(engine_time *Time)
    }
 }
 
-void EnginePollEvents(engine *Engine)
+void EngineShowOverlay(engine *Engine)
 {
-    glfwPollEvents();
-    if (Engine->GlobalState == ENGINE_TERMINATE)
-	glfwSetWindowShouldClose(Engine->Window, GL_TRUE);
-}
-
-void StartRendering(renderer *Renderer, camera *Camera)
-{
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glm::mat4 view = GetCameraViewMatrix(Camera);
-    glm::mat4 model = glm::mat4(1.0f);
-    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-
-    UseShader(Renderer->Shader);
-    ShaderSetUniform4fv(Renderer->Shader, "view", view);    
-    ShaderSetUniform4fv(Renderer->Shader, "model", model);
-
-    glStencilMask(0x00); // dont update the stencil buffer
-}
-
-void SwapBufferAndFinish(GLFWwindow *Window)
-{
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST); // TODO: do some check?
-    glfwSwapBuffers(Window);
-    glFinish();
-}
-
-void StartImGuiRendering()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-
-void RenderImGui()
-{
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
-}
-
-void StartStencilRendering(renderer *Renderer, camera *Camera)
-{
-    // NOTE: assume that ClearColor was made before
-    float scale = 1.1f;
-    glm::mat4 view = GetCameraViewMatrix(Camera);
-    glm::mat4 model = glm::mat4(1.0f);
-    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    //model = glm::scale(model, glm::vec3(scale, scale, scale));
-
-    UseShader(Renderer->Stencil);
-    ShaderSetUniform4fv(Renderer->Stencil, "view", view);    
-    ShaderSetUniform4fv(Renderer->Stencil, "model", model);
-
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    glStencilMask(0x00);
-    glDisable(GL_DEPTH_TEST);
-}
-
-void StopRenderingStencil()
-{
-    glStencilMask(0xFF);
-    glDisable(GL_STENCIL_TEST);
-
-}
-
-void DrawDebugOverlay(engine *Engine)
-{
-    // const float DISTANCE = 10.0f;
-    // static int corner = 0;
-    ImGuiIO& io = ImGui::GetIO();
-    // if (corner != -1)   
-    // {
-    // 	ImVec2 window_pos = ImVec2(
-    // 	    (corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE,
-    // 	    (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
-    // 	ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
-    // 	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-    // }
-
+    ImGuiIO& io = ImGui::GetIO(); // TODO: move to engine widow get width
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 210, 10));
     ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
     if (ImGui::Begin("Debug overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))   
     {
 	ImGui::Text("Debug overlay");
 	ImGui::Separator();
-	ImGui::Text((const char*)glGetString(GL_RENDERER));
-	ImGui::Text((const char*)glGetString(GL_VERSION));
+	ImGui::Text(Engine->GPUModel);
+	ImGui::Text(Engine->OpenglVersion);
 	ImGui::Separator();
-	ImGui::Text("dt: %.3f ms", Engine->Time->DeltaTime);
+	ImGui::Text("frameTime: %.3fms", Engine->Time->DeltaTime);
 	ImGui::SameLine();
 	ImGui::Text("fps: %d", Engine->Time->FPS);
 	ImGui::End();
     }
 }
 
-static void ShowEngineSettingsWindow(engine *Engine)
+static void EngineSettingsCollapseHeader(engine *Engine, int width, int height)
 {
     if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	ImGui::Text("screen: %d x %d", Engine->Width, Engine->Height);
-	ImGui::Text("mouseX: %d / mouseY: %d",
-		    (int)Engine->InputState->MousePosX,
-		    (int)Engine->InputState->MousePosY);
-	ImGui::Separator();
-    }
-
-    if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Text("maxCube/draw: %d", globalMaxCubeCount);
-	ImGui::Text("cubes: %d", Engine->Renderer->Stats.CubeCount);
-	ImGui::Text("draws: %d", Engine->Renderer->Stats.DrawCount);
-	ImGui::Separator();
-    }
-
-    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Text("yaw: %.2f", Engine->Camera->Settings->Yaw);
-	ImGui::Text("pitch: %.2f", Engine->Camera->Settings->Pitch);
-	ImGui::Text("speed: %.2f", Engine->Camera->Settings->Speed);
-	ImGui::Text("sensitivity: %.2f", Engine->Camera->Settings->Sensitivity);
-	ImGui::Text("fov: %.2f", Engine->Camera->Settings->Fov);
-	ImVec2 bSize(100, 20);
-	ImGui::Button("Reset Default", bSize);
+	ImGui::Text("screen: %d x %d", width, height);
+	ImGui::Text("VSYNC: ");
 	ImGui::SameLine();
-	ImGui::Button("Reset Front", bSize);
+	if (Engine->Vsync)
+	    ImGui::Button("on");
+	else
+	    ImGui::Button("off");
+	ImGui::Text("Poly: ");
 	ImGui::SameLine();
-	ImGui::Button("Reset Up", bSize);
+	if (Engine->PolyMode)
+	    ImGui::Button("on");
+	else
+	    ImGui::Button("off");
+	ImGui::Text("Debug: ");
+	ImGui::SameLine();
+	if (Engine->DebugMode)
+	    ImGui::Button("on");
+	else
+	    ImGui::Button("off");
 	ImGui::Separator();
     }
 }

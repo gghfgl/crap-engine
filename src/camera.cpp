@@ -16,6 +16,7 @@ void update_camera_vectors(camera *Camera)
 
 // construct with vectors
 camera* CameraConstruct(
+    float windowWidth, float windowHeight,
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
     float yaw = globalDefaultYawSetting,
@@ -30,54 +31,35 @@ camera* CameraConstruct(
     Settings->Speed = speed;
     Settings->Sensitivity = sensitivity;
     Settings->Fov = fov;
+
+    glm::mat4 projection = glm::perspective(
+	glm::radians(fov),
+        windowWidth / windowHeight,
+	0.1f, 100.0f);
     
-    camera* Result = new camera();
-    Result->Position = position;
-    Result->WorldUp = up;
-    Result->Settings = Settings;
-    Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
+    camera* Camera = new camera();
+    Camera->Position = position;
+    Camera->WorldUp = up;
+    Camera->Settings = Settings;
+    Camera->Front = glm::vec3(0.0f, 0.0f, -1.0f);
+    Camera->ProjectionMatrix = projection;
 
-    update_camera_vectors(Result);
-    return Result;
-}
-    
-// construct with scalar values
-camera* CameraConstruct(
-    float posX, float posY,float posZ,
-    float upX, float upY, float upZ,
-    float yaw, float pitch, float speed,
-    float sensitivity, float fov
-    )
-{
-    camera_settings* Settings = new camera_settings();
-    Settings->Yaw = yaw;
-    Settings->Pitch = pitch;
-    Settings->Speed = speed;
-    Settings->Sensitivity = sensitivity;
-    Settings->Fov = fov;
-
-    camera* Result = new camera();	
-    Result->Position = glm::vec3(posX,posY, posZ);
-    Result->WorldUp = glm::vec3(upX, upY, upZ);
-    Result->Settings = Settings;
-    Result->Front = glm::vec3(0.0f, 0.0f, -1.0f);
-
-    update_camera_vectors(Result);
-    return Result;
+    update_camera_vectors(Camera);
+    return Camera;
 }
 
-void DeleteCamera(camera *Camera)
+void CameraDelete(camera *Camera)
 {
     delete Camera;
 }
 
 // Returns the view matrix calculated using Euler Angles and the LookAt Matrix
-glm::mat4 GetCameraViewMatrix(camera *Camera)
+glm::mat4 CameraGetViewMatrix(camera *Camera)
 {
     return glm::lookAt(Camera->Position, Camera->Position + Camera->Front, Camera->Up);
 }
 
-void ProcessCameraKeyboard(camera *Camera, camera_movement direction, float deltaTime)
+void CameraProcessKeyboard(camera *Camera, camera_movement direction, float deltaTime)
 {
     float velocity = Camera->Settings->Speed * deltaTime;
     if (direction == FORWARD)
@@ -94,7 +76,7 @@ void ProcessCameraKeyboard(camera *Camera, camera_movement direction, float delt
 	Camera->Position -= Camera->Up * velocity;
 }
 
-void ProcessCameraMouseMovement(camera *Camera, float xoffset, float yoffset, bool constrainPitch = true)
+void CameraProcessMouseMovement(camera *Camera, float xoffset, float yoffset, bool constrainPitch = true)
 {
     xoffset *= Camera->Settings->Sensitivity;
     yoffset *= Camera->Settings->Sensitivity;
@@ -115,7 +97,7 @@ void ProcessCameraMouseMovement(camera *Camera, float xoffset, float yoffset, bo
 }
 
 // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-void ProcessMouseScroll(camera *Camera, float yoffset)
+void CameraProcessMouseScroll(camera *Camera, float yoffset)
 {
     if (Camera->Settings->Fov >= 1.0f && Camera->Settings->Fov <= 45.0f)
 	Camera->Settings->Fov -= yoffset;
@@ -123,4 +105,28 @@ void ProcessMouseScroll(camera *Camera, float yoffset)
 	Camera->Settings->Fov = 1.0f;
     if (Camera->Settings->Fov >= 45.0f)
 	Camera->Settings->Fov = 45.0f;
+}
+
+static void CameraSettingsCollapseHeader(camera *Camera)
+{
+    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+    	ImGui::Text("yaw: %.2f", Camera->Settings->Yaw);
+    	ImGui::Text("pitch: %.2f", Camera->Settings->Pitch);
+    	ImGui::Text("speed: %.2f", Camera->Settings->Speed);
+    	ImGui::Text("sensitivity: %.2f", Camera->Settings->Sensitivity);
+    	ImGui::Text("fov: %.2f", Camera->Settings->Fov);
+    	ImGui::Text("pos: %.2f, %.2f, %.2f",
+		    Camera->Position.x,
+		    Camera->Position.y,
+		    Camera->Position.z);
+
+    	ImVec2 bSize(100, 20);
+    	ImGui::Button("Reset Default", bSize);
+    	ImGui::SameLine();
+    	ImGui::Button("Reset Front", bSize);
+    	ImGui::SameLine();
+    	ImGui::Button("Reset Up", bSize);
+    	ImGui::Separator();
+    }
 }

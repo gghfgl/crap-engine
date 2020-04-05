@@ -1,8 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
-
-#include "shader.h"
+#include "shader.h" // TODO remove
 
 static const size_t globalPerCubeVertex  = 8;
 static const size_t globalPerCubeIndices = 36;
@@ -24,7 +22,7 @@ struct renderer_stats
 
 struct renderer
 {
-    shader *Shader;
+    shader *Shader; // TODO: put all in array cache?
     shader *Stencil;
 
     unsigned int DebugVAO = 0;

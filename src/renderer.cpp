@@ -1,16 +1,15 @@
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 #include "renderer.h"
 
-renderer* RendererConstruct(shader *Shader)
+renderer* RendererConstruct(shader *DefaultShader, shader *StencilShader)
 {
-    renderer* Result = new renderer();
-    Result->Shader = Shader;
-    return Result;
+    renderer* Renderer = new renderer();
+    // TODO: Renderer->Shaders = shaders[] ...
+    Renderer->Shader = DefaultShader;
+    Renderer->Stencil = StencilShader;
+    return Renderer;
 }
 
-void CleanAndDeleteRenderer(renderer *Renderer)
+void RendererDelete(renderer *Renderer)
 {
     glDeleteVertexArrays(1, &Renderer->DebugVAO);
     glDeleteBuffers(1, &Renderer->DebugVBO);
@@ -24,7 +23,7 @@ void CleanAndDeleteRenderer(renderer *Renderer)
     delete Renderer;
 }
 
-void PrepareEmbededAxisDebugRendering(renderer *Renderer)
+void RendererPrepareDebugAxis(renderer *Renderer)
 {    
     float debug_axis[] =
 	{
@@ -52,14 +51,60 @@ void PrepareEmbededAxisDebugRendering(renderer *Renderer)
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
-void DrawAxisDebug(renderer *Renderer)
+void RendererDrawDebugAxis(renderer *Renderer)
 {
     glBindVertexArray(Renderer->DebugVAO);
     glDrawArrays(GL_LINES, 0, 6);
     Renderer->Stats.DrawCount++;
 }
 
-void PrepareCubeBatchRendering(renderer *Renderer)
+void RendererStart(renderer *Renderer, glm::mat4 viewMatrix)
+{
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+
+    ShaderUseProgram(Renderer->Shader);
+    ShaderSetUniform4fv(Renderer->Shader, "view", viewMatrix);    
+    ShaderSetUniform4fv(Renderer->Shader, "model", model);
+
+    glStencilMask(0x00); // dont update the stencil buffer
+}
+
+void RendererStartStencil(renderer *Renderer, glm::mat4 viewMatrix)
+{
+    // NOTE: assume that ClearColor was made before
+    float scale = 1.1f;
+    glm::mat4 model = glm::mat4(1.0f);
+    //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    //model = glm::scale(model, glm::vec3(scale, scale, scale));
+
+    ShaderUseProgram(Renderer->Stencil);
+    ShaderSetUniform4fv(Renderer->Stencil, "view", viewMatrix);    
+    ShaderSetUniform4fv(Renderer->Stencil, "model", model);
+
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+}
+
+void RendererStopStencil()
+{
+    glStencilMask(0xFF);
+    glDisable(GL_STENCIL_TEST);
+}
+
+void RendererSwapBufferAndFinish(GLFWwindow *Window)
+{
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST); // TODO: do some check?
+    glfwSwapBuffers(Window);
+    glFinish();
+}
+
+void RendererPrepareCubeBatching(renderer *Renderer)
 {
     Renderer->CubeBuffer = new vertex[globalMaxVertexCount];
 
@@ -132,19 +177,25 @@ void PrepareCubeBatchRendering(renderer *Renderer)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
-void StartNewBatchCube(renderer *Renderer)
+void RendererResetStats(renderer *Renderer)
+{
+    // Set all values as 0 for integral data type (byte by byte)
+    memset(&Renderer->Stats, 0, sizeof(renderer_stats));
+}
+
+void RendererStartNewBatchCube(renderer *Renderer)
 {
     Renderer->CubeBufferPtr = Renderer->CubeBuffer;
 }
 
-void CloseBatchCube(renderer *Renderer)
+void RendererCloseBatchCube(renderer *Renderer)
 {
     GLsizeiptr size = (uint8_t*)Renderer->CubeBufferPtr - (uint8_t*)Renderer->CubeBuffer;
     glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer);
 }
 
-void FlushBatchCube(renderer *Renderer)
+void RendererFlushBatchCube(renderer *Renderer)
 {
     glBindVertexArray(Renderer->CubeVAO);
     glDrawElements(GL_TRIANGLES, Renderer->IndexCount, GL_UNSIGNED_INT, nullptr);
@@ -163,7 +214,7 @@ void FlushBatchCube(renderer *Renderer)
 
 // TODO: FlushBatchSphere()
 
-void AddCubeToBuffer(renderer *Renderer,
+void RendererAddCubeToBuffer(renderer *Renderer,
 		     const glm::vec3 &position,
 		     const glm::vec3 &size,
 		     const float &scale,
@@ -172,9 +223,9 @@ void AddCubeToBuffer(renderer *Renderer,
     // Are we out of vertex buffer? if then reset everything
     if (Renderer->IndexCount >= globalMaxIndexCount)
     {
-        CloseBatchCube(Renderer);
-        FlushBatchCube(Renderer);
-        StartNewBatchCube(Renderer);
+        RendererCloseBatchCube(Renderer);
+        RendererFlushBatchCube(Renderer);
+        RendererStartNewBatchCube(Renderer);
     }
 
     float posX = position.x + 1.0f / 2.0f - scale / 2.0f;
@@ -219,151 +270,13 @@ void AddCubeToBuffer(renderer *Renderer,
     Renderer->Stats.CubeCount++;
 }
 
-void ResetRendererStats(renderer *Renderer)
+static void RendererSettingsCollapseHeader(renderer *Renderer)
 {
-    // Set all values as 0 for integral data type (byte by byte)
-    memset(&Renderer->Stats, 0, sizeof(renderer_stats));
+    if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+    	ImGui::Text("maxCube: %d", globalMaxCubeCount);
+    	ImGui::Text("current: %d", Renderer->Stats.CubeCount);
+    	ImGui::Text("draw: %d", Renderer->Stats.DrawCount);
+    	ImGui::Separator();
+    }
 }
-
-
-// void OLD_STUFF(renderer *Renderer)
-// {    
-//     float vertices[] =
-//     {
-// 	// front
-// 	-1.0f, -1.0f,  1.0, // 0
-// 	1.0f, -1.0f,  1.0f, // 1
-// 	1.0f,  1.0f,  1.0f, // 2
-// 	-1.0f,  1.0f,  1.0f, // 3
-
-// 	// back
-// 	-1.0f, -1.0f, -1.0f, // 4
-// 	1.0f, -1.0f, -1.0f, // 5
-// 	1.0f,  1.0f, -1.0f, // 6
-// 	-1.0f,  1.0f, -1.0f, // 7
-
-//     	// front 2
-// 	-1.0f, -1.0f,  -1.0, // 8
-// 	1.0f, -1.0f,  -1.0f, // 9
-// 	1.0f,  1.0f,  -1.0f, // 10
-// 	-1.0f,  1.0f,  -1.0f, // 11
-
-// 	// back 2
-// 	-1.0f, -1.0f, -3.0f, // 12
-// 	1.0f, -1.0f, -3.0f, // 13
-// 	1.0f,  1.0f, -3.0f, // 14
-// 	-1.0f,  1.0f, -3.0f // 15
-//     };
-
-//     unsigned int indices[] =
-//	 {
-// 	// front
-// 	0, 1, 2, 2, 3, 0,
-// 	// right
-// 	1, 5, 6, 6, 2, 1,
-// 	// back
-// 	7, 6, 5, 5, 4, 7,
-// 	// left
-// 	4, 0, 3, 3, 7, 4,
-// 	// bottom
-// 	4, 5, 1, 1, 0, 4,
-// 	// top
-// 	3, 2, 6, 6, 7, 3,
-
-//     	// front
-// 	8, 9, 10, 10, 11, 8,
-// 	// right
-// 	9, 13, 14, 14, 10, 9,
-// 	// back
-// 	15, 14, 13, 13, 12, 15,
-// 	// left
-// 	12, 8, 11, 11, 15, 12,
-// 	// bottom
-// 	12, 13, 9, 9, 8, 12,
-// 	// top
-// 	11, 20, 14, 14, 15, 11
-//     };
-    
-//     glGenVertexArrays(1, &Renderer->CubeVAO);
-//     glBindVertexArray(Renderer->CubeVAO);
-
-//     unsigned int VBO;
-//     glGenBuffers(1, &VBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-//     // position attribute
-//     glEnableVertexAttribArray(0);
-//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-//     // // texture coord attribute
-//     // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-//     // glEnableVertexAttribArray(1);
-
-//     unsigned int IBO;
-//     glGenBuffers(1, &IBO);
-//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-
-//     // // load and create a texture 
-//     // // -------------------------
-//     // // texture 1
-//     // // ---------
-//     // glGenTextures(1, &texture1);
-//     // glBindTexture(GL_TEXTURE_2D, texture1);
-//     // // set the texture wrapping parameters
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//     // // set texture filtering parameters
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//     // // load image, create texture and generate mipmaps
-//     // int width, height, nrChannels;
-//     // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-//     // unsigned char *data = stbi_load("../assets/container2.png", &width, &height, &nrChannels, 0);
-//     // if (data)
-//     //
-//	     {
-//     //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-//     // 	glGenerateMipmap(GL_TEXTURE_2D);
-//     // }
-//     // else
-//     //
-//		 {
-//     //     std::cout << "Failed to load texture" << std::endl;
-//     // }
-//     // stbi_image_free(data);
-
-//     // // texture 2
-//     // // ---------
-//     // glGenTextures(1, &texture2);
-//     // glBindTexture(GL_TEXTURE_2D, texture2);
-//     // // set the texture wrapping parameters
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//     // // set texture filtering parameters
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//     // // load image, create texture and generate mipmaps
-//     // data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
-//     // if (data)
-//     //
-//		     {
-//     //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-//     //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-//     // 	glGenerateMipmap(GL_TEXTURE_2D);
-//     // }
-//     // else
-//     //
-//			 {
-//     //     std::cout << "Failed to load texture" << std::endl;
-//     // }
-//     // stbi_image_free(data);
-
-//     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-//     // -------------------------------------------------------------------------------------------
-//     //Renderer->shader->Use();
-//     //Renderer->shader->SetInteger("texture1", 0);
-//     // Renderer->shader->SetInteger("texture2", 1);    
-// }

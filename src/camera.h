@@ -1,8 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 const float globalDefaultYawSetting         = -90.0f;
 const float globalDefaultPitchSetting       =  0.0f;
 const float globalDefaultSpeedSetting       =  10.0f;
@@ -30,11 +27,13 @@ struct camera_settings
 
 struct camera
 {
+    camera_settings *Settings;
+
     glm::vec3 Position;
     glm::vec3 Front;
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
 
-    camera_settings *Settings;
+    glm::mat4 ProjectionMatrix;
 };
