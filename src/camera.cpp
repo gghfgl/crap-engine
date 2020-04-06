@@ -16,14 +16,14 @@ void update_camera_vectors(camera *Camera)
 
 // construct with vectors
 camera* CameraConstruct(
-    float windowWidth, float windowHeight,
+    float32 windowWidth, float32 windowHeight,
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-    float yaw = globalDefaultYawSetting,
-    float pitch = globalDefaultPitchSetting,
-    float speed = globalDefaultSpeedSetting,
-    float sensitivity = globalDefaultSensitivitySetting,
-    float fov = globalDefaultFovSetting)
+    float32 yaw = globalDefaultYawSetting,
+    float32 pitch = globalDefaultPitchSetting,
+    float32 speed = globalDefaultSpeedSetting,
+    float32 sensitivity = globalDefaultSensitivitySetting,
+    float32 fov = globalDefaultFovSetting)
 {
     camera_settings* Settings = new camera_settings();
     Settings->Yaw = yaw;
@@ -59,9 +59,9 @@ glm::mat4 CameraGetViewMatrix(camera *Camera)
     return glm::lookAt(Camera->Position, Camera->Position + Camera->Front, Camera->Up);
 }
 
-void CameraProcessKeyboard(camera *Camera, camera_movement direction, float deltaTime)
+void CameraProcessKeyboard(camera *Camera, camera_movement direction, float32 deltaTime)
 {
-    float velocity = Camera->Settings->Speed * deltaTime;
+    float32 velocity = Camera->Settings->Speed * deltaTime;
     if (direction == FORWARD)
 	Camera->Position += Camera->Front * velocity;
     if (direction == BACKWARD)
@@ -76,7 +76,7 @@ void CameraProcessKeyboard(camera *Camera, camera_movement direction, float delt
 	Camera->Position -= Camera->Up * velocity;
 }
 
-void CameraProcessMouseMovement(camera *Camera, float xoffset, float yoffset, bool constrainPitch = true)
+void CameraProcessMouseMovement(camera *Camera, float32 xoffset, float32 yoffset, bool constrainPitch = true)
 {
     xoffset *= Camera->Settings->Sensitivity;
     yoffset *= Camera->Settings->Sensitivity;
@@ -97,7 +97,7 @@ void CameraProcessMouseMovement(camera *Camera, float xoffset, float yoffset, bo
 }
 
 // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-void CameraProcessMouseScroll(camera *Camera, float yoffset)
+void CameraProcessMouseScroll(camera *Camera, float32 yoffset)
 {
     if (Camera->Settings->Fov >= 1.0f && Camera->Settings->Fov <= 45.0f)
 	Camera->Settings->Fov -= yoffset;

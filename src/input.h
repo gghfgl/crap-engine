@@ -3,10 +3,10 @@
 struct input_state {
     bool   Keyboard[1024];
 
-    double MousePosX, MousePosY;
-    float  MouseOffsetX, MouseOffsetY;
-    double MouseScrollOffsetX, MouseScrollOffsetY;
-    double MouseLastX, MouseLastY;
+    float64 MousePosX, MousePosY;
+    float32  MouseOffsetX, MouseOffsetY;
+    float64 MouseScrollOffsetX, MouseScrollOffsetY;
+    float64 MouseLastX, MouseLastY;
 
     bool   MouseLeftButton;
     bool   MouseLeftButtonFirstClick;

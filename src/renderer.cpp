@@ -45,10 +45,10 @@ void RendererPrepareDebugAxis(renderer *Renderer)
     glBufferData(GL_ARRAY_BUFFER, sizeof(debug_axis), debug_axis, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)(3 * sizeof(float32)));
 }
 
 void RendererDrawDebugAxis(renderer *Renderer)
@@ -76,7 +76,7 @@ void RendererStart(renderer *Renderer, glm::mat4 viewMatrix)
 void RendererStartStencil(renderer *Renderer, glm::mat4 viewMatrix)
 {
     // NOTE: assume that ClearColor was made before
-    float scale = 1.1f;
+    float32 scale = 1.1f;
     glm::mat4 model = glm::mat4(1.0f);
     //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     //model = glm::scale(model, glm::vec3(scale, scale, scale));
@@ -123,9 +123,9 @@ void RendererPrepareCubeBatching(renderer *Renderer)
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(vertex), (const void*)offsetof(vertex, Color));
 
     // predictable cube layout
-    uint32_t indices[globalMaxIndexCount];
-    uint32_t offset = 0;
-    for (int i = 0; i < globalMaxIndexCount; i += globalPerCubeIndices)
+    uint32 indices[globalMaxIndexCount];
+    uint32 offset = 0;
+    for (uint32 i = 0; i < globalMaxIndexCount; i += globalPerCubeIndices)
     { // 8 = nb of vertex needed for 1 cube
 	indices[i + 0] = 0 + offset;
 	indices[i + 1] = 1 + offset;
@@ -190,7 +190,7 @@ void RendererStartNewBatchCube(renderer *Renderer)
 
 void RendererCloseBatchCube(renderer *Renderer)
 {
-    GLsizeiptr size = (uint8_t*)Renderer->CubeBufferPtr - (uint8_t*)Renderer->CubeBuffer;
+    GLsizeiptr size = (uint8*)Renderer->CubeBufferPtr - (uint8*)Renderer->CubeBuffer;
     glBindBuffer(GL_ARRAY_BUFFER, Renderer->CubeVBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, Renderer->CubeBuffer);
 }
@@ -217,7 +217,7 @@ void RendererFlushBatchCube(renderer *Renderer)
 void RendererAddCubeToBuffer(renderer *Renderer,
 		     const glm::vec3 &position,
 		     const glm::vec3 &size,
-		     const float &scale,
+		     const float32 &scale,
 		     const glm::vec4 &color)
 {    
     // Are we out of vertex buffer? if then reset everything
@@ -228,9 +228,9 @@ void RendererAddCubeToBuffer(renderer *Renderer,
         RendererStartNewBatchCube(Renderer);
     }
 
-    float posX = position.x + 1.0f / 2.0f - scale / 2.0f;
-    float posY = position.y + 1.0f / 2.0f - scale / 2.0f;
-    float posZ = position.z + 1.0f / 2.0f - scale / 2.0f;
+    float32 posX = position.x + 1.0f / 2.0f - scale / 2.0f;
+    float32 posY = position.y + 1.0f / 2.0f - scale / 2.0f;
+    float32 posZ = position.z + 1.0f / 2.0f - scale / 2.0f;
     
     // FRONT
     Renderer->CubeBufferPtr->Position = { posX, posY, posZ };

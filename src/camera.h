@@ -1,10 +1,10 @@
 #pragma once
 
-const float globalDefaultYawSetting         = -90.0f;
-const float globalDefaultPitchSetting       =  0.0f;
-const float globalDefaultSpeedSetting       =  10.0f;
-const float globalDefaultSensitivitySetting =  0.1f;
-const float globalDefaultFovSetting         =  45.0f;
+const float32 globalDefaultYawSetting         = -90.0f;
+const float32 globalDefaultPitchSetting       =  0.0f;
+const float32 globalDefaultSpeedSetting       =  10.0f;
+const float32 globalDefaultSensitivitySetting =  0.1f;
+const float32 globalDefaultFovSetting         =  45.0f;
 
 enum camera_movement
 {
@@ -18,11 +18,11 @@ enum camera_movement
 
 struct camera_settings
 {
-    float Yaw;
-    float Pitch;
-    float Speed;
-    float Sensitivity;
-    float Fov;    
+    float32 Yaw;
+    float32 Pitch;
+    float32 Speed;
+    float32 Sensitivity;
+    float32 Fov;    
 };
 
 struct camera

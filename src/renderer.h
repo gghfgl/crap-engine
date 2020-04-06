@@ -16,8 +16,8 @@ struct vertex
 
 struct renderer_stats
 {
-    uint32_t DrawCount;
-    uint32_t CubeCount;
+    uint32 DrawCount;
+    uint32 CubeCount;
 };
 
 struct renderer
@@ -25,14 +25,14 @@ struct renderer
     shader *Shader; // TODO: put all in array cache?
     shader *Stencil;
 
-    unsigned int DebugVAO = 0;
-    unsigned int DebugVBO = 0;
+    uint32 DebugVAO = 0;
+    uint32 DebugVBO = 0;
 
-    unsigned int CubeVAO = 0;
-    unsigned int CubeVBO = 0;
-    unsigned int CubeIBO = 0;
+    uint32 CubeVAO = 0;
+    uint32 CubeVBO = 0;
+    uint32 CubeIBO = 0;
 
-    uint32_t IndexCount = 0;
+    uint32 IndexCount = 0;
 
     vertex *CubeBuffer = nullptr;
     vertex *CubeBufferPtr = nullptr;

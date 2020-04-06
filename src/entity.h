@@ -9,11 +9,11 @@ enum entity_state
 
 struct entity_cube
 {
-    unsigned int ID;
+    uint32 ID;
     const char* Name;
     glm::vec3 Position;
     glm::vec3 Size;
-    float Scale;
+    float32 Scale;
     glm::vec4 Color;
     bool IsSelected = false;
     entity_state State;

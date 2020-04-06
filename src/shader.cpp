@@ -3,10 +3,10 @@
 
 #include "shader.h"
 
-void check_compile_errors(unsigned int object, std::string type);
+void check_compile_errors(uint32 object, std::string type);
 void compile_shader(shader *Shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource);
 shader* load_shader_from_file(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, const std::string& name, std::map<std::string, shader*> &ShaderStorage);
-unsigned int get_uniform_location_cache(shader *Shader, const char* name);
+uint32 get_uniform_location_cache(shader *Shader, const char* name);
 
 shader* ShaderGetFromStorage(const std::string& name)
 {
@@ -27,57 +27,57 @@ void ShaderDeleteStorage()
     }
 }
 
-void ShaderSetUniform1f(shader *Shader, const char* name, float value)
+void ShaderSetUniform1f(shader *Shader, const char* name, float32 value)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform1f(id, value);
 }
 
-void ShaderSetUniform1i(shader *Shader, const char* name, int value)
+void ShaderSetUniform1i(shader *Shader, const char* name, int32 value)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform1i(id, value);
 }
 
-void ShaderSetUniform2f(shader *Shader, const char* name, float x, float y)
+void ShaderSetUniform2f(shader *Shader, const char* name, float32 x, float32 y)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform2f(id, x, y);
 }
 
 void ShaderSetUniform2f(shader *Shader, const char* name, const glm::vec2 &value)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform2f(id, value.x, value.y);
 }
 
-void ShaderSetUniform3f(shader *Shader, const char* name, float x, float y, float z)
+void ShaderSetUniform3f(shader *Shader, const char* name, float32 x, float32 y, float32 z)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform3f(id, x, y, z);
 }
 
 void ShaderSetUniform3f(shader *Shader, const char* name, const glm::vec3 &value)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform3f(id, value.x, value.y, value.z);
 }
 
-void ShaderSetUniform4f(shader *Shader, const char* name, float x, float y, float z, float w)
+void ShaderSetUniform4f(shader *Shader, const char* name, float32 x, float32 y, float32 z, float32 w)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform4f(id, x, y, z, w);
 }
 
 void ShaderSetUniform4f(shader *Shader, const char* name, const glm::vec4 &value)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniform4f(id, value.x, value.y, value.z, value.w);
 }
 
 void ShaderSetUniform4fv(shader *Shader, const char* name, const glm::mat4 &matrix)
 {
-    unsigned int id = get_uniform_location_cache(Shader, name);
+    uint32 id = get_uniform_location_cache(Shader, name);
     glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
@@ -101,12 +101,12 @@ void CrapShortcutConstructCompileShaders(glm::mat4 projectionMatrix)
     ShaderSetUniform4fv(defaultShader, "projection", projectionMatrix);
 }
 
-unsigned int get_uniform_location_cache(shader *Shader, const char* name)
+uint32 get_uniform_location_cache(shader *Shader, const char* name)
 {
     if (globalUniformLocationCache.find(name) != globalUniformLocationCache.end())
 	return globalUniformLocationCache[name];
 
-    unsigned int location = glGetUniformLocation(Shader->ID, name);
+    uint32 location = glGetUniformLocation(Shader->ID, name);
     globalUniformLocationCache[name] = location;
 
     return location;
@@ -170,7 +170,7 @@ void compile_shader(shader *Shader,
 		   const char* fragmentSource,
 		   const char* geometrySource)
 {
-    unsigned int sVertex, sFragment, gShader;
+    uint32 sVertex, sFragment, gShader;
     // Vertex Shader
     sVertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(sVertex, 1, &vertexSource, NULL);
@@ -210,9 +210,9 @@ void compile_shader(shader *Shader,
         glDeleteShader(gShader);
 }
 
-void check_compile_errors(unsigned int object, std::string type)
+void check_compile_errors(uint32 object, std::string type)
 {
-    int success;
+    int32 success;
     char infoLog[1024];
     if (type != "PROGRAM")
     {
