@@ -47,36 +47,36 @@
    - instancing ?
    - learn about compiler (unit, etc ...)
 */
-unsigned int globalWidth = 1280;
-unsigned int globalHeight = 960;
+const uint32 globalWidth = 1280;
+const uint32 globalHeight = 960;
 
 static bool  globalActiveWindow        = false;
-static int   globalSliderMapSize       = 130;
-unsigned int globalContainerSelectedID = 0;
-unsigned int globalContainerHoveredID  = 0;
-unsigned int globalTerrainHoveredID    = 0;
+static uint32   globalSliderMapSize       = 130;
+uint32 globalContainerSelectedID = 0;
+uint32 globalContainerHoveredID  = 0;
+uint32 globalTerrainHoveredID    = 0;
 
 glm::vec3 globalCameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 
-std::unordered_map<int, entity_cube> GAME_TERRAIN_ENTITIES;
-std::unordered_map<int, entity_cube> GAME_CONTAINER_ENTITIES;
-std::unordered_map<int, int> GAME_SLOT_RELATIONSHIPS;
+std::unordered_map<uint32, entity_cube> GAME_TERRAIN_ENTITIES;
+std::unordered_map<uint32, entity_cube> GAME_CONTAINER_ENTITIES;
+std::unordered_map<uint32, uint32> GAME_SLOT_RELATIONSHIPS;
 
-void DrawSettingsPanel(engine *Engine, int width, int height, input_state *InputState, camera *Camera, renderer *Renderr, int &mapSize, std::unordered_map<int, entity_cube> &objects, std::unordered_map<int, int> &slots, bool &focus);
-void AttribContainerToSlot(std::unordered_map<int, int> &slots, std::unordered_map<int, entity_cube> &containers, int selectedSlot, int selectedItem);
+void DrawSettingsPanel(engine *Engine, uint32 width, uint32 height, input_state *InputState, camera *Camera, renderer *Renderr, uint32 &mapSize, std::unordered_map<uint32, entity_cube> &objects, std::unordered_map<uint32, uint32> &slots, bool &focus);
+void AttribContainerToSlot(std::unordered_map<uint32, uint32> &slots, std::unordered_map<uint32, entity_cube> &containers, uint32 selectedSlot, uint32 selectedItem);
 
-void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrain, std::unordered_map<int, int> &slots);
+void CreateTestTerrain(uint32 mapSize, std::unordered_map<uint32, entity_cube> &terrain, std::unordered_map<uint32, uint32> &slots);
 void CreateTestContainers();
 void CreateTestSpheres(float radius, int slacks, int slices); // TODO: entity_sphere
 
-void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float scale);
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float32 scale);
 void DrawSpheres();
 
 int main(int argc, char *argv[])
 {
     // Init all systems
     engine *Engine = EngineConstruct(globalWidth, globalHeight, DEBUG_MODE | VSYNC);
-    camera *Camera = CameraConstruct((float)globalWidth, (float)globalHeight, globalCameraStartPosition);
+    camera *Camera = CameraConstruct((float32)globalWidth, (float32)globalHeight, globalCameraStartPosition);
     input_state *InputState = InputStateConstruct(Engine->Window);
 
     CrapShortcutConstructCompileShaders(Camera->ProjectionMatrix); // TODO: crap
@@ -90,22 +90,23 @@ int main(int argc, char *argv[])
     //CreateTestSpheres(0.5f, 20, 20); // dirty way to create spheres
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
-    {
-	int WIDTH, HEIGHT;
-	EngineGetWindowSize(Engine, &WIDTH, &HEIGHT);
+    {	
+	uint32 WIDTH = 0;
+	uint32 HEIGHT = 0;
+	EngineGetWindowSize(Engine, WIDTH, HEIGHT);
 
 	CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOT_RELATIONSHIPS);	
 	// Ray casting test
-	glm::vec3 rayWorld = MouseRayDirectionWorld((float)InputState->MousePosX,
-						    (float)InputState->MousePosY,
+	glm::vec3 rayWorld = MouseRayDirectionWorld((float32)InputState->MousePosX,
+						    (float32)InputState->MousePosY,
 						    WIDTH,
 						    HEIGHT,
 						    Camera->ProjectionMatrix,
 						    CameraGetViewMatrix(Camera));
 
-	for (std::pair<int, entity_cube> element : GAME_TERRAIN_ENTITIES)
+	for (std::pair<uint32, entity_cube> element : GAME_TERRAIN_ENTITIES)
 	{
-	    float rayIntersection = 0.0f;
+	    float32 rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
 		element.second.Position.x + element.second.Scale / 2,
 		element.second.Position.y + element.second.Scale / 2,
@@ -123,9 +124,9 @@ int main(int argc, char *argv[])
 		globalTerrainHoveredID = 0;
 	}
 
-	for (std::pair<int, entity_cube> element : GAME_CONTAINER_ENTITIES)
+	for (std::pair<uint32, entity_cube> element : GAME_CONTAINER_ENTITIES)
 	{
-	    float rayIntersection = 0.0f;
+	    float32 rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
 		element.second.Position.x + element.second.Scale / 2,
 		element.second.Position.y + element.second.Scale / 2,
@@ -146,17 +147,17 @@ int main(int argc, char *argv[])
 	if (InputState->Keyboard[GLFW_KEY_ESCAPE])
 	    Engine->GlobalState = ENGINE_TERMINATE;
 	if (InputState->Keyboard[GLFW_KEY_W])
-	    CameraProcessKeyboard(Camera, FORWARD, (float)Engine->Time->DeltaTime);
+	    CameraProcessKeyboard(Camera, FORWARD, Engine->Time->DeltaTime);
 	if (InputState->Keyboard[GLFW_KEY_S])
-	    CameraProcessKeyboard(Camera, BACKWARD, (float)Engine->Time->DeltaTime);
+	    CameraProcessKeyboard(Camera, BACKWARD, Engine->Time->DeltaTime);
 	if (InputState->Keyboard[GLFW_KEY_A])
-	    CameraProcessKeyboard(Camera, LEFT, (float)Engine->Time->DeltaTime);
+	    CameraProcessKeyboard(Camera, LEFT, Engine->Time->DeltaTime);
 	if (InputState->Keyboard[GLFW_KEY_D])
-	    CameraProcessKeyboard(Camera, RIGHT, (float)Engine->Time->DeltaTime);	
+	    CameraProcessKeyboard(Camera, RIGHT, Engine->Time->DeltaTime);	
 	if (InputState->Keyboard[GLFW_KEY_SPACE])
-	    CameraProcessKeyboard(Camera, UP, (float)Engine->Time->DeltaTime);	
+	    CameraProcessKeyboard(Camera, UP, Engine->Time->DeltaTime);	
 	if (InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
-	    CameraProcessKeyboard(Camera, DOWN, (float)Engine->Time->DeltaTime);	
+	    CameraProcessKeyboard(Camera, DOWN, Engine->Time->DeltaTime);	
 	if (InputState->MouseLeftButton && !globalActiveWindow)
 	{
 	    InputStateUpdateMouseOffset(InputState);
@@ -179,7 +180,7 @@ int main(int argc, char *argv[])
 	    RendererDrawDebugAxis(Renderer);	
 
 	RendererStartNewBatchCube(Renderer);
-	for (std::pair<int, entity_cube> element : GAME_TERRAIN_ENTITIES)
+	for (std::pair<uint32, entity_cube> element : GAME_TERRAIN_ENTITIES)
 	{
 	    if (globalTerrainHoveredID != 0 && globalTerrainHoveredID == element.second.ID)
 	    {
@@ -204,7 +205,7 @@ int main(int argc, char *argv[])
 	glStencilMask(0xFF);
 
 	RendererStartNewBatchCube(Renderer);
-	for (std::pair<int, entity_cube> element : GAME_CONTAINER_ENTITIES)
+	for (std::pair<uint32, entity_cube> element : GAME_CONTAINER_ENTITIES)
 	{
 	    PushEntityCubeToBuffer(Renderer, element.second, 1.0f);
 	}
@@ -277,23 +278,25 @@ void CreateTestContainers()
 	GAME_CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
 }
 
-void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrain, std::unordered_map<int, int> &slots)
+void CreateTestTerrain(uint32 mapSize,
+		       std::unordered_map<uint32, entity_cube> &terrain,
+		       std::unordered_map<uint32, uint32> &slots)
 {
     terrain.clear();
     //slots.clear(); // TODO: carefull overflow
     glm::vec4 color = { 0.2f, 0.2f, 0.2f, 1.0f };
     glm::vec4 colorH = { 0.25f, 0.25f, 0.25f, 1.0f };
     glm::vec3 size = { 1.0f, 0.5f, 1.0f };
-    float scale = 1.0f;
+    float32 scale = 1.0f;
     entity_state state = ENTITY_STATE_STATIC;
-    float posX = 0.0f;
+    float32 posX = 0.0f;
     bool slot = true;
-    unsigned int id = 1;
-    int side = (int)std::sqrt(mapSize);
-    for (int i = 0; i < side; i++)
+    uint32 id = 1;
+    int32 side = (int32)std::sqrt(mapSize);
+    for (int32 i = 0; i < side; i++)
     {
-	float posZ = -size.z;
-	for (int y = 0; y < side; y++)
+	float32 posZ = -size.z;
+	for (int32 y = 0; y < side; y++)
 	{
 	    glm::vec4 c = color;
 	    entity_state s = state;
@@ -315,7 +318,7 @@ void CreateTestTerrain(int mapSize, std::unordered_map<int, entity_cube> &terrai
     }
 }
 
-void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float scale)
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float32 scale)
 {
     RendererAddCubeToBuffer(Renderer,
 		    cube.Position,
@@ -325,17 +328,17 @@ void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float scale)
 }
 
 void DrawSettingsPanel(engine *Engine,
-		       int width, int height,
+		       uint32 width, uint32 height,
 		       input_state *InputState,
 		       camera *Camera,
 		       renderer *Renderer,
-		       int &mapSize,
-		       std::unordered_map<int, entity_cube> &containers,
-		       std::unordered_map<int, int> &slots,
+		       uint32 &mapSize,
+		       std::unordered_map<uint32, entity_cube> &containers,
+		       std::unordered_map<uint32, uint32> &slots,
 		       bool &focus)
 {
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(410, (float)height - 20));
+    ImGui::SetNextWindowSize(ImVec2(410, (float32)height - 20));
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize);
 
     EngineSettingsCollapseHeader(Engine, width, height);
@@ -347,7 +350,7 @@ void DrawSettingsPanel(engine *Engine,
     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::Text("slots: %03d/%03d", 0, slots.size());
-	if (ImGui::SliderInt("floor", &mapSize, 0, 1000))
+	if (ImGui::SliderInt("floor", &(int)mapSize, 0, 1000))
 	    slots.clear();
 	ImGui::Separator();
     }
@@ -355,13 +358,13 @@ void DrawSettingsPanel(engine *Engine,
     // Containers
     if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	static int selected = 0;
+	static uint32 selected = 0;
 	ImGui::BeginChild("left pane", ImVec2(120, 150));
-	for (std::pair<int, entity_cube> element : containers)	 
+	for (std::pair<uint32, entity_cube> element : containers)	 
 	{
 	    char label[128];
 	    sprintf_s(label, "obj: <%s>", element.second.Name);
-	    if (ImGui::Selectable(label, (int)globalContainerSelectedID == element.first))
+	    if (ImGui::Selectable(label, (uint32)globalContainerSelectedID == element.first))
 		globalContainerSelectedID = element.first;
 	}
 
@@ -399,12 +402,11 @@ void DrawSettingsPanel(engine *Engine,
     }
 
     // Slots
-    static int selectedItem = -1;
-    static int selectedSlot = 0;
+    static uint32 selectedSlot = 0;
     if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::Columns(2);
-	for (std::pair<int, int> sl : slots)
+	for (std::pair<uint32, uint32> sl : slots)
 	{
 	    char buf1[32];
 	    sprintf_s(buf1, "%03d", sl.first);
@@ -434,7 +436,7 @@ void DrawSettingsPanel(engine *Engine,
     {
 	ImGui::Text("slot-%03d", selectedSlot);
 	ImGui::Separator();
-	for (std::pair<int, entity_cube> ct : containers)	 
+	for (std::pair<uint32, entity_cube> ct : containers)	 
 	{
 	    if (ImGui::Selectable(containers[ct.first].Name))
 		AttribContainerToSlot(slots, containers, selectedSlot, ct.first);
@@ -449,12 +451,12 @@ void DrawSettingsPanel(engine *Engine,
     ImGui::End();
 }
 
-void AttribContainerToSlot(std::unordered_map<int, int> &slots,
-			   std::unordered_map<int, entity_cube> &containers,
-			   int selectedSlot,
-			   int selectedItem)
+void AttribContainerToSlot(std::unordered_map<uint32, uint32> &slots,
+			   std::unordered_map<uint32, entity_cube> &containers,
+			   uint32 selectedSlot,
+			   uint32 selectedItem)
 {
-    for (std::pair<int, int> sl : slots)
+    for (std::pair<uint32, uint32> sl : slots)
     {
 	if (sl.second == selectedItem)
 	{
@@ -475,7 +477,7 @@ void AttribContainerToSlot(std::unordered_map<int, int> &slots,
 
 // TODO: move to entity (entity_sphere...)
 unsigned int SphereVAO, SphereVBO, SphereIBO;
-std::vector<uint32_t> sphereIndices;
+std::vector<int> sphereIndices;
 void CreateTestSpheres(float radius, int stacks, int slices)
 {
     std::vector<glm::vec3> vertices;

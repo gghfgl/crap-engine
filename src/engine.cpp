@@ -35,7 +35,7 @@ void WrapImGuiRender()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
 }
 
-engine* EngineConstruct(unsigned int width, unsigned int height, int options=NO_FLAG)
+engine* EngineConstruct(uint32 width, uint32 height, int32 options=NO_FLAG)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -75,12 +75,23 @@ engine* EngineConstruct(unsigned int width, unsigned int height, int options=NO_
     if (options & POLYGONE_MODE) // TODO: on the fly setting
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    LARGE_INTEGER perfCountFrequencyResult;
+    QueryPerformanceFrequency(&perfCountFrequencyResult);
+    LARGE_INTEGER lastPerfCount;
+    QueryPerformanceCounter(&lastPerfCount);
+    uint64 lastCycleCount = __rdtsc();
+
+    engine_time *Time = new engine_time;
+    Time->PerfCountFrequency = perfCountFrequencyResult.QuadPart;
+    Time->LastPerfCount = lastPerfCount.QuadPart;
+    Time->LastCycleCount = lastCycleCount;
+
     engine *Engine = new engine();
     Engine->GlobalState = ENGINE_ACTIVE;
     Engine->GPUModel = (const char*)glGetString(GL_RENDERER);
     Engine->OpenglVersion = (const char*)glGetString(GL_VERSION);
     Engine->Window = window;
-    Engine->Time = new engine_time();
+    Engine->Time = Time;
 
     init_imgui(window);
     return Engine;
@@ -94,24 +105,29 @@ void EngineDelete(engine *Engine)
     glfwTerminate();
 }
 
-void EngineGetWindowSize(engine *Engine, int *width, int *height)
+void EngineGetWindowSize(engine *Engine,  uint32 width, uint32 height)
 {
-    glfwGetWindowSize(Engine->Window, width, height);
+    glfwGetWindowSize(Engine->Window, &(int)width, &(int)height);
 }
 
 void EngineUpdateTime(engine_time *Time)
 {
-   const double currentTime = glfwGetTime();
-   Time->DeltaTime = currentTime - Time->LastFrameTime;
-   Time->LastFrameTime = currentTime;
-   Time->NextFPS++;
+    LARGE_INTEGER currentPerfCount;
+    QueryPerformanceCounter(&currentPerfCount);
+    float32 counterElapsed = (float32)(currentPerfCount.QuadPart - Time->LastPerfCount);
+    float32 msPerFrame = (1000 * counterElapsed) / (float32)Time->PerfCountFrequency;
+    int32 fps = (int32)(Time->PerfCountFrequency / counterElapsed);
 
-   if(currentTime - Time->LastFrameTimeFPS > 1.0)
-   {
-      Time->LastFrameTimeFPS = currentTime;
-      Time->FPS = Time->NextFPS;
-      Time->NextFPS = 0;
-   }
+    uint64 currentCycleCount = __rdtsc();
+    int64 cyclesElapsed = currentCycleCount - Time->LastCycleCount;
+    int32 MCPF = (int32)(cyclesElapsed / (1000 * 1000));
+    
+    Time->MsPerFrame = msPerFrame;  // ms
+    Time->DeltaTime = msPerFrame / 1000.0f; // s
+    Time->LastPerfCount = currentPerfCount.QuadPart;
+    Time->FPS = fps;
+    Time->MegaCyclePerFrame = MCPF;
+    Time->LastCycleCount = currentCycleCount;
 }
 
 void EngineShowOverlay(engine *Engine)
@@ -126,9 +142,9 @@ void EngineShowOverlay(engine *Engine)
 	ImGui::Text(Engine->GPUModel);
 	ImGui::Text(Engine->OpenglVersion);
 	ImGui::Separator();
-	ImGui::Text("frameTime: %.3fms", Engine->Time->DeltaTime);
-	ImGui::SameLine();
-	ImGui::Text("fps: %d", Engine->Time->FPS);
+	ImGui::Text("frame time: %.3fms", Engine->Time->MsPerFrame);
+	ImGui::Text("frame per sec: %d", Engine->Time->FPS);
+	ImGui::Text("Mcy per frame: %d", Engine->Time->MegaCyclePerFrame);
 	ImGui::End();
     }
 }

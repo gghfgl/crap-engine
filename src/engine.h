@@ -14,11 +14,13 @@ enum engine_init_flag {
 };
 
 struct engine_time {
-    double DeltaTime = 0.0f;
-    double LastFrameTime = 0.0f;
-    double LastFrameTimeFPS = 0.0f;
-    int FPS = 0;
-    int NextFPS = 0;
+    float32 MsPerFrame;
+    float32 DeltaTime;
+    int64   LastPerfCount;
+    int64   PerfCountFrequency;
+    int32   FPS;
+    int32   MegaCyclePerFrame;
+    uint64  LastCycleCount;
 };
 
 struct engine {
