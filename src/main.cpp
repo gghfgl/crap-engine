@@ -2,30 +2,19 @@
 
 #include "plateform.h"
 
-/* NOTE: should implement
-   - depth test
-   - face culling
-   - MSAA anti aliasing
-   - frame rate counter ms /  VSYNC viz
-   - stencil test outline object + picking object by color (GPU)
-   - quick abstract UI debug
-   - stencil test outline object + picking object by ray casting (CPU)
-   - draw sphere ...
-*/
-
 /* TODO:
-   - clean renderer construct with shader array?
-   - fill engine boolean for Imgui settings
-   - stencil outlie probleme z buffer
+   - add texture and white default texture to batch rendering cube.
+   - load models assimp?
    - draw ray casting debug sphere see TODO in renderer
    - add Ray casting OBB test with debug bounding box draw
    - position objects from slot attruibution array
-   - add texture and white default texture to batch rendering cube.
+   - switch oultine with postprocessing technique?
 
    - set of predef camera position
    - lock/unlock camera movement from to terrain space
-   - load models assimp?
-   - read level design from file
+   - read level design from file?
+   - skybox with switch from file in the fly
+   - stencil reflect
 
    - add click action to container object and open imgui inventory?
    - in fuction time profiler (handemade hero fast thread id retrieval)
@@ -47,29 +36,29 @@
    - instancing ?
    - learn about compiler (unit, etc ...)
 */
-const uint32 globalWidth = 1280;
-const uint32 globalHeight = 960;
-
-static bool  globalActiveWindow        = false;
-static uint32   globalSliderMapSize       = 130;
-uint32 globalContainerSelectedID = 0;
-uint32 globalContainerHoveredID  = 0;
-uint32 globalTerrainHoveredID    = 0;
+const uint32 globalWidth            = 1280;
+const uint32 globalHeight           = 960;
+static bool globalActiveWindow      = false;
+static uint32 globalSliderMapSize   = 130;
+static uint32 globalCacheSliderMapSize   = 130;
+uint32 globalContainerSelectedID    = 0;
+uint32 globalContainerHoveredID     = 0;
+uint32 globalTerrainHoveredID       = 0;
 
 glm::vec3 globalCameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 
 std::unordered_map<uint32, entity_cube> GAME_TERRAIN_ENTITIES;
 std::unordered_map<uint32, entity_cube> GAME_CONTAINER_ENTITIES;
-std::unordered_map<uint32, uint32> GAME_SLOT_RELATIONSHIPS;
+std::unordered_map<uint32, uint32> GAME_SLOTS_RELATIONSHIP;
 
 void DrawSettingsPanel(engine *Engine, uint32 width, uint32 height, input_state *InputState, camera *Camera, renderer *Renderr, uint32 &mapSize, std::unordered_map<uint32, entity_cube> &objects, std::unordered_map<uint32, uint32> &slots, bool &focus);
 void AttribContainerToSlot(std::unordered_map<uint32, uint32> &slots, std::unordered_map<uint32, entity_cube> &containers, uint32 selectedSlot, uint32 selectedItem);
 
 void CreateTestTerrain(uint32 mapSize, std::unordered_map<uint32, entity_cube> &terrain, std::unordered_map<uint32, uint32> &slots);
-void CreateTestContainers();
+void CreateTestContainers(std::unordered_map<uint32, entity_cube> &containers);
 void CreateTestSpheres(float radius, int slacks, int slices); // TODO: entity_sphere
 
-void PushEntityCubeToBuffer(renderer *Renderer, entity_cube container, float32 scale);
+void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float32 scale);
 void DrawSpheres();
 
 int main(int argc, char *argv[])
@@ -78,24 +67,62 @@ int main(int argc, char *argv[])
     engine *Engine = EngineConstruct(globalWidth, globalHeight, DEBUG_MODE | VSYNC);
     camera *Camera = CameraConstruct((float32)globalWidth, (float32)globalHeight, globalCameraStartPosition);
     input_state *InputState = InputStateConstruct(Engine->Window);
-
-    CrapShortcutConstructCompileShaders(Camera->ProjectionMatrix); // TODO: crap
-    renderer *Renderer = RendererConstruct(ShaderGetFromStorage("default"),
-					   ShaderGetFromStorage("stencil")); // TODO: crap
+    ShaderCompileAndStore("../shaders/default.vs", "../shaders/default.fs", nullptr,
+			  "default", Camera->ProjectionMatrix);
+    ShaderCompileAndStore("../shaders/default.vs", "../shaders/stencil.fs", nullptr,
+			  "stencil", Camera->ProjectionMatrix);
+    renderer *Renderer = RendererConstruct();
     
     RendererPrepareDebugAxis(Renderer);
     RendererPrepareCubeBatching(Renderer);
     
-    CreateTestContainers();
+    CreateTestContainers(GAME_CONTAINER_ENTITIES);
     //CreateTestSpheres(0.5f, 20, 20); // dirty way to create spheres
+    CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
 
     while (Engine->GlobalState == ENGINE_ACTIVE)
     {	
-	uint32 WIDTH = 0;
-	uint32 HEIGHT = 0;
-	EngineGetWindowSize(Engine, WIDTH, HEIGHT);
+	int WIDTH = 0;
+	int HEIGHT = 0;
+	EngineGetWindowSize(Engine, &WIDTH, &HEIGHT);
 
-	CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOT_RELATIONSHIPS);	
+	if (globalSliderMapSize != globalCacheSliderMapSize)
+	{
+	    CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
+	    globalCacheSliderMapSize = globalSliderMapSize;
+	}
+	
+	// NOTE: READ INPUTS ======================================
+	EngineUpdateTime(Engine->Time);
+	InputStatePollEvents();
+	if (InputState->Keyboard[GLFW_KEY_ESCAPE])
+	    Engine->GlobalState = ENGINE_TERMINATE;
+	if (InputState->Keyboard[GLFW_KEY_W])
+	    CameraProcessKeyboard(Camera, FORWARD, Engine->Time->DeltaTime);
+	if (InputState->Keyboard[GLFW_KEY_S])
+	    CameraProcessKeyboard(Camera, BACKWARD, Engine->Time->DeltaTime);
+	if (InputState->Keyboard[GLFW_KEY_A])
+	    CameraProcessKeyboard(Camera, LEFT, Engine->Time->DeltaTime);
+	if (InputState->Keyboard[GLFW_KEY_D])
+	    CameraProcessKeyboard(Camera, RIGHT, Engine->Time->DeltaTime);	
+	if (InputState->Keyboard[GLFW_KEY_SPACE])
+	    CameraProcessKeyboard(Camera, UP, Engine->Time->DeltaTime);	
+	if (InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
+	    CameraProcessKeyboard(Camera, DOWN, Engine->Time->DeltaTime);	
+	if (InputState->MouseLeftButton && !globalActiveWindow)
+	{
+	    InputStateUpdateMouseOffset(InputState);
+	    CameraProcessMouseMovement(Camera,
+				       InputState->MouseOffsetX,
+				       InputState->MouseOffsetY);
+
+	    if (globalContainerHoveredID != 0)
+		globalContainerSelectedID = globalContainerHoveredID;
+	    else
+	        globalContainerSelectedID = 0;
+	}
+
+	// NOTE: SIMULATE WORLD ======================================
 	// Ray casting test
 	glm::vec3 rayWorld = MouseRayDirectionWorld((float32)InputState->MousePosX,
 						    (float32)InputState->MousePosY,
@@ -140,43 +167,14 @@ int main(int argc, char *argv[])
 	    else
 		globalContainerHoveredID = 0;
 	}
+
 	
-	// I/O
-	EngineUpdateTime(Engine->Time);
-	InputStatePollEvents();
-	if (InputState->Keyboard[GLFW_KEY_ESCAPE])
-	    Engine->GlobalState = ENGINE_TERMINATE;
-	if (InputState->Keyboard[GLFW_KEY_W])
-	    CameraProcessKeyboard(Camera, FORWARD, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_S])
-	    CameraProcessKeyboard(Camera, BACKWARD, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_A])
-	    CameraProcessKeyboard(Camera, LEFT, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_D])
-	    CameraProcessKeyboard(Camera, RIGHT, Engine->Time->DeltaTime);	
-	if (InputState->Keyboard[GLFW_KEY_SPACE])
-	    CameraProcessKeyboard(Camera, UP, Engine->Time->DeltaTime);	
-	if (InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
-	    CameraProcessKeyboard(Camera, DOWN, Engine->Time->DeltaTime);	
-	if (InputState->MouseLeftButton && !globalActiveWindow)
-	{
-	    InputStateUpdateMouseOffset(InputState);
-	    CameraProcessMouseMovement(Camera,
-				       InputState->MouseOffsetX,
-				       InputState->MouseOffsetY);
-
-	    if (globalContainerHoveredID != 0)
-		globalContainerSelectedID = globalContainerHoveredID;
-	    else
-	        globalContainerSelectedID = 0;
-	}
-
 	// NOTE: START RENDERING ======================================
 	RendererResetStats(Renderer);
-        RendererStart(Renderer, CameraGetViewMatrix(Camera));
+        RendererStart(Renderer, ShaderGetFromStorage("default"), CameraGetViewMatrix(Camera));
 
-	// NOTE: CLASSIC RENDERING ======================================
-	if (true)
+	// ** classic
+	if (Engine->DebugMode)
 	    RendererDrawDebugAxis(Renderer);	
 
 	RendererStartNewBatchCube(Renderer);
@@ -196,38 +194,62 @@ int main(int argc, char *argv[])
 	    } else
 		PushEntityCubeToBuffer(Renderer, element.second, 1.0f);
 	}
+
 	//DrawSpheres();
 	RendererCloseBatchCube(Renderer);
 	RendererFlushBatchCube(Renderer);
-
-	// NOTE: STENCIL RENDERING ======================================
+	
+	// ** stencil
 	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilMask(0xFF);
+	glStencilMask(0xFF); //enable writing stencil buffer
 
 	RendererStartNewBatchCube(Renderer);
 	for (std::pair<uint32, entity_cube> element : GAME_CONTAINER_ENTITIES)
 	{
+	    glClear(GL_STENCIL_BUFFER_BIT);
 	    PushEntityCubeToBuffer(Renderer, element.second, 1.0f);
 	}
+
 	RendererCloseBatchCube(Renderer);
 	RendererFlushBatchCube(Renderer);
 
 	if (globalContainerHoveredID != 0 || globalContainerSelectedID != 0)
 	{
-	    RendererStartStencil(Renderer, CameraGetViewMatrix(Camera));
+	    RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
 
 	    RendererStartNewBatchCube(Renderer);
 	    if (globalContainerSelectedID != 0)
+	    {
+		//RendererStartNewBatchCube(Renderer);
+
+		//glClear(GL_STENCIL_BUFFER_BIT);
+		//RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
 		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[globalContainerSelectedID], 1.1f);
+		//RendererStopStencil();	    
+
+		//RendererCloseBatchCube(Renderer);
+		//RendererFlushBatchCube(Renderer);
+	    }
 	    if (globalContainerHoveredID != 0)
+	    {
+		//RendererStartNewBatchCube(Renderer);
+
+		//glClear(GL_STENCIL_BUFFER_BIT);
+		//RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
 		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[globalContainerHoveredID], 1.1f);
+		//RendererStopStencil();	    
+
+		//RendererCloseBatchCube(Renderer);
+		//RendererFlushBatchCube(Renderer);
+	    }
+
 	    RendererCloseBatchCube(Renderer);
 	    RendererFlushBatchCube(Renderer);
 
 	    RendererStopStencil();	    
 	}
 	
-	// NOTE: UI RENDERING ======================================
+	// ** UI
         WrapImGuiNewFrame();	
 
         EngineShowOverlay(Engine);
@@ -238,13 +260,13 @@ int main(int argc, char *argv[])
 			  Renderer,
 			  globalSliderMapSize,
 			  GAME_CONTAINER_ENTITIES,
-			  GAME_SLOT_RELATIONSHIPS,
-			  globalActiveWindow);	
+			  GAME_SLOTS_RELATIONSHIP,
+			  globalActiveWindow);
 
 	WrapImGuiRender();
 	
-	// NOTE: SWAP BUFFER ======================================
-	RendererSwapBufferAndFinish(Engine->Window);
+	// ** Swap buffer
+	RendererSwapBufferAndFinish(Renderer, Engine->Window);
     }
 
     CameraDelete(Camera);
@@ -255,7 +277,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void CreateTestContainers()
+void CreateTestContainers(std::unordered_map<uint32, entity_cube> &containers)
 {
     entity_cube containerOne = EntityCubeConstruct(1,
 						   "Container1",
@@ -272,10 +294,10 @@ void CreateTestContainers()
 						   { 0.0f, 0.0f, 1.0f, 1.0f },
 						   ENTITY_STATE_DYNAMIC);
     
-    if (GAME_CONTAINER_ENTITIES.find(containerOne.ID) == GAME_CONTAINER_ENTITIES.end())
-	GAME_CONTAINER_ENTITIES[containerOne.ID] = containerOne;
-    if (GAME_CONTAINER_ENTITIES.find(containerTwo.ID) == GAME_CONTAINER_ENTITIES.end())
-	GAME_CONTAINER_ENTITIES[containerTwo.ID] = containerTwo;
+    if (containers.find(containerOne.ID) == containers.end())
+	containers[containerOne.ID] = containerOne;
+    if (containers.find(containerTwo.ID) == containers.end())
+	containers[containerTwo.ID] = containerTwo;
 }
 
 void CreateTestTerrain(uint32 mapSize,
@@ -320,11 +342,8 @@ void CreateTestTerrain(uint32 mapSize,
 
 void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float32 scale)
 {
-    RendererAddCubeToBuffer(Renderer,
-		    cube.Position,
-		    { cube.Size.x, cube.Size.y, cube.Size.z },
-		    cube.Scale * scale,
-		    cube.Color);
+    RendererAddCubeToBuffer(Renderer, cube.Position, { cube.Size.x, cube.Size.y, cube.Size.z },
+			    cube.Scale * scale, cube.Color);
 }
 
 void DrawSettingsPanel(engine *Engine,

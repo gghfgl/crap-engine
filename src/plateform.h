@@ -1,19 +1,6 @@
 #pragma once
 
-typedef int8_t int8;
-typedef int16_t int16;
-typedef int32_t int32;
-typedef int64_t int64;
-
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-typedef uint64_t uint64;
-
-typedef float float32;
-typedef double float64;
-
-#include <Windows.h>
+#include <windows.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -23,14 +10,15 @@ typedef double float64;
 #include "IMGUI/imgui.h"
 #include "IMGUI/imgui_impl_glfw.h"
 #include "IMGUI/imgui_impl_opengl3.h"
+#include "../dep/stb_image.cpp"
+#include "../dep/glad.c"
 
+#include "intrinsic.h"
 #include "input.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
 #include "shader.cpp"
-#include "renderer.cpp"
 #include "texture.cpp"
+#include "renderer.cpp"
 
 #include "engine.cpp"
-#include "../dep/stb_image.cpp"
-#include "../dep/glad.c"

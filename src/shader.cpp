@@ -39,6 +39,12 @@ void ShaderSetUniform1i(shader *Shader, const char* name, int32 value)
     glUniform1i(id, value);
 }
 
+void ShaderSetUniform1iv(shader *Shader, const char* name, int32 *value)
+{
+    uint32 id = get_uniform_location_cache(Shader, name);
+    glUniform1iv(id, (GLsizei)(sizeof(value)/sizeof(value[0])), value);
+}
+
 void ShaderSetUniform2f(shader *Shader, const char* name, float32 x, float32 y)
 {
     uint32 id = get_uniform_location_cache(Shader, name);
@@ -81,24 +87,15 @@ void ShaderSetUniform4fv(shader *Shader, const char* name, const glm::mat4 &matr
     glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
-// TODO: hardcoded
-void CrapShortcutConstructCompileShaders(glm::mat4 projectionMatrix)
+void ShaderCompileAndStore(const char* vShaderFile,
+			   const char* fShaderFile,
+			   const char* gShaderFile,
+			   const std::string& name,
+			   glm::mat4 projectionMatrix)
 {
-    shader *defaultShader = load_shader_from_file("../shaders/default.vs",
-					  "../shaders/default.fs",
-					  nullptr,
-					  "default",
-					  _SHADERS_STORAGE);
-    shader *stencilShader = load_shader_from_file("../shaders/default.vs",
-					  "../shaders/stencil.fs",
-					  nullptr,
-					  "stencil",
-					  _SHADERS_STORAGE);
-
-    ShaderUseProgram(stencilShader);
-    ShaderSetUniform4fv(stencilShader, "projection", projectionMatrix);
-    ShaderUseProgram(defaultShader);
-    ShaderSetUniform4fv(defaultShader, "projection", projectionMatrix);
+    shader *Shader = load_shader_from_file(vShaderFile, fShaderFile, gShaderFile, name, _SHADERS_STORAGE);
+    ShaderUseProgram(Shader);
+    ShaderSetUniform4fv(Shader, "projection", projectionMatrix);
 }
 
 uint32 get_uniform_location_cache(shader *Shader, const char* name)

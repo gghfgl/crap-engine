@@ -35,6 +35,47 @@ void WrapImGuiRender()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
 }
 
+void EngineToggleVsync(engine *Engine)
+{
+    if (Engine->Vsync)
+    {
+	glfwSwapInterval(0);
+	Engine->Vsync = false;
+    }
+    else
+    {
+	glfwSwapInterval(1);
+	Engine->Vsync = true;
+    }
+}
+
+void EngineTogglePolyMode(engine *Engine)
+{
+    if (Engine->PolyMode)
+    {
+	std::cout << "test" << std::endl;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	Engine->PolyMode = false;
+    }
+    else
+    {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	Engine->PolyMode = true;
+    }
+}
+
+void EngineToggleDebugMode(engine *Engine)
+{
+    if (Engine->DebugMode)
+    {
+	Engine->DebugMode = false;
+    }
+    else
+    {
+	Engine->DebugMode = true;
+    }
+}
+
 engine* EngineConstruct(uint32 width, uint32 height, int32 options=NO_FLAG)
 {
     glfwInit();
@@ -54,10 +95,10 @@ engine* EngineConstruct(uint32 width, uint32 height, int32 options=NO_FLAG)
         // return -1;
     }
 
-    if (options & VSYNC) // TODO: on the fly setting
-	glfwSwapInterval(1); // VSync
+    if (options & VSYNC)
+	glfwSwapInterval(1);
     else
-	glfwSwapInterval(0); // VSync
+	glfwSwapInterval(0);
 
     glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
     glDepthFunc(GL_LESS);
@@ -71,10 +112,7 @@ engine* EngineConstruct(uint32 width, uint32 height, int32 options=NO_FLAG)
     //glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     //glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
-
-    if (options & POLYGONE_MODE) // TODO: on the fly setting
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+    
     LARGE_INTEGER perfCountFrequencyResult;
     QueryPerformanceFrequency(&perfCountFrequencyResult);
     LARGE_INTEGER lastPerfCount;
@@ -92,6 +130,9 @@ engine* EngineConstruct(uint32 width, uint32 height, int32 options=NO_FLAG)
     Engine->OpenglVersion = (const char*)glGetString(GL_VERSION);
     Engine->Window = window;
     Engine->Time = Time;
+    Engine->Vsync = options & VSYNC ? true : false;
+    Engine->PolyMode = false;
+    Engine->DebugMode = options & DEBUG_MODE ? true : false;
 
     init_imgui(window);
     return Engine;
@@ -105,9 +146,9 @@ void EngineDelete(engine *Engine)
     glfwTerminate();
 }
 
-void EngineGetWindowSize(engine *Engine,  uint32 width, uint32 height)
+void EngineGetWindowSize(engine *Engine,  int *width, int *height)
 {
-    glfwGetWindowSize(Engine->Window, &(int)width, &(int)height);
+    glfwGetWindowSize(Engine->Window, width, height);
 }
 
 void EngineUpdateTime(engine_time *Time)
@@ -142,9 +183,9 @@ void EngineShowOverlay(engine *Engine)
 	ImGui::Text(Engine->GPUModel);
 	ImGui::Text(Engine->OpenglVersion);
 	ImGui::Separator();
-	ImGui::Text("frame time: %.3fms", Engine->Time->MsPerFrame);
-	ImGui::Text("frame per sec: %d", Engine->Time->FPS);
-	ImGui::Text("Mcy per frame: %d", Engine->Time->MegaCyclePerFrame);
+	ImGui::Text("ms/f: %.3fms", Engine->Time->MsPerFrame);
+	ImGui::Text("fps: %d", Engine->Time->FPS);
+	ImGui::Text("mcy/f: %d", Engine->Time->MegaCyclePerFrame);
 	ImGui::End();
     }
 }
@@ -153,25 +194,30 @@ static void EngineSettingsCollapseHeader(engine *Engine, int width, int height)
 {
     if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
+    	ImVec2 bSize(40, 20);
 	ImGui::Text("screen: %d x %d", width, height);
+	ImGui::Separator();
+
+	ImGui::PushID(1);
+	if (ImGui::Button(Engine->Vsync ? "on" : "off", bSize))
+	    EngineToggleVsync(Engine);
+	ImGui::SameLine();
 	ImGui::Text("VSYNC: ");
+	ImGui::PopID();
+
+	ImGui::PushID(2);
+	if (ImGui::Button(Engine->DebugMode ? "on" : "off", bSize))
+	    EngineToggleDebugMode(Engine);
 	ImGui::SameLine();
-	if (Engine->Vsync)
-	    ImGui::Button("on");
-	else
-	    ImGui::Button("off");
-	ImGui::Text("Poly: ");
+	ImGui::Text("DEBUG: ");
+	ImGui::PopID();
+
+	ImGui::PushID(3);
+	if (ImGui::Button(Engine->PolyMode ? "on" : "off", bSize))
+	    EngineTogglePolyMode(Engine);
 	ImGui::SameLine();
-	if (Engine->PolyMode)
-	    ImGui::Button("on");
-	else
-	    ImGui::Button("off");
-	ImGui::Text("Debug: ");
-	ImGui::SameLine();
-	if (Engine->DebugMode)
-	    ImGui::Button("on");
-	else
-	    ImGui::Button("off");
+	ImGui::Text("POLY: ");
+	ImGui::PopID();
 	ImGui::Separator();
     }
 }

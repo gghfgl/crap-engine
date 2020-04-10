@@ -28,8 +28,8 @@ glm::vec3 MouseRayDirectionWorld(float32 mouseX,float32 mouseY,
 				 glm::mat4 viewMatrix)
 {
     // transform to NDC
-    float32 mx = (2.0f * mouseX) / width - 1.0f;
-    float32 my = 1.0f - (2.0f * mouseY) / height;
+    float32 mx = (2.0f * mouseX) / (float32)width - 1.0f;
+    float32 my = 1.0f - (2.0f * mouseY) / (float32)height;
     float32 mz = 1.0f;
     glm::vec3 rayNDC = glm::vec3(mx, my, mz);
 
@@ -47,7 +47,7 @@ bool RaySphereIntersection(glm::vec3 rayOriginWorld,
 			   glm::vec3 rayDirectionWorld,
 			   glm::vec3 sphereCenterWorld,
 			   float32 sphereRadius,
-			   float32* intersectionDistance)
+			   float32 *intersectionDistance)
 {
     // work out components of quadratic
     glm::vec3 distToSphere = rayOriginWorld - sphereCenterWorld;
