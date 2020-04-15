@@ -1,13 +1,12 @@
 #pragma once
 
-#include <map>
 #include <string>
+#include <map>
 #include <unordered_map>
 
-std::unordered_map<std::string, uint32> globalUniformLocationCache;
-
-struct shader {
+struct shader_t {
     uint32 ID; 
 };
 
-std::map<std::string, shader*> _SHADERS_STORAGE;
+std::map<std::string, shader_t*> c_Shaders;
+std::unordered_map<std::string, uint32> c_UniformLocations;

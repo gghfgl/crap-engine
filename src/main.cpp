@@ -3,55 +3,34 @@
 #include "plateform.h"
 
 /* TODO:
-   - add texture and white default texture to batch rendering cube.
-   - load models assimp?
-   - draw ray casting debug sphere see TODO in renderer
-   - add Ray casting OBB test with debug bounding box draw
-   - position objects from slot attruibution array
-   - switch oultine with postprocessing technique?
+   - load assets (models, sound, skybox, etc ...)
+   - create and save level from editor
+   - move from editing to running scene on the fly
+   - scene = access engine API for creating game design
+   - beautyfull light PBR effects
+   - custom GUI for game UI
 
-   - set of predef camera position
-   - lock/unlock camera movement from to terrain space
-   - read level design from file?
-   - skybox with switch from file in the fly
-   - stencil reflect
-
-   - add click action to container object and open imgui inventory?
-   - in fuction time profiler (handemade hero fast thread id retrieval)
-   - work on z-buffer to avoid z-fighting colors/ textures
-   - move object between inventories
-   - z-fighting
-   - logger ?
-   - put engine settings in file with update and reload program?
-   - generate terrain (advanced)?
-   - compile and read shader for presetting uniform? the cherno
-   - batch rendering models?
-   - memory profiler
-   - light system PBR?
-   - blending
-   - framebuffer ?
-   - mipmap ?
-   - cubemap / skybox / reflect ?
-   - geometry shader ?
-   - instancing ?
-   - learn about compiler (unit, etc ...)
+   - learn more compiler stuff
+   - learn how properly debug with MSVC
 */
-const uint32 globalWidth            = 1280;
-const uint32 globalHeight           = 960;
-static bool globalActiveWindow      = false;
-static uint32 globalSliderMapSize   = 130;
-static uint32 globalCacheSliderMapSize   = 130;
-uint32 globalContainerSelectedID    = 0;
-uint32 globalContainerHoveredID     = 0;
-uint32 globalTerrainHoveredID       = 0;
 
-glm::vec3 globalCameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
+bool g_TestActive = true;
+const uint32 g_Width            = 1280;
+const uint32 g_Height           = 960;
+static bool g_ActiveWindow      = false;
+static uint32 g_SliderMapSize   = 130;
+static uint32 g_CacheSliderMapSize   = 130;
+uint32 g_ContainerSelectedID    = 0;
+uint32 g_ContainerHoveredID     = 0;
+uint32 g_TerrainHoveredID       = 0;
+
+glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 
 std::unordered_map<uint32, entity_cube> GAME_TERRAIN_ENTITIES;
 std::unordered_map<uint32, entity_cube> GAME_CONTAINER_ENTITIES;
 std::unordered_map<uint32, uint32> GAME_SLOTS_RELATIONSHIP;
 
-void DrawSettingsPanel(engine *Engine, uint32 width, uint32 height, input_state *InputState, camera *Camera, renderer *Renderr, uint32 &mapSize, std::unordered_map<uint32, entity_cube> &objects, std::unordered_map<uint32, uint32> &slots, bool &focus);
+//void DrawSettingsPanel(engine *Engine, uint32 width, uint32 height, input_state *InputState, camera *Camera, renderer *Renderr, uint32 &mapSize, std::unordered_map<uint32, entity_cube> &objects, std::unordered_map<uint32, uint32> &slots, bool &focus);
 void AttribContainerToSlot(std::unordered_map<uint32, uint32> &slots, std::unordered_map<uint32, entity_cube> &containers, uint32 selectedSlot, uint32 selectedItem);
 
 void CreateTestTerrain(uint32 mapSize, std::unordered_map<uint32, entity_cube> &terrain, std::unordered_map<uint32, uint32> &slots);
@@ -61,126 +40,129 @@ void CreateTestSpheres(float radius, int slacks, int slices); // TODO: entity_sp
 void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float32 scale);
 void DrawSpheres();
 
+// NOTE: ENGINE LEVEL EDITOR
 int main(int argc, char *argv[])
 {
     // Init all systems
-    engine *Engine = EngineConstruct(globalWidth, globalHeight, DEBUG_MODE | VSYNC);
-    camera *Camera = CameraConstruct((float32)globalWidth, (float32)globalHeight, globalCameraStartPosition);
-    input_state *InputState = InputStateConstruct(Engine->Window);
-    ShaderCompileAndStore("../shaders/default.vs", "../shaders/default.fs", nullptr,
+    window_t *Window = window::Construct(g_Width, g_Height, "crapEngine");
+    input_t *InputState = input::Construct(Window->PlatformWindow);
+    camera_t *Camera = camera::Construct((float32)g_Width, (float32)g_Height, g_CameraStartPosition);
+
+    // TODO: draw gride from shader?
+    shader::CompileAndCache("../shaders/default.vs", "../shaders/default.fs", nullptr,
 			  "default", Camera->ProjectionMatrix);
-    ShaderCompileAndStore("../shaders/default.vs", "../shaders/stencil.fs", nullptr,
+    shader::CompileAndCache("../shaders/default.vs", "../shaders/stencil.fs", nullptr,
 			  "stencil", Camera->ProjectionMatrix);
+
+    // TODO: renderer::CreateAndInit()
     renderer *Renderer = RendererConstruct();
-    
+
+    // TODO: use engine state to fill debug VAO / VBO and draw
     RendererPrepareDebugAxis(Renderer);
+
+    // TODO: move batch rendering away atm
     RendererPrepareCubeBatching(Renderer);
-    
+
+    // TODO: load model and texture now. Fuck primitiv atm!
     CreateTestContainers(GAME_CONTAINER_ENTITIES);
     //CreateTestSpheres(0.5f, 20, 20); // dirty way to create spheres
-    CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
+    CreateTestTerrain(g_SliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
 
-    while (Engine->GlobalState == ENGINE_ACTIVE)
-    {	
-	int WIDTH = 0;
-	int HEIGHT = 0;
-	EngineGetWindowSize(Engine, &WIDTH, &HEIGHT);
+    while (g_TestActive)
+    {
+	window::UpdateTime(Window->Time);
+	// window::UpdateSize(Window); // TODO: useless?
 
-	if (globalSliderMapSize != globalCacheSliderMapSize)
+	if (g_SliderMapSize != g_CacheSliderMapSize)
 	{
-	    CreateTestTerrain(globalSliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
-	    globalCacheSliderMapSize = globalSliderMapSize;
+	    CreateTestTerrain(g_SliderMapSize, GAME_TERRAIN_ENTITIES, GAME_SLOTS_RELATIONSHIP);
+	    g_CacheSliderMapSize = g_SliderMapSize;
 	}
-	
-	// NOTE: READ INPUTS ======================================
-	EngineUpdateTime(Engine->Time);
-	InputStatePollEvents();
-	if (InputState->Keyboard[GLFW_KEY_ESCAPE])
-	    Engine->GlobalState = ENGINE_TERMINATE;
-	if (InputState->Keyboard[GLFW_KEY_W])
-	    CameraProcessKeyboard(Camera, FORWARD, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_S])
-	    CameraProcessKeyboard(Camera, BACKWARD, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_A])
-	    CameraProcessKeyboard(Camera, LEFT, Engine->Time->DeltaTime);
-	if (InputState->Keyboard[GLFW_KEY_D])
-	    CameraProcessKeyboard(Camera, RIGHT, Engine->Time->DeltaTime);	
-	if (InputState->Keyboard[GLFW_KEY_SPACE])
-	    CameraProcessKeyboard(Camera, UP, Engine->Time->DeltaTime);	
-	if (InputState->Keyboard[GLFW_KEY_LEFT_CONTROL])
-	    CameraProcessKeyboard(Camera, DOWN, Engine->Time->DeltaTime);	
-	if (InputState->MouseLeftButton && !globalActiveWindow)
-	{
-	    InputStateUpdateMouseOffset(InputState);
-	    CameraProcessMouseMovement(Camera,
-				       InputState->MouseOffsetX,
-				       InputState->MouseOffsetY);
 
-	    if (globalContainerHoveredID != 0)
-		globalContainerSelectedID = globalContainerHoveredID;
-	    else
-	        globalContainerSelectedID = 0;
+	// NOTE: READ INPUTS ======================================
+	input::PollEvents();
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_ESCAPE])
+	    g_TestActive = false;
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_W])
+	    camera::ProcessMovementDirectional(Camera, FORWARD, Window->Time->DeltaTime);
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_S])
+	    camera::ProcessMovementDirectional(Camera, BACKWARD, Window->Time->DeltaTime);
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_A])
+	    camera::ProcessMovementDirectional(Camera, LEFT, Window->Time->DeltaTime);
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_D])
+	    camera::ProcessMovementDirectional(Camera, RIGHT, Window->Time->DeltaTime);
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_SPACE])
+	    camera::ProcessMovementDirectional(Camera, UP, Window->Time->DeltaTime);
+	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_LEFT_CONTROL])
+	    camera::ProcessMovementDirectional(Camera, DOWN, Window->Time->DeltaTime);
+
+	if (InputState->MouseEvent->LeftButton && !g_ActiveWindow)
+	{
+	    input::UpdateMouseOffsets(InputState->MouseEvent);
+	    camera::ProcessMovementAngles(Camera,
+				       InputState->MouseEvent->OffsetX,
+				       InputState->MouseEvent->OffsetY);
 	}
 
 	// NOTE: SIMULATE WORLD ======================================
 	// Ray casting test
-	glm::vec3 rayWorld = MouseRayDirectionWorld((float32)InputState->MousePosX,
-						    (float32)InputState->MousePosY,
-						    WIDTH,
-						    HEIGHT,
-						    Camera->ProjectionMatrix,
-						    CameraGetViewMatrix(Camera));
+	// glm::vec3 rayWorld = MouseRayDirectionWorld((float32)InputState->MousePosX,
+	// 					    (float32)InputState->MousePosY,
+	// 					    WIDTH,
+	// 					    HEIGHT,
+	// 					    Camera->ProjectionMatrix,
+	// 					    CameraGetViewMatrix(Camera));
 
-	for (std::pair<uint32, entity_cube> element : GAME_TERRAIN_ENTITIES)
-	{
-	    float32 rayIntersection = 0.0f;
-	    glm::vec3 spherePos = glm::vec3(
-		element.second.Position.x + element.second.Scale / 2,
-		element.second.Position.y + element.second.Scale / 2,
-		element.second.Position.z + element.second.Scale / 2);
+	// for (std::pair<uint32, entity_cube> element : GAME_TERRAIN_ENTITIES)
+	// {
+	//     float32 rayIntersection = 0.0f;
+	//     glm::vec3 spherePos = glm::vec3(
+	// 	element.second.Position.x + element.second.Scale / 2,
+	// 	element.second.Position.y + element.second.Scale / 2,
+	// 	element.second.Position.z + element.second.Scale / 2);
 	    
-	    if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
-	    {
-		if (element.second.State == ENTITY_STATE_SLOT)
-		{
-		    globalTerrainHoveredID = element.second.ID;
-		    break;
-		}
-	    }
-	    else
-		globalTerrainHoveredID = 0;
-	}
+	//     if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
+	//     {
+	// 	if (element.second.State == ENTITY_STATE_SLOT)
+	// 	{
+	// 	    g_TerrainHoveredID = element.second.ID;
+	// 	    break;
+	// 	}
+	//     }
+	//     else
+	// 	g_TerrainHoveredID = 0;
+	// }
 
-	for (std::pair<uint32, entity_cube> element : GAME_CONTAINER_ENTITIES)
-	{
-	    float32 rayIntersection = 0.0f;
-	    glm::vec3 spherePos = glm::vec3(
-		element.second.Position.x + element.second.Scale / 2,
-		element.second.Position.y + element.second.Scale / 2,
-		element.second.Position.z + element.second.Scale / 2);
+	// for (std::pair<uint32, entity_cube> element : GAME_CONTAINER_ENTITIES)
+	// {
+	//     float32 rayIntersection = 0.0f;
+	//     glm::vec3 spherePos = glm::vec3(
+	// 	element.second.Position.x + element.second.Scale / 2,
+	// 	element.second.Position.y + element.second.Scale / 2,
+	// 	element.second.Position.z + element.second.Scale / 2);
 	    
-	    if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
-	    {
-	        globalContainerHoveredID = element.second.ID;
-		break;
-	    }
-	    else
-		globalContainerHoveredID = 0;
-	}
+	//     if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, 0.5f, &rayIntersection))
+	//     {
+	//         g_ContainerHoveredID = element.second.ID;
+	// 	break;
+	//     }
+	//     else
+	// 	g_ContainerHoveredID = 0;
+	// }
 
 	
 	// NOTE: START RENDERING ======================================
 	RendererResetStats(Renderer);
-        RendererStart(Renderer, ShaderGetFromStorage("default"), CameraGetViewMatrix(Camera));
+        RendererStart(Renderer, shader::GetFromCache("default"), camera::GetViewMatrix(Camera));
 
 	// ** classic
-	if (Engine->DebugMode)
-	    RendererDrawDebugAxis(Renderer);	
+	// TODO if (Engine->DebugMode) ?
+	RendererDrawDebugAxis(Renderer);	
 
 	RendererStartNewBatchCube(Renderer);
 	for (std::pair<uint32, entity_cube> element : GAME_TERRAIN_ENTITIES)
 	{
-	    if (globalTerrainHoveredID != 0 && globalTerrainHoveredID == element.second.ID)
+	    if (g_TerrainHoveredID != 0 && g_TerrainHoveredID == element.second.ID)
 	    {
 		entity_cube hoveredSlot = EntityCubeConstruct(element.second.ID,
 							      nullptr,
@@ -213,30 +195,30 @@ int main(int argc, char *argv[])
 	RendererCloseBatchCube(Renderer);
 	RendererFlushBatchCube(Renderer);
 
-	if (globalContainerHoveredID != 0 || globalContainerSelectedID != 0)
+	if (g_ContainerHoveredID != 0 || g_ContainerSelectedID != 0)
 	{
-	    RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
+	    RendererStartStencil(Renderer, shader::GetFromCache("stencil"), camera::GetViewMatrix(Camera));
 
 	    RendererStartNewBatchCube(Renderer);
-	    if (globalContainerSelectedID != 0)
+	    if (g_ContainerSelectedID != 0)
 	    {
 		//RendererStartNewBatchCube(Renderer);
 
 		//glClear(GL_STENCIL_BUFFER_BIT);
 		//RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
-		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[globalContainerSelectedID], 1.1f);
+		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[g_ContainerSelectedID], 1.1f);
 		//RendererStopStencil();	    
 
 		//RendererCloseBatchCube(Renderer);
 		//RendererFlushBatchCube(Renderer);
 	    }
-	    if (globalContainerHoveredID != 0)
+	    if (g_ContainerHoveredID != 0)
 	    {
 		//RendererStartNewBatchCube(Renderer);
 
 		//glClear(GL_STENCIL_BUFFER_BIT);
 		//RendererStartStencil(Renderer, ShaderGetFromStorage("stencil"), CameraGetViewMatrix(Camera));
-		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[globalContainerHoveredID], 1.1f);
+		PushEntityCubeToBuffer(Renderer, GAME_CONTAINER_ENTITIES[g_ContainerHoveredID], 1.1f);
 		//RendererStopStencil();	    
 
 		//RendererCloseBatchCube(Renderer);
@@ -250,30 +232,33 @@ int main(int argc, char *argv[])
 	}
 	
 	// ** UI
-        WrapImGuiNewFrame();	
+        // WrapImGuiNewFrame();	
 
-        EngineShowOverlay(Engine);
-        DrawSettingsPanel(Engine,
-			  WIDTH, HEIGHT,
-			  InputState,
-			  Camera,
-			  Renderer,
-			  globalSliderMapSize,
-			  GAME_CONTAINER_ENTITIES,
-			  GAME_SLOTS_RELATIONSHIP,
-			  globalActiveWindow);
+        // EngineShowOverlay(Engine);
+        // DrawSettingsPanel(Engine,
+	// 		  WIDTH, HEIGHT,
+	// 		  InputState,
+	// 		  Camera,
+	// 		  Renderer,
+	// 		  g_SliderMapSize,
+	// 		  GAME_CONTAINER_ENTITIES,
+	// 		  GAME_SLOTS_RELATIONSHIP,
+	// 		  g_ActiveWindow);
 
-	WrapImGuiRender();
+	//WrapImGuiRender();
 	
 	// ** Swap buffer
-	RendererSwapBufferAndFinish(Renderer, Engine->Window);
+	// TODO:  update memory pool
+	Renderer->MemoryArena->MaxUsed = 0;
+	window::SwapBuffer(Window);
     }
 
-    CameraDelete(Camera);
-    InputStateDelete(InputState);
-    ShaderDeleteStorage();
     RendererDelete(Renderer);
-    EngineDelete(Engine);
+
+    shader::ClearCache();
+    camera::Delete(Camera);
+    input::Delete(InputState);
+    window::Delete(Window);
     return 0;
 }
 
@@ -346,129 +331,130 @@ void PushEntityCubeToBuffer(renderer *Renderer, entity_cube cube, float32 scale)
 			    cube.Scale * scale, cube.Color);
 }
 
-void DrawSettingsPanel(engine *Engine,
-		       uint32 width, uint32 height,
-		       input_state *InputState,
-		       camera *Camera,
-		       renderer *Renderer,
-		       uint32 &mapSize,
-		       std::unordered_map<uint32, entity_cube> &containers,
-		       std::unordered_map<uint32, uint32> &slots,
-		       bool &focus)
-{
-    ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(410, (float32)height - 20));
-    ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize);
+// TODO: move to GUI
+// void DrawSettingsPanel(engine *Engine,
+// 		       uint32 width, uint32 height,
+// 		       input_state *InputState,
+// 		       camera *Camera,
+// 		       renderer *Renderer,
+// 		       uint32 &mapSize,
+// 		       std::unordered_map<uint32, entity_cube> &containers,
+// 		       std::unordered_map<uint32, uint32> &slots,
+// 		       bool &focus)
+// {
+//     ImGui::SetNextWindowPos(ImVec2(10, 10));
+//     ImGui::SetNextWindowSize(ImVec2(410, (float32)height - 20));
+//     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize);
 
-    EngineSettingsCollapseHeader(Engine, width, height);
-    InputStateSettingsCollapseHeader(InputState);
-    CameraSettingsCollapseHeader(Camera);
-    RendererSettingsCollapseHeader(Renderer);
+//     EngineSettingsCollapseHeader(Engine, width, height);
+//     input::InputStateSettingsCollapseHeader(InputState);
+//     CameraSettingsCollapseHeader(Camera);
+//     RendererSettingsCollapseHeader(Renderer);
 
-    // World
-    if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Text("slots: %03d/%03d", 0, slots.size());
-	if (ImGui::SliderInt("floor", &(int)mapSize, 0, 1000))
-	    slots.clear();
-	ImGui::Separator();
-    }
+//     // World
+//     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	ImGui::Text("slots: %03d/%03d", 0, slots.size());
+// 	if (ImGui::SliderInt("floor", &(int)mapSize, 0, 1000))
+// 	    slots.clear();
+// 	ImGui::Separator();
+//     }
 
-    // Containers
-    if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	static uint32 selected = 0;
-	ImGui::BeginChild("left pane", ImVec2(120, 150));
-	for (std::pair<uint32, entity_cube> element : containers)	 
-	{
-	    char label[128];
-	    sprintf_s(label, "obj: <%s>", element.second.Name);
-	    if (ImGui::Selectable(label, (uint32)globalContainerSelectedID == element.first))
-		globalContainerSelectedID = element.first;
-	}
+//     // Containers
+//     if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	static uint32 selected = 0;
+// 	ImGui::BeginChild("left pane", ImVec2(120, 150));
+// 	for (std::pair<uint32, entity_cube> element : containers)	 
+// 	{
+// 	    char label[128];
+// 	    sprintf_s(label, "obj: <%s>", element.second.Name);
+// 	    if (ImGui::Selectable(label, (uint32)g_ContainerSelectedID == element.first))
+// 		g_ContainerSelectedID = element.first;
+// 	}
 
-	ImGui::EndChild();
-	ImGui::SameLine();
+// 	ImGui::EndChild();
+// 	ImGui::SameLine();
 
-	ImGui::BeginChild("right pane", ImVec2(0, 150));
-	if (globalContainerSelectedID != 0)
-	{
-	    ImGui::Text("mem: %p", &containers[globalContainerSelectedID]);
-	    ImGui::Text("ID: %03d", containers[globalContainerSelectedID].ID);
-	    ImGui::Text("Name: %s", containers[globalContainerSelectedID].Name);
-	    ImGui::Text("State: %s",
-			(containers[globalContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
-	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
-			containers[globalContainerSelectedID].Position.x,
-			containers[globalContainerSelectedID].Position.y,
-			containers[globalContainerSelectedID].Position.z);
+// 	ImGui::BeginChild("right pane", ImVec2(0, 150));
+// 	if (g_ContainerSelectedID != 0)
+// 	{
+// 	    ImGui::Text("mem: %p", &containers[g_ContainerSelectedID]);
+// 	    ImGui::Text("ID: %03d", containers[g_ContainerSelectedID].ID);
+// 	    ImGui::Text("Name: %s", containers[g_ContainerSelectedID].Name);
+// 	    ImGui::Text("State: %s",
+// 			(containers[g_ContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
+// 	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+// 			containers[g_ContainerSelectedID].Position.x,
+// 			containers[g_ContainerSelectedID].Position.y,
+// 			containers[g_ContainerSelectedID].Position.z);
 
-	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
-			containers[globalContainerSelectedID].Size.x,
-			containers[globalContainerSelectedID].Size.y,
-			containers[globalContainerSelectedID].Size.z,
-			containers[globalContainerSelectedID].Color.w);
+// 	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+// 			containers[g_ContainerSelectedID].Size.x,
+// 			containers[g_ContainerSelectedID].Size.y,
+// 			containers[g_ContainerSelectedID].Size.z,
+// 			containers[g_ContainerSelectedID].Color.w);
 
-	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
-			containers[globalContainerSelectedID].Color.r,
-			containers[globalContainerSelectedID].Color.g,
-			containers[globalContainerSelectedID].Color.b,
-			containers[globalContainerSelectedID].Color.a);
-	}
+// 	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+// 			containers[g_ContainerSelectedID].Color.r,
+// 			containers[g_ContainerSelectedID].Color.g,
+// 			containers[g_ContainerSelectedID].Color.b,
+// 			containers[g_ContainerSelectedID].Color.a);
+// 	}
 
-	ImGui::EndChild();
-	ImGui::Separator();
-    }
+// 	ImGui::EndChild();
+// 	ImGui::Separator();
+//     }
 
-    // Slots
-    static uint32 selectedSlot = 0;
-    if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Columns(2);
-	for (std::pair<uint32, uint32> sl : slots)
-	{
-	    char buf1[32];
-	    sprintf_s(buf1, "%03d", sl.first);
-	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
-	    ImGui::NextColumn();
+//     // Slots
+//     static uint32 selectedSlot = 0;
+//     if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	ImGui::Columns(2);
+// 	for (std::pair<uint32, uint32> sl : slots)
+// 	{
+// 	    char buf1[32];
+// 	    sprintf_s(buf1, "%03d", sl.first);
+// 	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
+// 	    ImGui::NextColumn();
 
-	    char buf2[32];
-	    if (sl.second == 0)
-		sprintf_s(buf2, "%03d<empty>", sl.first);
-	    else
-		sprintf_s(buf2, "%03d", sl.second);
+// 	    char buf2[32];
+// 	    if (sl.second == 0)
+// 		sprintf_s(buf2, "%03d<empty>", sl.first);
+// 	    else
+// 		sprintf_s(buf2, "%03d", sl.second);
 
-	    if (ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f)))
-	    {
-		selectedSlot = sl.first;
-		ImGui::OpenPopup("objects_popup");
-	    }
+// 	    if (ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f)))
+// 	    {
+// 		selectedSlot = sl.first;
+// 		ImGui::OpenPopup("objects_popup");
+// 	    }
 
-	    ImGui::NextColumn();
-	}
+// 	    ImGui::NextColumn();
+// 	}
 
-	ImGui::Columns(1);
-	ImGui::Separator();
-    }
+// 	ImGui::Columns(1);
+// 	ImGui::Separator();
+//     }
 
-    if (ImGui::BeginPopup("objects_popup"))
-    {
-	ImGui::Text("slot-%03d", selectedSlot);
-	ImGui::Separator();
-	for (std::pair<uint32, entity_cube> ct : containers)	 
-	{
-	    if (ImGui::Selectable(containers[ct.first].Name))
-		AttribContainerToSlot(slots, containers, selectedSlot, ct.first);
-	}
-	ImGui::EndPopup();
-    }
+//     if (ImGui::BeginPopup("objects_popup"))
+//     {
+// 	ImGui::Text("slot-%03d", selectedSlot);
+// 	ImGui::Separator();
+// 	for (std::pair<uint32, entity_cube> ct : containers)	 
+// 	{
+// 	    if (ImGui::Selectable(containers[ct.first].Name))
+// 		AttribContainerToSlot(slots, containers, selectedSlot, ct.first);
+// 	}
+// 	ImGui::EndPopup();
+//     }
     
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
-	focus = true;
-    else
-	focus = false;
-    ImGui::End();
-}
+//     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+// 	focus = true;
+//     else
+// 	focus = false;
+//     ImGui::End();
+// }
 
 void AttribContainerToSlot(std::unordered_map<uint32, uint32> &slots,
 			   std::unordered_map<uint32, entity_cube> &containers,

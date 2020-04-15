@@ -1,9 +1,104 @@
 #include "camera.h"
 
-// Calculates the front vector from the Camera's (updated) Euler Angles
-void update_camera_vectors(camera *Camera)
+static void update_camera_vectors(camera_t *Camera);
+
+namespace camera
 {
-    // Calculate the new Front vector
+    camera_t* Construct(
+	float32 windowWidth, float32 windowHeight,
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+	float32 yaw = g_DefaultYawSetting,
+	float32 pitch = g_DefaultPitchSetting,
+	float32 speed = g_DefaultSpeedSetting,
+	float32 sensitivity = g_DefaultSensitivitySetting,
+	float32 fov = g_DefaultFovSetting)
+    {
+	camera_settings* Settings = new camera_settings;
+	Settings->Yaw = yaw;
+	Settings->Pitch = pitch;
+	Settings->Speed = speed;
+	Settings->Sensitivity = sensitivity;
+	Settings->Fov = fov;
+
+	glm::mat4 projection = glm::perspective(
+	    glm::radians(fov),
+	    windowWidth / windowHeight,
+	    0.1f, 100.0f);
+
+	// TODO: malloc?
+	camera_t* Camera = new camera_t;
+	Camera->Position = position;
+	Camera->WorldUp = up;
+	Camera->Settings = Settings;
+	Camera->Front = glm::vec3(0.0f, 0.0f, -1.0f);
+	Camera->ProjectionMatrix = projection;
+
+	update_camera_vectors(Camera);
+	return Camera;
+    }
+
+    void Delete(camera_t *Camera)
+    {
+	delete Camera->Settings;
+	delete Camera;
+    }
+
+    glm::mat4 GetViewMatrix(camera_t *Camera)
+    {
+	return glm::lookAt(Camera->Position, Camera->Position + Camera->Front, Camera->Up);
+    }
+
+    void ProcessMovementDirectional(camera_t *Camera, camera_movement direction, float32 deltaTime)
+    {
+	float32 velocity = Camera->Settings->Speed * deltaTime;
+	if (direction == FORWARD)
+	    Camera->Position += Camera->Front * velocity;
+	if (direction == BACKWARD)
+	    Camera->Position -= Camera->Front * velocity;
+	if (direction == LEFT)
+	    Camera->Position -= Camera->Right * velocity;
+	if (direction == RIGHT)
+	    Camera->Position += Camera->Right * velocity;
+	if (direction == UP)
+	    Camera->Position += Camera->Up * velocity;
+	if (direction == DOWN)
+	    Camera->Position -= Camera->Up * velocity;
+    }
+
+    void ProcessMovementAngles(camera_t *Camera, float32 xoffset, float32 yoffset, bool constrainPitch = true)
+    {
+	xoffset *= Camera->Settings->Sensitivity;
+	yoffset *= Camera->Settings->Sensitivity;
+	Camera->Settings->Yaw   += xoffset;
+	Camera->Settings->Pitch += yoffset;
+
+	if (constrainPitch)
+   
+	{
+	    if (Camera->Settings->Pitch > 89.0f)
+		Camera->Settings->Pitch = 89.0f;
+	    if (Camera->Settings->Pitch < -89.0f)
+		Camera->Settings->Pitch = -89.0f;
+	}
+
+	update_camera_vectors(Camera);
+    }
+
+    void ProcessMovementFov(camera_t *Camera, float32 yoffset)
+    {
+	if (Camera->Settings->Fov >= 1.0f && Camera->Settings->Fov <= 45.0f)
+	    Camera->Settings->Fov -= yoffset;
+	if (Camera->Settings->Fov <= 1.0f)
+	    Camera->Settings->Fov = 1.0f;
+	if (Camera->Settings->Fov >= 45.0f)
+	    Camera->Settings->Fov = 45.0f;
+    }
+}
+
+static void update_camera_vectors(camera_t *Camera)
+{
+// Calculates the front vector from the Camera's (updated) Euler Angles
     glm::vec3 front;
     front.x = cos(glm::radians(Camera->Settings->Yaw)) * cos(glm::radians(Camera->Settings->Pitch));
     front.y = sin(glm::radians(Camera->Settings->Pitch));
@@ -12,121 +107,4 @@ void update_camera_vectors(camera *Camera)
     // Also re-calculate the Right and Up vector
     Camera->Right = glm::normalize(glm::cross(Camera->Front, Camera->WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     Camera->Up    = glm::normalize(glm::cross(Camera->Right, Camera->Front));
-}
-
-// construct with vectors
-camera* CameraConstruct(
-    float32 windowWidth, float32 windowHeight,
-    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-    float32 yaw = globalDefaultYawSetting,
-    float32 pitch = globalDefaultPitchSetting,
-    float32 speed = globalDefaultSpeedSetting,
-    float32 sensitivity = globalDefaultSensitivitySetting,
-    float32 fov = globalDefaultFovSetting)
-{
-    camera_settings* Settings = new camera_settings();
-    Settings->Yaw = yaw;
-    Settings->Pitch = pitch;
-    Settings->Speed = speed;
-    Settings->Sensitivity = sensitivity;
-    Settings->Fov = fov;
-
-    glm::mat4 projection = glm::perspective(
-	glm::radians(fov),
-        windowWidth / windowHeight,
-	0.1f, 100.0f);
-    
-    camera* Camera = new camera();
-    Camera->Position = position;
-    Camera->WorldUp = up;
-    Camera->Settings = Settings;
-    Camera->Front = glm::vec3(0.0f, 0.0f, -1.0f);
-    Camera->ProjectionMatrix = projection;
-
-    update_camera_vectors(Camera);
-    return Camera;
-}
-
-void CameraDelete(camera *Camera)
-{
-    delete Camera;
-}
-
-// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
-glm::mat4 CameraGetViewMatrix(camera *Camera)
-{
-    return glm::lookAt(Camera->Position, Camera->Position + Camera->Front, Camera->Up);
-}
-
-void CameraProcessKeyboard(camera *Camera, camera_movement direction, float32 deltaTime)
-{
-    float32 velocity = Camera->Settings->Speed * deltaTime;
-    if (direction == FORWARD)
-	Camera->Position += Camera->Front * velocity;
-    if (direction == BACKWARD)
-	Camera->Position -= Camera->Front * velocity;
-    if (direction == LEFT)
-	Camera->Position -= Camera->Right * velocity;
-    if (direction == RIGHT)
-	Camera->Position += Camera->Right * velocity;
-    if (direction == UP)
-	Camera->Position += Camera->Up * velocity;
-    if (direction == DOWN)
-	Camera->Position -= Camera->Up * velocity;
-}
-
-void CameraProcessMouseMovement(camera *Camera, float32 xoffset, float32 yoffset, bool constrainPitch = true)
-{
-    xoffset *= Camera->Settings->Sensitivity;
-    yoffset *= Camera->Settings->Sensitivity;
-    Camera->Settings->Yaw   += xoffset;
-    Camera->Settings->Pitch += yoffset;
-
-    if (constrainPitch)
-   
-    {
-	if (Camera->Settings->Pitch > 89.0f)
-	    Camera->Settings->Pitch = 89.0f;
-	if (Camera->Settings->Pitch < -89.0f)
-	    Camera->Settings->Pitch = -89.0f;
-    }
-
-    // Update Front, Right and Up Vectors using the updated Euler angles
-    update_camera_vectors(Camera);
-}
-
-// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-void CameraProcessMouseScroll(camera *Camera, float32 yoffset)
-{
-    if (Camera->Settings->Fov >= 1.0f && Camera->Settings->Fov <= 45.0f)
-	Camera->Settings->Fov -= yoffset;
-    if (Camera->Settings->Fov <= 1.0f)
-	Camera->Settings->Fov = 1.0f;
-    if (Camera->Settings->Fov >= 45.0f)
-	Camera->Settings->Fov = 45.0f;
-}
-
-static void CameraSettingsCollapseHeader(camera *Camera)
-{
-    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-    	ImGui::Text("yaw: %.2f", Camera->Settings->Yaw);
-    	ImGui::Text("pitch: %.2f", Camera->Settings->Pitch);
-    	ImGui::Text("speed: %.2f", Camera->Settings->Speed);
-    	ImGui::Text("sensitivity: %.2f", Camera->Settings->Sensitivity);
-    	ImGui::Text("fov: %.2f", Camera->Settings->Fov);
-    	ImGui::Text("pos: %.2f, %.2f, %.2f",
-		    Camera->Position.x,
-		    Camera->Position.y,
-		    Camera->Position.z);
-
-    	ImVec2 bSize(100, 20);
-    	ImGui::Button("Reset Default", bSize);
-    	ImGui::SameLine();
-    	ImGui::Button("Reset Front", bSize);
-    	ImGui::SameLine();
-    	ImGui::Button("Reset Up", bSize);
-    	ImGui::Separator();
-    }
 }

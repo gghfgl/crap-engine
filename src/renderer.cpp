@@ -1,5 +1,34 @@
 #include "renderer.h"
 
+// // TODO: renderer
+//     void EngineTogglePolyMode(engine *Engine)
+//     {
+// 	if (Engine->PolyMode)
+// 	{
+// 	    std::cout << "test" << std::endl;
+// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+// 	    Engine->PolyMode = false;
+// 	}
+// 	else
+// 	{
+// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+// 	    Engine->PolyMode = true;
+// 	}
+//     }
+
+// // TODO: renderer
+//     void EngineToggleDebugMode(engine *Engine)
+//     {
+// 	if (Engine->DebugMode)
+// 	{
+// 	    Engine->DebugMode = false;
+// 	}
+// 	else
+// 	{
+// 	    Engine->DebugMode = true;
+// 	}
+//     }
+
 renderer* RendererConstruct()
 {
     vertex *CubeBuffer = new vertex[globalMaxVertexCount];
@@ -60,7 +89,7 @@ void RendererDrawDebugAxis(renderer *Renderer)
     Renderer->Stats.DrawCount++;
 }
 
-void RendererStart(renderer *Renderer, shader *Shader, glm::mat4 viewMatrix)
+void RendererStart(renderer *Renderer, shader_t *Shader, glm::mat4 viewMatrix)
 {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -68,18 +97,18 @@ void RendererStart(renderer *Renderer, shader *Shader, glm::mat4 viewMatrix)
     glm::mat4 model = glm::mat4(1.0f);
     //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 
-    ShaderUseProgram(Shader);
-    ShaderSetUniform4fv(Shader, "view", viewMatrix);    
-    ShaderSetUniform4fv(Shader, "model", model);
+    shader::UseProgram(Shader);
+    shader::SetUniform4fv(Shader, "view", viewMatrix);    
+    shader::SetUniform4fv(Shader, "model", model);
 
     glBindTextureUnit(0, Renderer->DefaultTextureID); // TODO: meh ...
     int32 samplers[1] = {1};
-    ShaderSetUniform1iv(Shader, "uTexture", samplers); // TODO: meh ...
+    shader::SetUniform1iv(Shader, "uTexture", samplers); // TODO: meh ...
 
     glStencilMask(0x00); // dont update the stencil buffer
 }
 
-void RendererStartStencil(renderer *Renderer, shader *Shader, glm::mat4 viewMatrix)
+void RendererStartStencil(renderer *Renderer, shader_t *Shader, glm::mat4 viewMatrix)
 {
     // NOTE: assume that ClearColor was made before
     float32 scale = 1.1f;
@@ -87,9 +116,9 @@ void RendererStartStencil(renderer *Renderer, shader *Shader, glm::mat4 viewMatr
     //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     //model = glm::scale(model, glm::vec3(scale, scale, scale));
 
-    ShaderUseProgram(Shader);
-    ShaderSetUniform4fv(Shader, "view", viewMatrix);    
-    ShaderSetUniform4fv(Shader, "model", model);
+    shader::UseProgram(Shader);
+    shader::SetUniform4fv(Shader, "view", viewMatrix);    
+    shader::SetUniform4fv(Shader, "model", model);
 
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilMask(0x00);
