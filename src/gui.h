@@ -119,3 +119,21 @@
 /* 	    ImGui::Separator(); */
 /* 	} */
 /*     } */
+
+/* static void RendererSettingsCollapseHeader(renderer *Renderer) */
+/* { */
+/*     if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen)) */
+/*     { */
+/* 	ImGui::Text("Memory Arena (bytes)"); */
+/*         float progress = ((float)Renderer->MemoryArena->MaxUsed / (float)Renderer->MemoryArena->Size) * 1.0f; */
+/*     	char buf[32]; */
+/*         sprintf_s(buf, "%.1f/100 - %d/%d", 100 * progress, (int)(Renderer->MemoryArena->MaxUsed), (int)Renderer->MemoryArena->Size); */
+/*         ImGui::ProgressBar(progress, ImVec2(-1.0f,0.f), buf); */
+/*     	ImGui::Separator(); */
+
+/*     	ImGui::Text("maxCube: %d", globalMaxCubeCount); */
+/*     	ImGui::Text("current: %d", Renderer->Stats.CubeCount); */
+/*     	ImGui::Text("draw: %d", Renderer->Stats.DrawCount); */
+/*     	ImGui::Separator(); */
+/*     } */
+/* } */

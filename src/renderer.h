@@ -16,14 +16,23 @@ struct vertex
     float32 TextureIndex;
 };
 
+// TODO: objectif-> draw without bacthing
+// TODO: check batching when repetitive object. (voxel)
+
+// TODO: struct vertex_array (uint32 ID, ARRAY vertex_buffers)
+// TODO: struct vertex_buffer (uint32 ID, vertex*)
+
 struct renderer_stats
 {
     uint32 DrawCount;
     uint32 CubeCount;
 };
 
+// TODO: renderer_t
 struct renderer
 {
+    // TODO: single VAO
+    
     // NOTE: renderer data ...
     uint32 DebugVAO = 0;
     uint32 DebugVBO = 0;
@@ -36,11 +45,7 @@ struct renderer
 
     uint32 DefaultTextureID; // TODO: meh ...
 
+    // TODO: keep memory pool in renderer
     memory_arena *MemoryArena;
     renderer_stats Stats;
 };
-
-/* struct rendere_memory_pool */
-/* { */
-/*     vertex *CubeBuffer; */
-/* }; */

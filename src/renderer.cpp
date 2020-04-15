@@ -1,34 +1,5 @@
 #include "renderer.h"
 
-// // TODO: renderer
-//     void EngineTogglePolyMode(engine *Engine)
-//     {
-// 	if (Engine->PolyMode)
-// 	{
-// 	    std::cout << "test" << std::endl;
-// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-// 	    Engine->PolyMode = false;
-// 	}
-// 	else
-// 	{
-// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-// 	    Engine->PolyMode = true;
-// 	}
-//     }
-
-// // TODO: renderer
-//     void EngineToggleDebugMode(engine *Engine)
-//     {
-// 	if (Engine->DebugMode)
-// 	{
-// 	    Engine->DebugMode = false;
-// 	}
-// 	else
-// 	{
-// 	    Engine->DebugMode = true;
-// 	}
-//     }
-
 renderer* RendererConstruct()
 {
     vertex *CubeBuffer = new vertex[globalMaxVertexCount];
@@ -337,20 +308,31 @@ void RendererAddCubeToBuffer(renderer *Renderer,
     Renderer->Stats.CubeCount++;
 }
 
-static void RendererSettingsCollapseHeader(renderer *Renderer)
-{
-    if (ImGui::CollapsingHeader("Render settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-	ImGui::Text("Memory Arena (bytes)");
-        float progress = ((float)Renderer->MemoryArena->MaxUsed / (float)Renderer->MemoryArena->Size) * 1.0f;
-    	char buf[32];
-        sprintf_s(buf, "%.1f/100 - %d/%d", 100 * progress, (int)(Renderer->MemoryArena->MaxUsed), (int)Renderer->MemoryArena->Size);
-        ImGui::ProgressBar(progress, ImVec2(-1.0f,0.f), buf);
-    	ImGui::Separator();
+// // TODO: renderer
+//     void EngineTogglePolyMode(engine *Engine)
+//     {
+// 	if (Engine->PolyMode)
+// 	{
+// 	    std::cout << "test" << std::endl;
+// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+// 	    Engine->PolyMode = false;
+// 	}
+// 	else
+// 	{
+// 	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+// 	    Engine->PolyMode = true;
+// 	}
+//     }
 
-    	ImGui::Text("maxCube: %d", globalMaxCubeCount);
-    	ImGui::Text("current: %d", Renderer->Stats.CubeCount);
-    	ImGui::Text("draw: %d", Renderer->Stats.DrawCount);
-    	ImGui::Separator();
-    }
-}
+// // TODO: renderer
+//     void EngineToggleDebugMode(engine *Engine)
+//     {
+// 	if (Engine->DebugMode)
+// 	{
+// 	    Engine->DebugMode = false;
+// 	}
+// 	else
+// 	{
+// 	    Engine->DebugMode = true;
+// 	}
+//     }
