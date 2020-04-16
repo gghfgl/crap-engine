@@ -1,89 +1,99 @@
 #pragma once
 
-/* void init_imgui(GLFWwindow* window) */
-/* { */
-/*     const char* glsl_version = "#version 450";  */
-/*     IMGUI_CHECKVERSION(); */
-/*     ImGui::CreateContext(); */
-/*     //ImGuiIO& io = ImGui::GetIO(); (void)io; */
-/*     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls */
-/*     ImGui::StyleColorsDark(); */
-/*     ImGui_ImplGlfw_InitForOpenGL(window, true); */
-/*     ImGui_ImplOpenGL3_Init(glsl_version); */
-/* } */
+static void window_settings_collapse_header(window_t *Window);
 
-/* void delete_imgui() */
-/* { */
-/*     ImGui_ImplOpenGL3_Shutdown(); */
-/*     ImGui_ImplGlfw_Shutdown(); */
-/*     ImGui::DestroyContext(); */
-/* } */
+namespace EditorGUI
+{
+    void Init(window_t* Window)
+    {
+	const char* glsl_version = "#version 450";
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	//ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(Window->PlatformWindow, true);
+	ImGui_ImplOpenGL3_Init(glsl_version);
+    }
 
-/* void WrapImGuiNewFrame() */
-/* { */
-/*     ImGui_ImplOpenGL3_NewFrame(); */
-/*     ImGui_ImplGlfw_NewFrame(); */
-/*     ImGui::NewFrame(); */
-/* } */
+    void Delete()
+    {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+    }
 
-/* void WrapImGuiRender() */
-/* { */
-/*     ImGui::Render(); */
-/*     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());     */
-/* } */
+    void NewFrame()
+    {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+    }
 
-/* // TODO: move to GUI */
-/* void EngineShowOverlay(engine *Engine) */
-/* { */
-/*     ImGuiIO& io = ImGui::GetIO(); // TODO: move to engine widow get width */
-/*     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 210, 10)); */
-/*     ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background */
-/*     if (ImGui::Begin("Debug overlay", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))    */
-/*     { */
-/* 	ImGui::Text("Debug overlay"); */
-/* 	ImGui::Separator(); */
-/* 	ImGui::Text(Engine->GPUModel); */
-/* 	ImGui::Text(Engine->OpenglVersion); */
-/* 	ImGui::Separator(); */
-/* 	ImGui::Text("ms/f: %.3fms", Engine->Time->MsPerFrame); */
-/* 	ImGui::Text("fps: %d", Engine->Time->FPS); */
-/* 	ImGui::Text("mcy/f: %d", Engine->Time->MegaCyclePerFrame); */
-/* 	ImGui::End(); */
-/*     } */
-/* } */
+    void Render()
+    {
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 
-/* // TODO: move to GUI */
-/* static void EngineSettingsCollapseHeader(engine *Engine, int width, int height) */
-/* { */
-/*     if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_DefaultOpen)) */
-/*     { */
-/*     	ImVec2 bSize(40, 20); */
-/* 	ImGui::Text("screen: %d x %d", width, height); */
-/* 	ImGui::Separator(); */
+    // TODO: switch to string rendering
+    void ShowWindowStatsOverlay(window_t *Window)
+    {
+	ImGui::SetNextWindowPos(ImVec2((float32)Window->Width - 210, 10));
+	ImGui::SetNextWindowBgAlpha(0.35f);
+	if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+	{
+	    ImGui::Text("Window Stats");
+	    ImGui::Separator();
+	    ImGui::Text(Window->APIinfo.GPUvendor);
+	    ImGui::Text(Window->APIinfo.Version);
+	    ImGui::Separator();
+	    ImGui::Text("ms/f: %.3fms", Window->Time->MsPerFrame);
+	    //ImGui::Text("fps: %d", Window->Time->FPS);
+	    ImGui::Text("mcy/f: %d", Window->Time->MegaCyclePerFrame);
+	    ImGui::End();
+	}
+    }
 
-/* 	ImGui::PushID(1); */
-/* 	if (ImGui::Button(Engine->Vsync ? "on" : "off", bSize)) */
-/* 	    EngineToggleVsync(Engine); */
-/* 	ImGui::SameLine(); */
-/* 	ImGui::Text("VSYNC: "); */
-/* 	ImGui::PopID(); */
+    void ShowSettingsPanel(window_t *Window, bool &focus)
+    {
+	ImGui::SetNextWindowPos(ImVec2(10, 10));
+	ImGui::SetNextWindowSize(ImVec2(410, (float32)Window->Height - 20));
+	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
-/* 	ImGui::PushID(2); */
-/* 	if (ImGui::Button(Engine->DebugMode ? "on" : "off", bSize)) */
-/* 	    EngineToggleDebugMode(Engine); */
-/* 	ImGui::SameLine(); */
-/* 	ImGui::Text("DEBUG: "); */
-/* 	ImGui::PopID(); */
+        window_settings_collapse_header(Window);
+    
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+	    focus = true;
+	else
+	    focus = false;
+	ImGui::End();
+    }
+}
 
-/* 	ImGui::PushID(3); */
-/* 	if (ImGui::Button(Engine->PolyMode ? "on" : "off", bSize)) */
-/* 	    EngineTogglePolyMode(Engine); */
-/* 	ImGui::SameLine(); */
-/* 	ImGui::Text("POLY: "); */
-/* 	ImGui::PopID(); */
-/* 	ImGui::Separator(); */
-/*     } */
-/* } */
+static void window_settings_collapse_header(window_t *Window)
+{
+    if (ImGui::CollapsingHeader("Window settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+    	ImVec2 bSize(40, 20);
+	ImGui::Text("SCREEN: %d x %d", Window->Width, Window->Height);
+	ImGui::Separator();
+
+	ImGui::PushID(1);
+	if (ImGui::Button(Window->Vsync ? "on" : "off", bSize))
+	    window::ToggleVsync(Window);
+	ImGui::SameLine();
+	ImGui::Text("VSYNC: ");
+	ImGui::PopID();
+
+	ImGui::PushID(2);
+	if (ImGui::Button(Window->DebugMode ? "on" : "off", bSize))
+	    window::ToggleDebugMode(Window);
+	ImGui::SameLine();
+	ImGui::Text("DEBUG: ");
+	ImGui::PopID();
+    }
+}
 
     /* // TODO: GUI */
     /* static void CameraSettingsCollapseHeader(camera *Camera) */
@@ -137,3 +147,128 @@
 /*     	ImGui::Separator(); */
 /*     } */
 /* } */
+
+// TODO: move to GUI
+// void DrawSettingsPanel(engine *Engine,
+// 		       uint32 width, uint32 height,
+// 		       input_state *InputState,
+// 		       camera *Camera,
+// 		       renderer *Renderer,
+// 		       uint32 &mapSize,
+// 		       std::unordered_map<uint32, entity_cube> &containers,
+// 		       std::unordered_map<uint32, uint32> &slots,
+// 		       bool &focus)
+// {
+//     ImGui::SetNextWindowPos(ImVec2(10, 10));
+//     ImGui::SetNextWindowSize(ImVec2(410, (float32)height - 20));
+//     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize);
+
+//     EngineSettingsCollapseHeader(Engine, width, height);
+//     input::InputStateSettingsCollapseHeader(InputState);
+//     CameraSettingsCollapseHeader(Camera);
+//     RendererSettingsCollapseHeader(Renderer);
+
+//     // World
+//     if (ImGui::CollapsingHeader("World settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	ImGui::Text("slots: %03d/%03d", 0, slots.size());
+// 	if (ImGui::SliderInt("floor", &(int)mapSize, 0, 1000))
+// 	    slots.clear();
+// 	ImGui::Separator();
+//     }
+
+//     // Containers
+//     if (ImGui::CollapsingHeader("Object settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	static uint32 selected = 0;
+// 	ImGui::BeginChild("left pane", ImVec2(120, 150));
+// 	for (std::pair<uint32, entity_cube> element : containers)	 
+// 	{
+// 	    char label[128];
+// 	    sprintf_s(label, "obj: <%s>", element.second.Name);
+// 	    if (ImGui::Selectable(label, (uint32)g_ContainerSelectedID == element.first))
+// 		g_ContainerSelectedID = element.first;
+// 	}
+
+// 	ImGui::EndChild();
+// 	ImGui::SameLine();
+
+// 	ImGui::BeginChild("right pane", ImVec2(0, 150));
+// 	if (g_ContainerSelectedID != 0)
+// 	{
+// 	    ImGui::Text("mem: %p", &containers[g_ContainerSelectedID]);
+// 	    ImGui::Text("ID: %03d", containers[g_ContainerSelectedID].ID);
+// 	    ImGui::Text("Name: %s", containers[g_ContainerSelectedID].Name);
+// 	    ImGui::Text("State: %s",
+// 			(containers[g_ContainerSelectedID].State == ENTITY_STATE_STATIC ? "STATIC" : "DYNAMIC"));
+// 	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+// 			containers[g_ContainerSelectedID].Position.x,
+// 			containers[g_ContainerSelectedID].Position.y,
+// 			containers[g_ContainerSelectedID].Position.z);
+
+// 	    ImGui::Text("Size x=%.2f y=%.2f z=%.2f w=%.2f",
+// 			containers[g_ContainerSelectedID].Size.x,
+// 			containers[g_ContainerSelectedID].Size.y,
+// 			containers[g_ContainerSelectedID].Size.z,
+// 			containers[g_ContainerSelectedID].Color.w);
+
+// 	    ImGui::Text("Color r=%.2f g=%.2f b=%.2f a=%.2f",
+// 			containers[g_ContainerSelectedID].Color.r,
+// 			containers[g_ContainerSelectedID].Color.g,
+// 			containers[g_ContainerSelectedID].Color.b,
+// 			containers[g_ContainerSelectedID].Color.a);
+// 	}
+
+// 	ImGui::EndChild();
+// 	ImGui::Separator();
+//     }
+
+//     // Slots
+//     static uint32 selectedSlot = 0;
+//     if (ImGui::CollapsingHeader("Slots settings", ImGuiTreeNodeFlags_DefaultOpen))
+//     {
+// 	ImGui::Columns(2);
+// 	for (std::pair<uint32, uint32> sl : slots)
+// 	{
+// 	    char buf1[32];
+// 	    sprintf_s(buf1, "%03d", sl.first);
+// 	    ImGui::Button(buf1, ImVec2(-FLT_MIN, 0.0f));
+// 	    ImGui::NextColumn();
+
+// 	    char buf2[32];
+// 	    if (sl.second == 0)
+// 		sprintf_s(buf2, "%03d<empty>", sl.first);
+// 	    else
+// 		sprintf_s(buf2, "%03d", sl.second);
+
+// 	    if (ImGui::Button(buf2, ImVec2(-FLT_MIN, 0.0f)))
+// 	    {
+// 		selectedSlot = sl.first;
+// 		ImGui::OpenPopup("objects_popup");
+// 	    }
+
+// 	    ImGui::NextColumn();
+// 	}
+
+// 	ImGui::Columns(1);
+// 	ImGui::Separator();
+//     }
+
+//     if (ImGui::BeginPopup("objects_popup"))
+//     {
+// 	ImGui::Text("slot-%03d", selectedSlot);
+// 	ImGui::Separator();
+// 	for (std::pair<uint32, entity_cube> ct : containers)	 
+// 	{
+// 	    if (ImGui::Selectable(containers[ct.first].Name))
+// 		AttribContainerToSlot(slots, containers, selectedSlot, ct.first);
+// 	}
+// 	ImGui::EndPopup();
+//     }
+    
+//     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+// 	focus = true;
+//     else
+// 	focus = false;
+//     ImGui::End();
+// }

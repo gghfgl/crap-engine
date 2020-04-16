@@ -67,37 +67,21 @@ namespace window
     {
 	Window->Vsync = !Window->Vsync;
 	glfwSwapInterval(Window->Vsync);
+   }
 
-	// TODO: remove
-	// if (Window->Vsync)
-	// {
-	//     glfwSwapInterval(0);
-	//     Window->Vsync = false;
-	// }
-	// else
-	// {
-	//     glfwSwapInterval(1);
-	//     Window->Vsync = true;
-	// }
-    }
-
-    void UpdateSize(window_t *Window)
+    void ToggleDebugMode(window_t *Window)
     {
-	glfwGetWindowSize(Window->PlatformWindow, &Window->Width, &Window->Height);
+	    Window->DebugMode = !Window->DebugMode;
     }
 
     void SwapBuffer(window_t *Window)
     {
-        // ===================== platform code =====================
 	swap_buffer_and_finish(Window);
-        // ========================================================
     }
 
     void Delete(window_t *Window)
     {
-        // ===================== platform code =====================
         terminate_window(Window);
-        // ========================================================
 	delete Window->Time;
 	delete Window;
     }
@@ -147,9 +131,10 @@ static render_API_info init_render_API()
     glEnable(GL_CULL_FACE); // face culling
     glCullFace(GL_FRONT); // face culling
     //glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    //glEnable(GL_STENCIL_TEST);
+    // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     
     glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
     //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

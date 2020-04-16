@@ -2,11 +2,12 @@
 
 #include "shader.h"
 
-static const size_t globalPerCubeVertex  = 8;
-static const size_t globalPerCubeIndices = 36;
-static const size_t globalMaxCubeCount   = 1000;
-static const size_t globalMaxVertexCount = globalMaxCubeCount * globalPerCubeVertex;
-static const size_t globalMaxIndexCount  = globalMaxCubeCount * globalPerCubeIndices;
+// TODO: think about memory pool after Model loader
+/* static const size_t globalPerCubeVertex  = 8; */
+/* static const size_t globalPerCubeIndices = 36; */
+/* static const size_t globalMaxCubeCount   = 1000; */
+/* static const size_t globalMaxVertexCount = globalMaxCubeCount * globalPerCubeVertex; */
+/* static const size_t globalMaxIndexCount  = globalMaxCubeCount * globalPerCubeIndices; */
 
 struct vertex
 {
@@ -16,36 +17,31 @@ struct vertex
     float32 TextureIndex;
 };
 
-// TODO: objectif-> draw without bacthing
-// TODO: check batching when repetitive object. (voxel)
+struct vertex_buffer
+{
+    uint32 ID;
+    vertex *Buffer = nullptr;
+    vertex *BufferPtr = nullptr;
+};
 
-// TODO: struct vertex_array (uint32 ID, ARRAY vertex_buffers)
-// TODO: struct vertex_buffer (uint32 ID, vertex*)
+struct vertex_array
+{
+    uint32 ID;
+    vertex_buffer *VBOs = nullptr;
+    vertex_buffer *VBOsPtr = nullptr;
+};
 
 struct renderer_stats
 {
-    uint32 DrawCount;
-    uint32 CubeCount;
+    uint32 DrawCalls;
+    int64 VertexCount;
 };
 
-// TODO: renderer_t
-struct renderer
+struct renderer_t
 {
-    // TODO: single VAO
-    
-    // NOTE: renderer data ...
-    uint32 DebugVAO = 0;
-    uint32 DebugVBO = 0;
-    uint32 CubeVAO = 0;
-    uint32 CubeVBO = 0;
-    uint32 CubeIBO = 0;
-    uint32 IndexCount = 0;
-    vertex *CubeBuffer = nullptr;
-    vertex *CubeBufferPtr = nullptr;
+    bool PolygoneMode;
+    vertex_array *VAO = nullptr;
 
-    uint32 DefaultTextureID; // TODO: meh ...
-
-    // TODO: keep memory pool in renderer
-    memory_arena *MemoryArena;
     renderer_stats Stats;
+    memory_pool *MemPool; // TODO: do something with this?
 };

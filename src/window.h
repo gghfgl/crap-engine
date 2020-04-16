@@ -21,6 +21,7 @@ struct window_t {
     int Width, Height;
     render_API_info APIinfo;
     const char*  WindowTitle;
-    bool Vsync;
     window_time *Time;
+    bool DebugMode;
+    bool Vsync;
 };

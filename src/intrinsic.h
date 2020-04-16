@@ -13,7 +13,7 @@ typedef double float64;
 
 #define ASSERT(x) if (!(x)) __debugbreak();
 
-struct memory_arena
+struct memory_pool
 {
     size_t Size;
     int64 *Base;
@@ -21,20 +21,20 @@ struct memory_arena
     size_t MaxUsed;
 };
 
-inline void InitMemoryArena(memory_arena *Arena, size_t size, int64 *base)
+inline void InitMemoryPool(memory_pool *MemPool, size_t size, int64 *base)
 {
-    Arena->Size = size;
-    Arena->Base = base;
-    Arena->Used = 0;
-    Arena->MaxUsed = 0;
+    MemPool->Size = size;
+    MemPool->Base = base;
+    MemPool->Used = 0;
+    MemPool->MaxUsed = 0;
 }
 
-inline void* PushStructToArena(memory_arena *Arena, size_t size)
+inline void* PushStructToPool(memory_pool *MemPool, size_t size)
 {
-    ASSERT(Arena->Used + size <= Arena->Size);
+    ASSERT(MemPool->Used + size <= MemPool->Size);
 
-    Arena->Used += size;
-    Arena->MaxUsed += size;
-    void *Result = (void*)((int64)Arena->Base + Arena->Used);
+    MemPool->Used += size;
+    MemPool->MaxUsed += size;
+    void *Result = (void*)((int64)MemPool->Base + MemPool->Used);
     return Result;
 }

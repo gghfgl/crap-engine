@@ -123,12 +123,14 @@
 #define CRAP_KEY_MENU 348 
 #define CRAP_KEY_LAST CRAP_KEY_MENU
 
-struct keyboard_e {
+struct keyboard_e
+{
     bool IsPressed[512] = {0};
     bool IsReleased[512] = {0};
 };
 
-struct mouse_e {
+struct mouse_e
+{
     float64  PosX, PosY;
     float64  LastX, LastY;
     float32  OffsetX, OffsetY;
@@ -137,7 +139,8 @@ struct mouse_e {
     bool     LeftButtonFirstClick;  
 };
 
-struct input_t {
+struct input_t
+{
     keyboard_e *KeyboardEvent;
     mouse_e    *MouseEvent;
 };

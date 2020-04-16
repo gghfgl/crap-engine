@@ -20,5 +20,5 @@
 #include "shader.cpp"
 #include "texture.cpp"
 #include "renderer.cpp"
-
 #include "window.cpp"
+#include "gui.h"
