@@ -100,7 +100,8 @@ namespace shader
 	for (auto iter : c_Shaders)
 	{
 	    glDeleteProgram(iter.second->ID);
-	    delete iter.second;
+	    free(iter.second);
+	    iter.second = NULL;
 	}
 
 	c_UniformLocations.clear();
@@ -163,7 +164,7 @@ static shader_t* load_shader_from_file(const char* vShaderFile,
     const char* fShaderCode = fragmentCode.c_str();
     const char* gShaderCode = geometryCode.c_str();
     // 2. Now create shader_t object from source code
-    shader_t *Shader = new shader_t();
+    shader_t *Shader = new shader_t;
     compile_shader(Shader, vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
 
     return Shader;

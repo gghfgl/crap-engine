@@ -7,7 +7,7 @@ namespace camera
     camera_t* Construct(
 	float32 windowWidth, float32 windowHeight,
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+	glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f),
 	float32 yaw = g_DefaultYawSetting,
 	float32 pitch = g_DefaultPitchSetting,
 	float32 speed = g_DefaultSpeedSetting,
@@ -26,12 +26,11 @@ namespace camera
 	    windowWidth / windowHeight,
 	    0.1f, 100.0f);
 
-	// TODO: malloc?
 	camera_t* Camera = new camera_t;
 	Camera->Position = position;
-	Camera->WorldUp = up;
-	Camera->Settings = Settings;
 	Camera->Front = glm::vec3(0.0f, 0.0f, -1.0f);
+	Camera->WorldUp = worldUp;
+	Camera->Settings = Settings;
 	Camera->ProjectionMatrix = projection;
 
 	update_camera_vectors(Camera);
@@ -40,8 +39,8 @@ namespace camera
 
     void Delete(camera_t *Camera)
     {
-	delete Camera->Settings;
-	delete Camera;
+        delete Camera->Settings;
+        delete Camera;
     }
 
     glm::mat4 GetViewMatrix(camera_t *Camera)

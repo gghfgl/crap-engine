@@ -22,6 +22,6 @@ struct window_t {
     render_API_info APIinfo;
     const char*  WindowTitle;
     window_time *Time;
-    bool DebugMode;
+    bool DebugMode = 0;
     bool Vsync;
 };

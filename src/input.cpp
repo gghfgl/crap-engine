@@ -25,7 +25,6 @@ namespace input
 	glfwGetWindowSize(Window, &width, &height);
 	// ========================================================
 
-	// TODO: malloc?
         KEYBOARD_EVENTS = new keyboard_e;
         MOUSE_EVENTS = new mouse_e;
         MOUSE_EVENTS->PosX = 0.0f;
@@ -48,9 +47,9 @@ namespace input
 
     void Delete(input_t *InputState)
     {
-	delete InputState->KeyboardEvent ;
-	delete InputState->MouseEvent ;
-	delete InputState ;
+        delete InputState->KeyboardEvent;
+	delete InputState->MouseEvent;
+	delete InputState;
     }
 
     void PollEvents()

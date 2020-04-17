@@ -1,11 +1,11 @@
 #version 450 core
 
-in vec4 vColor;
-in vec2 vTexCoord;
-in float vTexIndex;
+in vec4 v_Color;
+// in vec2 vTexCoord;
+// in float vTexIndex;
 
 // texture samplers
-uniform sampler2D uTextures[1];
+// uniform sampler2D uTextures[1];
 // uniform sampler2D texture1;
 // uniform sampler2D texture2;
 // uniform sampler2D uTextures[2];
@@ -20,7 +20,7 @@ void main()
     // FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2);
     // FragColor = texture(texture1, TexCoord);
    //  FragColor = vec4(debug_color, 1.0);
-    FragColor = vColor;
+    FragColor = v_Color;
     //int index = int(vTexIndex);
     //FragColor = texture(uTextures[index], vTexCoord);
 }
