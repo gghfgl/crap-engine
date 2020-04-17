@@ -121,14 +121,15 @@ static render_API_info init_render_API()
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
 	// TODO: dont use STD::COUT!!!!
-	std::cout << "Failed to initialize GLAD" << std::endl;
-	// return -1;
+	std::cout << "EXITCODE:1234567890 Failed to initialize GLAD" << std::endl;
+	int exitcode = 1234567890;
+        exit(exitcode);
     }
 
     glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
     glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE); // face culling
-    glCullFace(GL_FRONT); // face culling
+    //glEnable(GL_CULL_FACE); // face culling
+    //glCullFace(GL_FRONT); // face culling
     // glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
 
     //glEnable(GL_STENCIL_TEST);

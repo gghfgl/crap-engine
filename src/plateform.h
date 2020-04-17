@@ -12,13 +12,16 @@
 #include "IMGUI/imgui_impl_opengl3.h"
 #include "../dep/stb_image.cpp"
 #include "../dep/glad.c"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include "intrinsic.h"
 #include "input.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
 #include "shader.cpp"
-#include "texture.cpp"
+// #include "texture.cpp"
 #include "renderer.cpp"
 #include "window.cpp"
 #include "gui.h"

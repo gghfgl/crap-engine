@@ -1,8 +1,9 @@
 #pragma once
 
 static void window_settings_collapse_header(window_t *Window);
+static void editor_grid_collapse_header(uint32 &resolution);
 
-namespace EditorGUI
+namespace editorGUI
 {
     void Init(window_t* Window)
     {
@@ -55,13 +56,14 @@ namespace EditorGUI
 	}
     }
 
-    void ShowSettingsPanel(window_t *Window, bool &focus)
+    void ShowSettingsPanel(window_t *Window, uint32 &gridResolution, bool &focus)
     {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::SetNextWindowSize(ImVec2(410, (float32)Window->Height - 20));
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
         window_settings_collapse_header(Window);
+	editor_grid_collapse_header(gridResolution);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	    focus = true;
@@ -92,6 +94,15 @@ static void window_settings_collapse_header(window_t *Window)
 	ImGui::SameLine();
 	ImGui::Text("DEBUG: ");
 	ImGui::PopID();
+    }
+}
+
+static void editor_grid_collapse_header(uint32 &resolution)
+{
+    if (ImGui::CollapsingHeader("Grid", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::SliderInt("res", &(int)resolution, 0, 50);
+	ImGui::Separator();
     }
 }
 

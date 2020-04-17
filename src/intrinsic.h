@@ -38,3 +38,8 @@ inline void* PushStructToPool(memory_pool *MemPool, size_t size)
     void *Result = (void*)((int64)MemPool->Base + MemPool->Used);
     return Result;
 }
+
+inline void RefreshMemoryPool(memory_pool *MemPool)
+{
+    MemPool->MaxUsed = 0;
+}

@@ -18,22 +18,46 @@ struct renderer_t
     bool WireframeMode;
 
     renderer_stats Stats;
-    memory_pool *MemPool; // TODO: do something with this?
 };
 
 struct vertex_t
 {
     glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 TexCoords;
+    glm::vec3 Tangent;
+    glm::vec3 Bitangent;
     glm::vec4 Color;
-    glm::vec2 TextureCoord;
+};
+
+struct texture_t
+{
+    uint32 Id;
+    std::string Type; // TODO: const char*
+    std::string Path; // TODO: const char*
 };
 
 struct mesh_t
 {
-    uint32 VAO = 0;
-    uint32 VBO = 0;
+    uint32 VAO;
+    uint32 VBO;
+    uint32 EBO; // TODO: IBO?
 
+    // array method
     uint32 VertexCount = 0;
     vertex_t *Data = nullptr;
     vertex_t *DataPtr = nullptr;
+
+    // vector method
+    std::vector<vertex_t> Vertices;
+    std::vector<uint32> Indices;
+    std::vector<texture_t> Textures;
+};
+
+struct model_t
+{
+    std::vector<mesh_t*> Meshes; // TODO: free ptr memory!
+    std::string Directory; // TODO: const char*
+    std::vector<texture_t> TexturesLoaded; // TODO: kind of cache
+    bool GammaCorrection;
 };
