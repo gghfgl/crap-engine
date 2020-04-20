@@ -22,6 +22,7 @@
 #include "entity.cpp"
 #include "shader.cpp"
 // #include "texture.cpp"
+#include "mesh.cpp"
 #include "renderer.cpp"
 #include "window.cpp"
 #include "gui.h"

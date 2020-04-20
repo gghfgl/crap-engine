@@ -15,13 +15,14 @@
 */
 
 /* TODO:
-   - refact reorganize code (renderer / mesh / model)
+   - assimp be carefull of texture path (same dir as the model)
+   - mesh / model + memory pool??
    - load model on the fly with imgui in a list
    - scale and move model
    - improve grid rendering
 */
 
-void GenerateGridData(mesh_t *MeshGrid, uint32 resolution);
+void GenerateGridData(mesh_t *MeshGrid, uint32 resolution, uint32 maxResolution);
 // -------------------------------
 struct editor_t
 {
@@ -34,6 +35,7 @@ const uint32 g_Width = 1280;
 const uint32 g_Height = 960;
 static bool g_ActiveWindow = false;
 glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
+static const uint32 g_GridMaxResolution = 52;
 static uint32 g_GridResolutionSlider = 10;
 
 int main(int argc, char *argv[])
@@ -42,37 +44,20 @@ int main(int argc, char *argv[])
     input_t *InputState = input::Construct(Window->PlatformWindow);
     camera_t *Camera = camera::Construct((float32)g_Width, (float32)g_Height, g_CameraStartPosition);
     renderer_t *Renderer = renderer::Construct();
-    shader::CompileAndCache("../shaders/default.vs", "../shaders/default.fs", nullptr,
-			  "default", Camera->ProjectionMatrix);
-    shader::CompileAndCache("../shaders/default.vs", "../shaders/stencil.fs", nullptr,
-    			  "stencil", Camera->ProjectionMatrix);
+
+    shader::CompileAndCache("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
+    shader::CompileAndCache("../shaders/grid.glsl", "grid", Camera->ProjectionMatrix);
 
     // =================================================
-    mesh_t *MeshGrid = new mesh_t;
-    MeshGrid->Data = new vertex_t[1000]; // TODO: ptr from memory pool ???
+    // Grid
+    std::vector<vertex_t> vGrid(g_GridMaxResolution * 4, vertex_t());
+    std::vector<uint32> uEmpty;
+    std::vector<texture_t> tEmpty;
+    mesh_t *MeshGrid = mesh::Construct(vGrid, uEmpty, tEmpty);
 
-    glGenVertexArrays(1, &MeshGrid->VAO);
-    glBindVertexArray(MeshGrid->VAO);
-
-    glGenBuffers(1, &MeshGrid->VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, MeshGrid->VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_t) * 1000, nullptr, GL_DYNAMIC_DRAW);
-
-    // Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-    			  sizeof(vertex_t),
-    			  (const void*)offsetof(vertex_t, Position));
-
-    // Color
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
-    			  sizeof(vertex_t),
-    			  (const void*)offsetof(vertex_t, Color));
-
-    glBindVertexArray(0);
-    // =================================================
+    // Nanosuit
     model_t *TestModel = model::LoadFromFile("../assets/nanosuit/nanosuit.obj");
+    // =================================================
 
     
     editor_t *Editor = new editor_t;
@@ -119,14 +104,14 @@ int main(int argc, char *argv[])
 
 	if (Editor->GridResolution != g_GridResolutionSlider)
 	{
-	    GenerateGridData(Editor->MeshGrid, g_GridResolutionSlider);
+	    GenerateGridData(Editor->MeshGrid, g_GridResolutionSlider, g_GridMaxResolution);
 	    Editor->GridResolution = g_GridResolutionSlider;
 	}
 
 	if (Editor->GridResolution > 0)
 	    renderer::DrawLines(Renderer,
 				Editor->MeshGrid,
-				shader::GetFromCache("default"),
+				shader::GetFromCache("grid"),
 				camera::GetViewMatrix(Camera));
 
         glm::mat4 model = glm::mat4(1.0f);
@@ -140,7 +125,10 @@ int main(int argc, char *argv[])
 
 	editorGUI::NewFrame();
 	editorGUI::ShowWindowStatsOverlay(Window);
-	editorGUI::ShowSettingsPanel(Window, g_GridResolutionSlider, g_ActiveWindow);
+	editorGUI::ShowSettingsPanel(Window,
+				     g_GridResolutionSlider,
+				     g_GridMaxResolution,
+				     g_ActiveWindow);
 	editorGUI::Render();
 	
 	// TODO:  update memory pool
@@ -150,6 +138,7 @@ int main(int argc, char *argv[])
     }
 
     mesh::Delete(Editor->MeshGrid);
+    model::Delete(TestModel);
     delete Editor;
 
     editorGUI::Delete();
@@ -196,57 +185,56 @@ int main(int argc, char *argv[])
 //     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)(3 * sizeof(float32)));
 // }
 
-void GenerateGridData(mesh_t *MeshGrid, uint32 resolution)
+void GenerateGridData(mesh_t *MeshGrid, uint32 resolution, uint32 maxResolution)
 {
-    uint32 vCount = resolution * 4 + 4; // 44
-    float32 b = (float32)resolution / 2.0f + 1.0f; // 6
-    float32 a = -b; // -6
-    float32 xPos = -((float32)resolution / 2.0f); // -5
-    float32 zPos = xPos; // -5
-    glm::vec4 color = glm::vec4(0.360f, 0.360f, 0.360f, 1.0f);
-
-    // TODO: carefull vCount > maxVertex from memory pool
-    MeshGrid->VertexCount = vCount;
-    MeshGrid->DataPtr = MeshGrid->Data;
-
-    uint32 i = 0;
-    while (i < vCount / 2)
+    if (resolution <= maxResolution)
     {
-	if (i%2 == 0)
+	uint32 vCount = resolution * 4 + 4; // 44
+	float32 b = (float32)resolution / 2.0f + 1.0f; // 6
+	float32 a = -b; // -6
+	float32 xPos = -((float32)resolution / 2.0f); // -5
+	float32 zPos = xPos; // -5
+
+	MeshGrid->Vertices.clear();
+	uint32 i = 0;
+	while (i < vCount / 2)
 	{
-	    MeshGrid->DataPtr->Position = glm::vec3(a, 0.0f, zPos);
-	    MeshGrid->DataPtr->Color = color;
-	}
-	else
-	{
-	    MeshGrid->DataPtr->Position = glm::vec3(b, 0.0f, zPos);
-	    MeshGrid->DataPtr->Color = color;
-	    zPos += 1.0f;
+	    vertex_t v;
+	    if (i%2 == 0)
+	    {
+		v.Position = glm::vec3(a, 0.0f, zPos);
+	    }
+	    else
+	    {
+		v.Position = glm::vec3(b, 0.0f, zPos);
+		zPos += 1.0f;
+	    }
+
+	    MeshGrid->Vertices.push_back(v);
+	    i++;
 	}
 
-	MeshGrid->DataPtr++;
-	i++;
-    }
-
-    while (i < vCount)
-    {
-	if (i%2 == 0)
+	while (i < vCount)
 	{
-	    MeshGrid->DataPtr->Position = glm::vec3(xPos, 0.0f, a);
-	    MeshGrid->DataPtr->Color = color;
-	}
-	else
-	{
-	    MeshGrid->DataPtr->Position = glm::vec3(xPos, 0.0f, b);
-	    MeshGrid->DataPtr->Color = color;
-	    xPos += 1.0f;
-	}
+	    vertex_t v;
+	    if (i%2 == 0)
+	    {
+		v.Position = glm::vec3(xPos, 0.0f, a);
+	    }
+	    else
+	    {
+		v.Position = glm::vec3(xPos, 0.0f, b);
+		xPos += 1.0f;
+	    }
 
-	MeshGrid->DataPtr++;
-	i++;
-    }
+	    MeshGrid->Vertices.push_back(v);
+	    i++;
+	}
     
-    GLsizeiptr size = (uint8*)MeshGrid->DataPtr - (uint8*)MeshGrid->Data;
-    glBindBuffer(GL_ARRAY_BUFFER, MeshGrid->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size, MeshGrid->Data);
+	glBindBuffer(GL_ARRAY_BUFFER, MeshGrid->VBO);
+	glBufferSubData(GL_ARRAY_BUFFER,
+			0,
+			MeshGrid->Vertices.size() * sizeof(vertex_t),
+			&MeshGrid->Vertices[0]);
+    }
 }

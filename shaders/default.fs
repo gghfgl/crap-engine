@@ -1,5 +1,4 @@
 #version 450 core
-
 //in vec4 v_Color;
 in vec2 v_TexCoord;
 // in float vTexIndex;

@@ -1,7 +1,8 @@
 #pragma once
 
 struct render_API_info {
-    const char*  GPUvendor;
+    const char*  Vendor;
+    const char*  Renderer;
     const char*  Version;
 };
 

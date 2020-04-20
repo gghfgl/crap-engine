@@ -1,7 +1,7 @@
 #pragma once
 
 static void window_settings_collapse_header(window_t *Window);
-static void editor_grid_collapse_header(uint32 &resolution);
+static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
 
 namespace editorGUI
 {
@@ -46,7 +46,8 @@ namespace editorGUI
 	{
 	    ImGui::Text("Window Stats");
 	    ImGui::Separator();
-	    ImGui::Text(Window->APIinfo.GPUvendor);
+	    ImGui::Text(Window->APIinfo.Vendor);
+	    ImGui::Text(Window->APIinfo.Renderer);
 	    ImGui::Text(Window->APIinfo.Version);
 	    ImGui::Separator();
 	    ImGui::Text("ms/f: %.3fms", Window->Time->MsPerFrame);
@@ -56,14 +57,17 @@ namespace editorGUI
 	}
     }
 
-    void ShowSettingsPanel(window_t *Window, uint32 &gridResolution, bool &focus)
+    void ShowSettingsPanel(window_t *Window,
+			   uint32 &gridResolution,
+			   uint32 gridMaxResolution,
+			   bool &focus)
     {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::SetNextWindowSize(ImVec2(410, (float32)Window->Height - 20));
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
         window_settings_collapse_header(Window);
-	editor_grid_collapse_header(gridResolution);
+	editor_grid_collapse_header(gridResolution, gridMaxResolution);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	    focus = true;
@@ -97,11 +101,13 @@ static void window_settings_collapse_header(window_t *Window)
     }
 }
 
-static void editor_grid_collapse_header(uint32 &resolution)
+static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution)
 {
     if (ImGui::CollapsingHeader("Grid", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	ImGui::SliderInt("res", &(int)resolution, 0, 50);
+	ImGui::SliderInt("res", &(int)resolution, 0, gridMaxResolution);
+	ImGui::SameLine();
+	ImGui::Text("max: %dx%d", gridMaxResolution, gridMaxResolution);
 	ImGui::Separator();
     }
 }

@@ -121,7 +121,7 @@ static render_API_info init_render_API()
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
 	// TODO: dont use STD::COUT!!!!
-	std::cout << "EXITCODE:1234567890 Failed to initialize GLAD" << std::endl;
+        printf("EXITCODE:1234567890 Failed to initialize GLAD");
 	int exitcode = 1234567890;
         exit(exitcode);
     }
@@ -141,7 +141,8 @@ static render_API_info init_render_API()
     glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
 
     render_API_info APIinfo;
-    APIinfo.GPUvendor = (const char*)glGetString(GL_RENDERER);
+    APIinfo.Vendor = (const char*)glGetString(GL_VENDOR);
+    APIinfo.Renderer = (const char*)glGetString(GL_RENDERER);
     APIinfo.Version = (const char*)glGetString(GL_VERSION);
 
     return APIinfo;
