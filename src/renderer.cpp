@@ -17,15 +17,6 @@ namespace renderer
 
     void Delete(renderer_t *Renderer)
     {
-	// ===================== platform code =====================
-	// // TODO: move to mesh model etc ...
-	// glDeleteVertexArrays(1, &Renderer->VAO->Id);
-	// glDeleteBuffers(1, &Renderer->DebugVBO);
-	// glDeleteVertexArrays(1, &Renderer->CubeVAO);
-	// glDeleteBuffers(1, &Renderer->CubeVBO);
-	// glDeleteBuffers(1, &Renderer->CubeIBO);
-	// ========================================================
-
 	// TODO: delete MemPool
         delete Renderer;
     }
@@ -68,7 +59,6 @@ namespace renderer
 		  shader_t *Shader,
 		  glm::mat4 viewMatrix,
 		  glm::mat4 model)
-
     {
 	shader::UseProgram(Shader);
 	shader::SetUniform4fv(Shader, "view", viewMatrix);    
@@ -99,7 +89,7 @@ namespace renderer
 	}
 
 	glBindVertexArray(Mesh->VAO);
-	glDrawElements(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
 
 	glBindVertexArray(0); // good practice
 	glActiveTexture(GL_TEXTURE0); // good practice

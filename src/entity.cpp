@@ -61,8 +61,8 @@ bool RaySphereIntersection(glm::vec3 rayOriginWorld,
     // check for ray hitting twice (in and out of the sphere)
     if ( b_squared_minus_c > 0.0f ) {
 	// get the 2 intersection distances along ray
-	float32 t_a              = -b + sqrt( b_squared_minus_c );
-	float32 t_b              = -b - sqrt( b_squared_minus_c );
+	float32 t_a = -b + sqrt( b_squared_minus_c );
+	float32 t_b = -b - sqrt( b_squared_minus_c );
 	*intersectionDistance = t_b;
 
 	// if behind viewer, throw one or both away

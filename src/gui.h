@@ -44,8 +44,6 @@ namespace editorGUI
 	ImGui::SetNextWindowBgAlpha(0.35f);
 	if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
 	{
-	    ImGui::Text("Window Stats");
-	    ImGui::Separator();
 	    ImGui::Text(Window->APIinfo.Vendor);
 	    ImGui::Text(Window->APIinfo.Renderer);
 	    ImGui::Text(Window->APIinfo.Version);
