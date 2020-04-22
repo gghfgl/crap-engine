@@ -35,6 +35,12 @@ namespace shader
 	glUniform1iv(id, (GLsizei)(sizeof(value)/sizeof(value[0])), value);
     }
 
+    void SetUniform1ui(shader_t *Shader, const char* name, uint32 value)
+    {
+	uint32 id = get_uniform_location_cache(Shader, name);
+	glUniform1ui(id, value);
+    }
+
     void SetUniform2f(shader_t *Shader, const char* name, float32 x, float32 y)
     {
 	uint32 id = get_uniform_location_cache(Shader, name);

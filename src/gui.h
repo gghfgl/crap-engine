@@ -1,6 +1,6 @@
 #pragma once
 
-static void window_settings_collapse_header(window_t *Window);
+static void window_settings_collapse_header(window_t *Window, input_t *InputState);
 static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
 
 namespace editorGUI
@@ -57,15 +57,16 @@ namespace editorGUI
     }
 
     void ShowEditorPanel(window_t *Window,
-			   uint32 &gridResolution,
-			   uint32 gridMaxResolution,
-			   bool &focus)
+			 input_t *InputState,
+			 uint32 &gridResolution,
+			 uint32 gridMaxResolution,
+			 bool &focus)
     {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::SetNextWindowSize(ImVec2(410, (float32)Window->Height - 20));
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
-        window_settings_collapse_header(Window);
+        window_settings_collapse_header(Window, InputState);
 	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
@@ -76,12 +77,15 @@ namespace editorGUI
     }
 }
 
-static void window_settings_collapse_header(window_t *Window)
+static void window_settings_collapse_header(window_t *Window, input_t *InputState)
 {
     if (ImGui::CollapsingHeader("Window settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
     	ImVec2 bSize(40, 20);
 	ImGui::Text("SCREEN: %d x %d", Window->Width, Window->Height);
+	ImGui::Text("MousePos: %d x %d",
+		    (uint32)InputState->MouseEvent->PosX,
+		    (uint32)InputState->MouseEvent->PosY);
 	ImGui::Separator();
 
 	ImGui::PushID(1);
