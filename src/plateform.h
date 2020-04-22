@@ -19,7 +19,6 @@
 #include "intrinsic.h"
 #include "input.cpp"
 #include "camera.cpp"
-#include "entity.cpp"
 #include "shader.cpp"
 // #include "texture.cpp"
 #include "mesh.cpp"

@@ -93,6 +93,7 @@ namespace renderer
 
 	glBindVertexArray(0); // good practice
 	glActiveTexture(GL_TEXTURE0); // good practice
+	Renderer->Stats.DrawCalls++;
     }
 
     void DrawModel(renderer_t *Renderer,

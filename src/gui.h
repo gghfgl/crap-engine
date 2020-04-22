@@ -38,7 +38,7 @@ namespace editorGUI
     }
 
     // TODO: switch to string rendering
-    void ShowWindowStatsOverlay(window_t *Window)
+    void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
     {
 	ImGui::SetNextWindowPos(ImVec2((float32)Window->Width - 210, 10));
 	ImGui::SetNextWindowBgAlpha(0.35f);
@@ -51,11 +51,12 @@ namespace editorGUI
 	    ImGui::Text("ms/f: %.3fms", Window->Time->MsPerFrame);
 	    //ImGui::Text("fps: %d", Window->Time->FPS);
 	    ImGui::Text("mcy/f: %d", Window->Time->MegaCyclePerFrame);
+	    ImGui::Text("drawCalls: %d", Renderer->Stats.DrawCalls);
 	    ImGui::End();
 	}
     }
 
-    void ShowSettingsPanel(window_t *Window,
+    void ShowEditorPanel(window_t *Window,
 			   uint32 &gridResolution,
 			   uint32 gridMaxResolution,
 			   bool &focus)
@@ -65,7 +66,7 @@ namespace editorGUI
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
         window_settings_collapse_header(Window);
-	editor_grid_collapse_header(gridResolution, gridMaxResolution);
+	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	    focus = true;

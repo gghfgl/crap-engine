@@ -22,7 +22,7 @@
 */
 
 void PushGridSubData(mesh_t *MeshGrid, uint32 resolution, uint32 maxResolution);
-mesh_t* CreatePickingSpheresMesh(float radius, int stacks, int slices);
+mesh_t* CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
 // -------------------------------
 struct editor_t
 {
@@ -33,8 +33,10 @@ struct editor_t
 
 struct object_t
 {
+    const char* Label;
     model_t *Model;
-    mesh_t *PickingSpheres;
+    mesh_t *PickingSphere;
+    glm::vec3 Position;
 };
 
 const uint32 g_Width = 1280;
@@ -43,6 +45,9 @@ static bool g_ActiveWindow = false;
 glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 static const uint32 g_GridMaxResolution = 52;
 static uint32 g_GridResolutionSlider = 10;
+static uint32 g_PickingHovered = 0;
+static uint32 g_SelectedObject = 0;
+const float32 g_PickingSphereRadius = 0.1f;
 
 static std::map<uint32, object_t*> SCENE_OBJECTS;
 
@@ -55,6 +60,7 @@ int main(int argc, char *argv[])
 
     shader::CompileAndCache("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
     shader::CompileAndCache("../shaders/grid.glsl", "grid", Camera->ProjectionMatrix);
+    shader::CompileAndCache("../shaders/picking.glsl", "picking", Camera->ProjectionMatrix);
 
     // =================================================
     // Grid
@@ -65,20 +71,20 @@ int main(int argc, char *argv[])
 
     // Nanosuit with spheres pos
     model_t *Nanosuit = model::LoadFromFile("../assets/nanosuit/nanosuit.obj");
-    object_t *FirstObject = new object_t;
-    FirstObject->Model = Nanosuit;
-    FirstObject->PickingSpheres = CreatePickingSpheresMesh(0.5f, 20, 20);
-    SCENE_OBJECTS.insert({1, FirstObject}); // TODO: ID->object
+    object_t *TestObject = new object_t;
+    TestObject->Label = "nanosuit";
+    TestObject->Model = Nanosuit;
+    TestObject->PickingSphere = CreatePickingSphereMesh(0.0f, g_PickingSphereRadius, 15, 15);
+    TestObject->Position = glm::vec3(0.0f, 0.0f, 0.0f);
 
+    SCENE_OBJECTS.insert({1, TestObject}); // TODO: ID->object
     // =================================================
-
     
     editor_t *Editor = new editor_t;
     Editor->Active = true;
     Editor->GridResolution = 0;
     Editor->MeshGrid = MeshGrid;
     editorGUI::Init(Window);
-
 
     while (Editor->Active)
     {
@@ -107,9 +113,37 @@ int main(int argc, char *argv[])
 	    camera::ProcessMovementAngles(Camera,
 				       InputState->MouseEvent->OffsetX,
 				       InputState->MouseEvent->OffsetY);
+
+	    if (g_PickingHovered != 0)
+		g_SelectedObject = g_PickingHovered;
+	    else
+		g_SelectedObject = 0;
 	}
 
 	// NOTE: SIMULATE  ======================================>
+	glm::vec3 rayWorld = input::MouseRayDirectionWorld((float32)InputState->MouseEvent->PosX,
+							   (float32)InputState->MouseEvent->PosY,
+							   Window->Width,
+							   Window->Height,
+							   Camera->ProjectionMatrix,
+							   camera::GetViewMatrix(Camera));
+
+	for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
+	{
+	    float32 rayIntersection = 0.0f;
+	    glm::vec3 spherePos = glm::vec3(
+	        it->second->Position.x,
+		it->second->Position.y,
+		it->second->Position.z);
+	    
+	    if (mesh::RaySphereIntersection(Camera->Position, rayWorld, spherePos, g_PickingSphereRadius, &rayIntersection))
+	    {
+	        g_PickingHovered = it->first;
+		break;
+	    }
+	    else
+	        g_PickingHovered = 0;
+	}
 
 	// NOTE: RENDERING ======================================>
 	renderer::ResetStats(Renderer);
@@ -131,25 +165,27 @@ int main(int argc, char *argv[])
 	    // TODO: if object positions changed then PushObjectSubData (model + sphere + axis.ord)
 	    
 	    glm::mat4 model = glm::mat4(1.0f);
-	    //model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
+	    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 	    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-	    // renderer::DrawModel(Renderer,
-	    // 			it->second->Model,
-	    // 			shader::GetFromCache("default"),
-	    // 			camera::GetViewMatrix(Camera),
-	    // 			model);
+	    renderer::DrawModel(Renderer,
+	    			it->second->Model,
+	    			shader::GetFromCache("default"),
+	    			camera::GetViewMatrix(Camera),
+	    			model);
 
-	    // TODO: if object selected then render speheres and axis.ord
+	    // TODO: if edit pos mode then render move obj speheres
+	    glDisable(GL_DEPTH_TEST);
 	    renderer::DrawMesh(Renderer,
-	    		       it->second->PickingSpheres,
-	    		       shader::GetFromCache("grid"),
+	    		       it->second->PickingSphere,
+	    		       shader::GetFromCache(g_PickingHovered == it->first || g_SelectedObject == it->first ? "picking" : "grid"),
 	    		       camera::GetViewMatrix(Camera),
 	    		       glm::mat4(1.0f));
+	    glEnable(GL_DEPTH_TEST);
 	}
 
 	editorGUI::NewFrame();
-	editorGUI::ShowWindowStatsOverlay(Window);
-	editorGUI::ShowSettingsPanel(Window,
+	editorGUI::ShowWindowStatsOverlay(Window, Renderer);
+	editorGUI::ShowEditorPanel(Window,
 				     g_GridResolutionSlider,
 				     g_GridMaxResolution,
 				     g_ActiveWindow);
@@ -164,7 +200,7 @@ int main(int argc, char *argv[])
     for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
     {
 	model::Delete(it->second->Model);
-	mesh::Delete(it->second->PickingSpheres);
+	mesh::Delete(it->second->PickingSphere);
     }
     mesh::Delete(Editor->MeshGrid);
     delete Editor;
@@ -232,60 +268,42 @@ void PushGridSubData(mesh_t *MeshGrid, uint32 resolution, uint32 maxResolution)
     }
 }
 
-mesh_t* CreatePickingSpheresMesh(float radius, int stacks, int slices)
+mesh_t* CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
 {
-    float32 margin = 4.0f;
     uint32 nbVerticesPerSphere = 0;
     std::vector<vertex_t> vertices;
     std::vector<uint32> indices;
 
-    for (uint32 m = 0; m < 3; m++)
+    for (uint32 i = 0; i <= stacks; i++)
     {
-	for (int i = 0; i <= stacks; i++)
-	{
-	    GLfloat V   = i / (float) stacks;
-	    GLfloat phi = V * glm::pi <float> ();
+	GLfloat V   = i / (float) stacks;
+	GLfloat phi = V * glm::pi <float> ();
         
-	    for (int j = 0; j <= slices; ++j)
-	    {
-		GLfloat U = j / (float) slices;
-		GLfloat theta = U * (glm::pi <float> () * 2);
+	for (uint32 j = 0; j <= slices; ++j)
+	{
+	    GLfloat U = j / (float) slices;
+	    GLfloat theta = U * (glm::pi <float> () * 2);
             
-		// Calc The Vertex Positions
-		GLfloat x = cosf (theta) * sinf (phi);
-		GLfloat y = cosf (phi);
-		GLfloat z = sinf (theta) * sinf (phi);
-		vertex_t Vertex;
-		if (m == 0)
-		{
-		    Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
-		    nbVerticesPerSphere += 1; // nb vertices per sphere reference
-		}
-		else if (m == 1)
-		    Vertex.Position = glm::vec3(x * radius, y * radius + margin, z * radius);
-		else if (m == 2)
-		    Vertex.Position = glm::vec3(x * radius, y * radius, z * radius + margin);
-
-		vertices.push_back(Vertex);
-	    }
+	    // Calc The Vertex Positions
+	    GLfloat x = cosf (theta) * sinf (phi);
+	    GLfloat y = cosf (phi);
+	    GLfloat z = sinf (theta) * sinf (phi);
+	    vertex_t Vertex;
+	    Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
+	    vertices.push_back(Vertex);
+	    nbVerticesPerSphere += 1; // nb vertices per sphere reference
 	}
     }
 
-    uint32 offset = 0;
-    for (uint32 a = 0; a < vertices.size(); a++)
-    {
-	for (int i = 0; i < slices * stacks + slices; ++i)
-	{        
-	    indices.push_back (i + offset);
-	    indices.push_back (i + slices + 1 + offset);
-	    indices.push_back (i + slices + offset);
+    for (uint32 i = 0; i < slices * stacks + slices; ++i)
+    {        
+	indices.push_back (i);
+	indices.push_back (i + slices + 1);
+	indices.push_back (i + slices);
         
-	    indices.push_back (i + slices + 1 + offset);
-	    indices.push_back (i + offset);
-	    indices.push_back (i + 1 + offset);
-	}
-
-	offset += nbVerticesPerSphere;
+	indices.push_back (i + slices + 1);
+	indices.push_back (i);
+	indices.push_back (i + 1);
     }
 
     std::vector<texture_t> tEmpty;
