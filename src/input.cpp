@@ -37,6 +37,8 @@ namespace input
         MOUSE_EVENTS->LastY = height / 2.0f;
         MOUSE_EVENTS->LeftButton = false;
         MOUSE_EVENTS->LeftButtonFirstClick = true;
+        MOUSE_EVENTS->RightButton = false;
+        MOUSE_EVENTS->RightButtonFirstClick = true;
     
 	input_t *InputState = new input_t;
 	InputState->KeyboardEvent = KEYBOARD_EVENTS;
@@ -74,6 +76,14 @@ namespace input
 	MouseEvent->LastY = MouseEvent->PosY;
     }
 
+    float32 GetMouseScrollOffsetY(mouse_e *MouseEvent)
+    {
+	float32 rValue =  (float32)MouseEvent->ScrollOffsetY;
+	MouseEvent->ScrollOffsetY = 0.0f;
+
+	return rValue;
+    }
+    
     glm::vec3 MouseRayDirectionWorld(float32 mouseX,float32 mouseY,
 				     int width, int height,
 				     glm::mat4 projectionMatrix,
@@ -124,6 +134,14 @@ void mouse_button_callback(GLFWwindow* window, int32 button, int32 action, int32
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 	input::MOUSE_EVENTS->LeftButton = false;
 	input::MOUSE_EVENTS->LeftButtonFirstClick = true;
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	input::MOUSE_EVENTS->RightButton = true;
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
+	input::MOUSE_EVENTS->RightButton = false;
+	input::MOUSE_EVENTS->RightButtonFirstClick = true;
     }
 }
 

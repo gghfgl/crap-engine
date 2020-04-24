@@ -100,6 +100,8 @@ int main(int argc, char *argv[])
     {
 	window::UpdateTime(Window->Time);
 
+	std::cout << "y=" << input::MOUSE_EVENTS->ScrollOffsetY << std::endl;
+
 	// NOTE: INPUTS ======================================>
 	input::PollEvents();
 	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_ESCAPE])
@@ -116,6 +118,14 @@ int main(int argc, char *argv[])
 	    camera::ProcessMovementDirectional(Camera, UP, Window->Time->DeltaTime);
 	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_LEFT_CONTROL])
 	    camera::ProcessMovementDirectional(Camera, DOWN, Window->Time->DeltaTime);
+
+	if (InputState->MouseEvent->ScrollOffsetY != 0.0f)
+	{
+	    if (input::GetMouseScrollOffsetY(InputState->MouseEvent) > 0)
+		camera::ProcessMovementDirectional(Camera, FORWARD, Window->Time->DeltaTime, 5.0f);
+	    else
+		camera::ProcessMovementDirectional(Camera, BACKWARD, Window->Time->DeltaTime, 5.0f);
+	}
 	
 	if (InputState->MouseEvent->LeftButton)
 	{
@@ -137,7 +147,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	    g_DragObject = 0;
-
+	
 	// NOTE: SIMULATE  ======================================>
 	glm::vec3 rayWorld = input::MouseRayDirectionWorld((float32)InputState->MouseEvent->PosX,
 							   (float32)InputState->MouseEvent->PosY,

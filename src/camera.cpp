@@ -48,9 +48,9 @@ namespace camera
 	return glm::lookAt(Camera->Position, Camera->Position + Camera->Front, Camera->Up);
     }
 
-    void ProcessMovementDirectional(camera_t *Camera, camera_movement direction, float32 deltaTime)
+    void ProcessMovementDirectional(camera_t *Camera, camera_movement direction, float32 deltaTime, float32 acceleration=1.0f)
     {
-	float32 velocity = Camera->Settings->Speed * deltaTime;
+	float32 velocity = Camera->Settings->Speed * acceleration * deltaTime;
 	if (direction == FORWARD)
 	    Camera->Position += Camera->Front * velocity;
 	if (direction == BACKWARD)

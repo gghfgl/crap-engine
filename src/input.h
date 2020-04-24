@@ -137,6 +137,8 @@ struct mouse_e
     float64  ScrollOffsetX, ScrollOffsetY;
     bool     LeftButton;
     bool     LeftButtonFirstClick;  
+    bool     RightButton;
+    bool     RightButtonFirstClick;  
 };
 
 struct input_t
