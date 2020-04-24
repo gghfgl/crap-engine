@@ -28,51 +28,6 @@ namespace mesh
 	glDeleteBuffers(1, &Mesh->VBO);
 	glDeleteBuffers(1, &Mesh->IBO);
     }
-
-    bool RaySphereIntersection(glm::vec3 rayOriginWorld,
-			       glm::vec3 rayDirectionWorld,
-			       glm::vec3 sphereCenterWorld,
-			       float32 sphereRadius,
-			       float32 *intersectionDistance)
-    {
-	// work out components of quadratic
-	glm::vec3 distToSphere = rayOriginWorld - sphereCenterWorld;
-	float32 b = dot( rayDirectionWorld, distToSphere );
-	float32 c = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
-	float32 b_squared_minus_c = b * b - c;
-
-	// check for "imaginary" answer. == ray completely misses sphere
-	if ( b_squared_minus_c < 0.0f ) { return false; }
-
-	// check for ray hitting twice (in and out of the sphere)
-	if ( b_squared_minus_c > 0.0f ) {
-	    // get the 2 intersection distances along ray
-	    float32 t_a = -b + sqrt( b_squared_minus_c );
-	    float32 t_b = -b - sqrt( b_squared_minus_c );
-	    *intersectionDistance = t_b;
-
-	    // if behind viewer, throw one or both away
-	    if ( t_a < 0.0 ) {
-		if ( t_b < 0.0 ) { return false; }
-	    } else if ( t_b < 0.0 ) {
-		*intersectionDistance = t_a;
-	    }
-
-	    return true;
-	}
-
-	// check for ray hitting once (skimming the surface)
-	if ( 0.0f == b_squared_minus_c ) {
-	    // if behind viewer, throw away
-	    float32 t = -b + sqrt( b_squared_minus_c );
-	    if ( t < 0.0f ) { return false; }
-	    *intersectionDistance = t;
-	    return true;
-	}
-
-	// note: could also check if ray origin is inside sphere radius
-	return false;
-    }
 }
 
 static void allocate_mesh(mesh_t *Mesh)

@@ -20,10 +20,17 @@
    - load model on the fly with imgui in a list WITH progress bar
    - improve grid rendering
 */
-void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 target); // TODO: mehh
+
+// -------------------------------
+
+void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
 void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution);
 mesh_t* CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
+bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float32 sphereRadius, float32 *intersectionDistance);
+bool RayPlaneIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 planeCoord, glm::vec3 planeNormal, glm::vec3 *intersectionPoint);
+
 // -------------------------------
+
 struct editor_t
 {
     bool Active;
@@ -49,7 +56,6 @@ static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
 const float32 g_PickingSphereRadius = 0.1f;
-static float32 g_rayCastLastX = 0.0f;
 
 static std::map<uint32, object_t*> SCENE_OBJECTS;
 
@@ -61,8 +67,7 @@ int main(int argc, char *argv[])
     renderer_t *Renderer = renderer::Construct();
 
     shader::CompileAndCache("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
-    shader::CompileAndCache("../shaders/grid.glsl", "grid", Camera->ProjectionMatrix);
-    shader::CompileAndCache("../shaders/picking.glsl", "picking", Camera->ProjectionMatrix);
+    shader::CompileAndCache("../shaders/color.glsl", "color", Camera->ProjectionMatrix);
 
     // =================================================
     // Grid
@@ -70,6 +75,10 @@ int main(int argc, char *argv[])
     std::vector<uint32> uEmpty;
     std::vector<texture_t> tEmpty;
     mesh_t *MeshGrid = mesh::Construct(vGrid, uEmpty, tEmpty);
+
+    // Ray
+    std::vector<vertex_t> vRay(2, vertex_t());
+    mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
     // Nanosuit with spheres pos
     model_t *Nanosuit = model::LoadFromFile("../assets/nanosuit/nanosuit.obj");
@@ -129,10 +138,7 @@ int main(int argc, char *argv[])
 	    }
 	}
 	else
-	{
 	    g_DragObject = 0;
-	    g_rayCastLastX = 0.0f;
-	}
 
 	// NOTE: SIMULATE  ======================================>
 	glm::vec3 rayWorld = input::MouseRayDirectionWorld((float32)InputState->MouseEvent->PosX,
@@ -150,7 +156,7 @@ int main(int argc, char *argv[])
 		it->second->Position.y,
 		it->second->Position.z);
 	    
-	    if (mesh::RaySphereIntersection(Camera->Position, rayWorld, spherePos, g_PickingSphereRadius, &rayIntersection))
+	    if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, g_PickingSphereRadius, &rayIntersection))
 	    {
 	        g_HoveredObject = it->first;
 		break;
@@ -159,10 +165,20 @@ int main(int argc, char *argv[])
 	        g_HoveredObject = 0;
 	}
 
+	glm::vec3 pIntersection = glm::vec3(0.0f);
+        if (!RayPlaneIntersection(Camera->Position, rayWorld, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), &pIntersection))
+	    pIntersection = glm::vec3(0.0f);
+
 	// NOTE: RENDERING ======================================>
 	renderer::ResetStats(Renderer);
 	renderer::NewRenderingContext(Renderer);
 	glm::mat4 viewMatrix = camera::GetViewMatrix(Camera);
+
+	// TODO: if editor obj select active
+	shader_t *ColorShader = shader::GetFromCache("color");
+	shader::UseProgram(ColorShader);
+	shader::SetUniform4fv(ColorShader, "view", viewMatrix);    
+	shader::SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
 
 	if (Editor->GridResolution != g_GridResolutionSlider)
 	{
@@ -170,11 +186,20 @@ int main(int argc, char *argv[])
 	    Editor->GridResolution = g_GridResolutionSlider;
 	}
 	if (Editor->GridResolution > 0)
-	    renderer::DrawLines(Renderer,
-				Editor->MeshGrid,
-				shader::GetFromCache("grid"),
-			        viewMatrix);
+	{
+	    shader::SetUniform4f(ColorShader, "color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
+	    renderer::DrawLines(Renderer, Editor->MeshGrid, ColorShader);
+	}
 
+	// Test ray  drawing
+	PushRaySubData(MeshRay, Camera->Position, rayWorld);
+	shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
+	renderer::DrawLines(Renderer, MeshRay, ColorShader);
+
+	shader_t *DefaultShader = shader::GetFromCache("default");
+	shader::UseProgram(DefaultShader);
+	shader::SetUniform4fv(DefaultShader, "view", viewMatrix);    
+	shader::SetUniform4fv(DefaultShader, "model", glm::mat4(1.0f));
 	for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
 	{
 	    bool isSelected = false;
@@ -182,31 +207,20 @@ int main(int argc, char *argv[])
 		isSelected = true;
 
 	    if (g_DragObject == it->first)
-	    {
-		it->second->Position.x = it->second->Position.x + ((rayWorld.x - g_rayCastLastX) * 1.0f);
-		g_rayCastLastX = rayWorld.x;
-	    }
+		it->second->Position = pIntersection;
 
-            // TODO: if object positions changed then PushObjectSubData (model + sphere + axis.ord)
 	    glm::mat4 model = glm::mat4(1.0f);
-	    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	    model = glm::translate(model, it->second->Position);
 	    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-	    renderer::DrawModel(Renderer,
-	    			it->second->Model,
-				isSelected,
-	    			shader::GetFromCache("default"),
-	    		        viewMatrix,
-	    			model);
+	    shader::SetUniform4fv(DefaultShader, "model", model);
+	    shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
+	    renderer::DrawModel(Renderer, it->second->Model, DefaultShader);
 
-	    // TODO: if edit pos mode then render move obj speheres
 	    model = glm::mat4(1.0f);
 	    model = glm::translate(model, it->second->Position);
-	    renderer::DrawMesh(Renderer,
-	    		       it->second->PickingSphere,
-			       isSelected,
-	    		       shader::GetFromCache("default"),
-	    		       viewMatrix,
-	    		       model);
+	    shader::SetUniform4fv(DefaultShader, "model", model);
+	    shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
+	    renderer::DrawMesh(Renderer, it->second->PickingSphere, DefaultShader);
 	}
 
 	editorGUI::NewFrame();
@@ -295,13 +309,13 @@ void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution)
     }
 }
 
-void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 ray)
+void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
 {
-    glm::vec3 target = origin + (ray * 1.0f);
+    glm::vec3 target = origin + (direction * 1.0f);
 
     Mesh->Vertices.clear();
     vertex_t v;
-    v.Position = origin;
+    v.Position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
     Mesh->Vertices.push_back(v);
     v.Position = target;
     Mesh->Vertices.push_back(v);
@@ -391,3 +405,75 @@ mesh_t* CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, u
 //     glEnableVertexAttribArray(1);
 //     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)(3 * sizeof(float32)));
 // }
+
+bool RaySphereIntersection(glm::vec3 rayOriginWorld,
+			   glm::vec3 rayDirectionWorld,
+			   glm::vec3 sphereCenterWorld,
+			   float32 sphereRadius,
+			   float32 *intersectionDistance)
+{
+    // work out components of quadratic
+    glm::vec3 distToSphere = rayOriginWorld - sphereCenterWorld;
+    float32 b = dot( rayDirectionWorld, distToSphere );
+    float32 c = dot( distToSphere, distToSphere ) - sphereRadius * sphereRadius;
+    float32 b_squared_minus_c = b * b - c;
+
+    // check for "imaginary" answer. == ray completely misses sphere
+    if ( b_squared_minus_c < 0.0f ) { return false; }
+
+    // check for ray hitting twice (in and out of the sphere)
+    if ( b_squared_minus_c > 0.0f ) {
+	// get the 2 intersection distances along ray
+	float32 t_a = -b + sqrt( b_squared_minus_c );
+	float32 t_b = -b - sqrt( b_squared_minus_c );
+	*intersectionDistance = t_b;
+
+	// if behind viewer, throw one or both away
+	if ( t_a < 0.0 ) {
+	    if ( t_b < 0.0 ) { return false; }
+	} else if ( t_b < 0.0 ) {
+	    *intersectionDistance = t_a;
+	}
+
+	return true;
+    }
+
+    // check for ray hitting once (skimming the surface)
+    if ( 0.0f == b_squared_minus_c ) {
+	// if behind viewer, throw away
+	float32 t = -b + sqrt( b_squared_minus_c );
+	if ( t < 0.0f ) { return false; }
+	*intersectionDistance = t;
+	return true;
+    }
+
+    // note: could also check if ray origin is inside sphere radius
+    return false;
+}
+
+// In case of plane (infint plane surface) it will be always intersec until the ray is parallel to the plane
+bool RayPlaneIntersection(glm::vec3 rayOriginWorld,
+			  glm::vec3 rayDirectionWorld, // Normalized !!!!
+			  glm::vec3 planeCoord,
+			  glm::vec3 planeNormal,
+			  glm::vec3 *intersectionPoint)
+{
+    /*
+      What does the d value mean ?
+      For two vectors a and b a dot product actually returns the length of the orthogonal projection of one vector on the other times this other vector.
+      But if a is normalized (length = 1), Dot(a, b) is then the length of the projection of b on a. In case of our plane, d gives us the directional distance all points of the plane in the normal direction to the origin (a is the normal). We can then get whether a point is on this plane by comparing the length of the projection on the normal (Dot product).
+    */
+    float32 d = dot(planeNormal, planeCoord);
+
+    if (dot(planeNormal, rayDirectionWorld) == 0)
+    {
+	return false; // No intersection, the line is parallel to the plane
+    }
+
+    // Compute the X value for the directed line ray intersecting the plane
+    float32 x = (d - dot(planeNormal, rayOriginWorld)) / dot(planeNormal, rayDirectionWorld);
+
+    // output itersec point
+    *intersectionPoint = rayOriginWorld + rayDirectionWorld * x;
+    return true;
+}

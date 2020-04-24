@@ -43,29 +43,15 @@ namespace renderer
 	// ========================================================
     }
 
-    void DrawLines(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, glm::mat4 viewMatrix)
+    void DrawLines(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
     {
-	shader::UseProgram(Shader);
-	shader::SetUniform4fv(Shader, "view", viewMatrix);    
-	shader::SetUniform4fv(Shader, "model", glm::mat4(1.0f));
-
 	glBindVertexArray(Mesh->VAO);
 	glDrawArrays(GL_LINES, 0, (GLsizei)Mesh->Vertices.size());
 	Renderer->Stats.DrawCalls++;
     }
 
-    void DrawMesh(renderer_t *Renderer,
-		  mesh_t *Mesh,
-		  bool flipColor,
-		  shader_t *Shader,
-		  glm::mat4 viewMatrix,
-		  glm::mat4 model)
+    void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
     {
-	shader::UseProgram(Shader);
-	shader::SetUniform4fv(Shader, "view", viewMatrix);    
-	shader::SetUniform4fv(Shader, "model", model);
-	shader::SetUniform1ui(Shader, "flip_color", flipColor);
-
 	uint32 diffuseNr = 1;
 	uint32 specularNr = 1;
 	uint32 normalNr = 1;
@@ -98,14 +84,9 @@ namespace renderer
 	Renderer->Stats.DrawCalls++;
     }
 
-    void DrawModel(renderer_t *Renderer,
-		   model_t *Model,
-		   bool flipColor,
-		   shader_t *Shader,
-		   glm::mat4 viewMatrix,
-		   glm::mat4 model)
+    void DrawModel(renderer_t *Renderer, model_t *Model, shader_t *Shader)
     {
 	for (uint32 i = 0; i < Model->Meshes.size(); i++)
-	    DrawMesh(Renderer, Model->Meshes[i], flipColor, Shader, viewMatrix, model);
+	    DrawMesh(Renderer, Model->Meshes[i], Shader);
     }
 }
