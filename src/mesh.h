@@ -34,3 +34,12 @@ struct model_t
     std::vector<texture_t> TexturesLoadedCache;
     bool GammaCorrection;
 };
+
+struct object_t
+{
+    const char* Label;
+    const char* Filepath;
+    model_t *Model;
+    mesh_t *PickingSphere;
+    glm::vec3 Position;
+};

@@ -2,6 +2,7 @@
 
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
 static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
+static void object_list_collapse_header(std::map<uint32, object_t*> objects, uint32 *selectedObject);
 
 namespace editorGUI
 {
@@ -60,6 +61,8 @@ namespace editorGUI
 			 input_t *InputState,
 			 uint32 &gridResolution,
 			 uint32 gridMaxResolution,
+			 std::map<uint32, object_t*> objects,
+			 uint32 *selectedObject,
 			 bool &focus)
     {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
@@ -68,6 +71,7 @@ namespace editorGUI
 
         window_settings_collapse_header(Window, InputState);
 	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
+        object_list_collapse_header(objects, selectedObject);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	    focus = true;
@@ -111,6 +115,41 @@ static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolu
 	ImGui::SliderInt("res", &(int)resolution, 0, gridMaxResolution);
 	ImGui::SameLine();
 	ImGui::Text("max: %dx%d", gridMaxResolution, gridMaxResolution);
+	ImGui::Separator();
+    }
+}
+
+static void object_list_collapse_header(std::map<uint32, object_t*> objects, uint32 *selectedObject)
+{
+    if (ImGui::CollapsingHeader("Object list", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	static uint32 selected = 0;
+	ImGui::BeginChild("left pane", ImVec2(120, 150));
+	for (auto it = objects.begin(); it != objects.end(); it++)	 
+	{
+	    char label[128];
+	    sprintf_s(label, "obj: <%s>", it->second->Label);
+	    if (ImGui::Selectable(label, *selectedObject == it->first))
+	        *selectedObject = it->first;
+	}
+
+	ImGui::EndChild();
+	ImGui::SameLine();
+
+	ImGui::BeginChild("right pane", ImVec2(0, 150));
+	if (*selectedObject != 0)
+	{
+	    ImGui::Text("mem: %p", &objects[*selectedObject]);
+	    ImGui::Text("ID: %03d", *selectedObject);
+	    ImGui::Text("Label: %s", objects[*selectedObject]->Label);
+	    ImGui::Text("Filepath: %s", objects[*selectedObject]->Filepath);
+	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
+			objects[*selectedObject]->Position.x,
+			objects[*selectedObject]->Position.y,
+			objects[*selectedObject]->Position.z);
+	}
+
+	ImGui::EndChild();
 	ImGui::Separator();
     }
 }

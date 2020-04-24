@@ -301,3 +301,13 @@ static uint32 load_texture_from_file(const char *path, const std::string &direct
 
     return textureID;
 }
+
+namespace object
+{
+    void Delete(object_t* Object)
+    {
+	model::Delete(Object->Model);
+	mesh::Delete(Object->PickingSphere);
+	delete Object;
+    }
+}

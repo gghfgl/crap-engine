@@ -17,6 +17,8 @@
 /* TODO:
    - assimp be carefull of texture path (same dir as the model)
    - 3d picking + model list + select model from list + move/scale
+   - scale model
+   - list model
    - load model on the fly with imgui in a list WITH progress bar
    - improve grid rendering
 */
@@ -35,15 +37,8 @@ struct editor_t
 {
     bool Active;
     mesh_t *MeshGrid;
+    mesh_t *MeshRay;
     uint32 GridResolution;
-};
-
-struct object_t
-{
-    const char* Label;
-    model_t *Model;
-    mesh_t *PickingSphere;
-    glm::vec3 Position;
 };
 
 const uint32 g_Width = 1280;
@@ -81,9 +76,11 @@ int main(int argc, char *argv[])
     mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
     // Nanosuit with spheres pos
-    model_t *Nanosuit = model::LoadFromFile("../assets/nanosuit/nanosuit.obj");
+    const char* nanosuitFilepath = "../assets/nanosuit/nanosuit.obj";
+    model_t *Nanosuit = model::LoadFromFile(nanosuitFilepath);
     object_t *TestObject = new object_t;
     TestObject->Label = "nanosuit";
+    TestObject->Filepath = nanosuitFilepath;
     TestObject->Model = Nanosuit;
     TestObject->PickingSphere = CreatePickingSphereMesh(0.0f, g_PickingSphereRadius, 15, 15);
     TestObject->Position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -96,6 +93,7 @@ int main(int argc, char *argv[])
     Editor->Active = true;
     Editor->GridResolution = 0;
     Editor->MeshGrid = MeshGrid;
+    Editor->MeshRay = MeshRay;
     editorGUI::Init(Window);
 
     while (Editor->Active)
@@ -156,7 +154,11 @@ int main(int argc, char *argv[])
 		it->second->Position.y,
 		it->second->Position.z);
 	    
-	    if (RaySphereIntersection(Camera->Position, rayWorld, spherePos, g_PickingSphereRadius, &rayIntersection))
+	    if (RaySphereIntersection(Camera->Position,
+				      rayWorld,
+				      spherePos,
+				      g_PickingSphereRadius,
+				      &rayIntersection))
 	    {
 	        g_HoveredObject = it->first;
 		break;
@@ -166,7 +168,10 @@ int main(int argc, char *argv[])
 	}
 
 	glm::vec3 pIntersection = glm::vec3(0.0f);
-        if (!RayPlaneIntersection(Camera->Position, rayWorld, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), &pIntersection))
+        if (!RayPlaneIntersection(Camera->Position,
+				  rayWorld, glm::vec3(0.0f),
+				  glm::vec3(0.0f, 1.0f, 0.0f),
+				  &pIntersection))
 	    pIntersection = glm::vec3(0.0f);
 
 	// NOTE: RENDERING ======================================>
@@ -192,9 +197,9 @@ int main(int argc, char *argv[])
 	}
 
 	// Test ray  drawing
-	PushRaySubData(MeshRay, Camera->Position, rayWorld);
+	PushRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
 	shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
-	renderer::DrawLines(Renderer, MeshRay, ColorShader);
+	renderer::DrawLines(Renderer, Editor->MeshRay, ColorShader);
 
 	shader_t *DefaultShader = shader::GetFromCache("default");
 	shader::UseProgram(DefaultShader);
@@ -209,6 +214,7 @@ int main(int argc, char *argv[])
 	    if (g_DragObject == it->first)
 		it->second->Position = pIntersection;
 
+	    // Model
 	    glm::mat4 model = glm::mat4(1.0f);
 	    model = glm::translate(model, it->second->Position);
 	    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
@@ -216,6 +222,7 @@ int main(int argc, char *argv[])
 	    shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
 	    renderer::DrawModel(Renderer, it->second->Model, DefaultShader);
 
+	    // Picking sphere
 	    model = glm::mat4(1.0f);
 	    model = glm::translate(model, it->second->Position);
 	    shader::SetUniform4fv(DefaultShader, "model", model);
@@ -229,6 +236,8 @@ int main(int argc, char *argv[])
 				   InputState,
 				   g_GridResolutionSlider,
 				   g_GridMaxResolution,
+				   SCENE_OBJECTS,
+				   &g_SelectedObject,
 				   g_ActiveWindow);
 	editorGUI::Render();
 	
@@ -239,11 +248,9 @@ int main(int argc, char *argv[])
     }
 
     for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
-    {
-	model::Delete(it->second->Model);
-	mesh::Delete(it->second->PickingSphere);
-    }
+	object::Delete(it->second);
     mesh::Delete(Editor->MeshGrid);
+    mesh::Delete(Editor->MeshRay);
     delete Editor;
 
     editorGUI::Delete();
