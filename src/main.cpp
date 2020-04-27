@@ -100,8 +100,6 @@ int main(int argc, char *argv[])
     {
 	window::UpdateTime(Window->Time);
 
-	std::cout << "y=" << input::MOUSE_EVENTS->ScrollOffsetY << std::endl;
-
 	// NOTE: INPUTS ======================================>
 	input::PollEvents();
 	if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_ESCAPE])
@@ -122,19 +120,21 @@ int main(int argc, char *argv[])
 	if (InputState->MouseEvent->ScrollOffsetY != 0.0f)
 	{
 	    if (input::GetMouseScrollOffsetY(InputState->MouseEvent) > 0)
-		camera::ProcessMovementDirectional(Camera, FORWARD, Window->Time->DeltaTime, 5.0f);
+		camera::ProcessMovementDirectional(Camera, FORWARD,
+						   Window->Time->DeltaTime, 5.0f);
 	    else
-		camera::ProcessMovementDirectional(Camera, BACKWARD, Window->Time->DeltaTime, 5.0f);
+		camera::ProcessMovementDirectional(Camera, BACKWARD,
+						   Window->Time->DeltaTime, 5.0f);
 	}
 	
 	if (InputState->MouseEvent->LeftButton)
 	{
 	    if (g_HoveredObject != 0)
 		g_SelectedObject = g_HoveredObject;
-	    else if (g_DragObject == 0)
+	    else if (g_DragObject == 0 && !g_ActiveWindow)
 		g_SelectedObject = 0;
 
-	    if (g_SelectedObject != 0)
+	    if (g_SelectedObject != 0 && !g_ActiveWindow)
 		g_DragObject = g_SelectedObject;
 
 	    if (!g_ActiveWindow && !g_SelectedObject)
@@ -227,7 +227,9 @@ int main(int argc, char *argv[])
 	    // Model
 	    glm::mat4 model = glm::mat4(1.0f);
 	    model = glm::translate(model, it->second->Position);
-	    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+	    model = glm::scale(model, glm::vec3(it->second->Scale));
+	    model = glm::rotate(model, glm::radians(it->second->Rotate),
+				glm::vec3(0.0f, 1.0f, 0.0f));
 	    shader::SetUniform4fv(DefaultShader, "model", model);
 	    shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
 	    renderer::DrawModel(Renderer, it->second->Model, DefaultShader);

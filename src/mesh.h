@@ -42,4 +42,6 @@ struct object_t
     model_t *Model;
     mesh_t *PickingSphere;
     glm::vec3 Position;
+    float32 Scale = 1.0f;
+    float32 Rotate = 0.0f; // degeres
 };

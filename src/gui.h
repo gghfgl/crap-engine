@@ -6,6 +6,8 @@ static void object_list_collapse_header(std::map<uint32, object_t*> objects, uin
 
 namespace editorGUI
 {
+    const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
+
     void Init(window_t* Window)
     {
 	const char* glsl_version = "#version 450";
@@ -147,6 +149,12 @@ static void object_list_collapse_header(std::map<uint32, object_t*> objects, uin
 			objects[*selectedObject]->Position.x,
 			objects[*selectedObject]->Position.y,
 			objects[*selectedObject]->Position.z);
+	    ImGui::SliderScalar("scale", ImGuiDataType_Float,
+				&objects[*selectedObject]->Scale,
+				&editorGUI::f32_zero, &editorGUI::f32_two);
+	    ImGui::SliderScalar("rotate", ImGuiDataType_Float,
+				&objects[*selectedObject]->Rotate,
+				&editorGUI::f32_zero, &editorGUI::f32_360);
 	}
 
 	ImGui::EndChild();
