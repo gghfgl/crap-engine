@@ -28,6 +28,50 @@ namespace mesh
 	glDeleteBuffers(1, &Mesh->VBO);
 	glDeleteBuffers(1, &Mesh->IBO);
     }
+
+    mesh_t* CreatePrimitiveSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
+    {
+	uint32 nbVerticesPerSphere = 0;
+	std::vector<vertex_t> vertices;
+	std::vector<uint32> indices;
+
+	for (uint32 i = 0; i <= stacks; i++)
+	{
+	    GLfloat V   = i / (float) stacks;
+	    GLfloat phi = V * glm::pi <float> ();
+        
+	    for (uint32 j = 0; j <= slices; ++j)
+	    {
+		GLfloat U = j / (float) slices;
+		GLfloat theta = U * (glm::pi <float> () * 2);
+            
+		// Calc The Vertex Positions
+		GLfloat x = cosf (theta) * sinf (phi);
+		GLfloat y = cosf (phi);
+		GLfloat z = sinf (theta) * sinf (phi);
+		vertex_t Vertex;
+		Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
+		vertices.push_back(Vertex);
+		nbVerticesPerSphere += 1; // nb vertices per sphere reference
+	    }
+	}
+
+	for (uint32 i = 0; i < slices * stacks + slices; ++i)
+	{        
+	    indices.push_back (i);
+	    indices.push_back (i + slices + 1);
+	    indices.push_back (i + slices);
+        
+	    indices.push_back (i + slices + 1);
+	    indices.push_back (i);
+	    indices.push_back (i + 1);
+	}
+
+	std::vector<texture_t> tEmpty;
+	mesh_t *Mesh = mesh::Construct(vertices, indices, tEmpty);
+
+        return Mesh;
+    }
 }
 
 static void allocate_mesh(mesh_t *Mesh)
@@ -96,14 +140,19 @@ namespace model
 	    return nullptr;
 	}
 
-	Model->Directory = path.substr(0, path.find_last_of('/'));
-	printf("load model from file directory: %s\n", Model->Directory.c_str()); // TODO:
+	Model->Directory = path.substr(0, path.find_last_of('\\'));
+	Model->ObjFilename = path.substr(Model->Directory.length(), path.length());
+
+	// TODO: !!!!!
+	printf("==============================\n");
+	printf("load model from directory: %s\n", Model->Directory.c_str());
+	printf("load model from file: %s\n", Model->ObjFilename.c_str());
+
 	process_node(Model, scene->mRootNode, scene);
 
 	return Model;
     }
 
-    
     void Delete(model_t *Model)
     {
 	for (auto& m : Model->Meshes)
@@ -262,6 +311,9 @@ static std::vector<texture_t> load_material_textures(model_t *Model,
 
 static uint32 load_texture_from_file(const char *path, const std::string &directory)
 {
+    // TODO: !!!!!!!!!!
+    printf("texture=%s\n", path);
+    
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
 

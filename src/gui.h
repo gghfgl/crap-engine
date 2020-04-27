@@ -2,12 +2,10 @@
 
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
 static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
-static void object_list_collapse_header(std::map<uint32, object_t*> objects, uint32 *selectedObject);
+static void object_list_collapse_header(std::map<uint32, object_t*> *objects, uint32 *selectedObject, float32 pickingSphereRadius);
 
 namespace editorGUI
 {
-    const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
-
     void Init(window_t* Window)
     {
 	const char* glsl_version = "#version 450";
@@ -63,8 +61,9 @@ namespace editorGUI
 			 input_t *InputState,
 			 uint32 &gridResolution,
 			 uint32 gridMaxResolution,
-			 std::map<uint32, object_t*> objects,
+			 std::map<uint32, object_t*> *objects,
 			 uint32 *selectedObject,
+			 float32 pickingSphereRadius,
 			 bool &focus)
     {
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
@@ -73,7 +72,7 @@ namespace editorGUI
 
         window_settings_collapse_header(Window, InputState);
 	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
-        object_list_collapse_header(objects, selectedObject);
+        object_list_collapse_header(objects, selectedObject, pickingSphereRadius);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 	    focus = true;
@@ -121,16 +120,59 @@ static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolu
     }
 }
 
-static void object_list_collapse_header(std::map<uint32, object_t*> objects, uint32 *selectedObject)
+const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
+OPENFILENAME ofn;       // common dialog box structure
+char szFile[260];       // buffer for file name
+HWND hwnd;              // owner window
+HANDLE hf;              // file handle
+static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
+					uint32 *selectedObject,
+					float32 pickingSphereRadius)
 {
     if (ImGui::CollapsingHeader("Object list", ImGuiTreeNodeFlags_DefaultOpen))
     {
+	// TODO: move from here
+        // Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hwnd;
+	ofn.lpstrFile = szFile;
+        // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+        // use the contents of szFile to initialize itself.
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        // =================================
+
 	static uint32 selected = 0;
 	ImGui::BeginChild("left pane", ImVec2(120, 150));
-	for (auto it = objects.begin(); it != objects.end(); it++)	 
+
+	if (ImGui::Button("open"))
+	{
+	    if (GetOpenFileName(&ofn)==TRUE)
+	    {
+		uint32 id = (uint32)objects->size() + 1;
+		// TODO:
+		//model_t *loadedModel = model::LoadFromFile("C:/Users/test/Documents/dev/crapengine/assets/nanosuit/nanosuit.obj");
+		model_t *loadedModel = model::LoadFromFile(szFile);
+		object_t *obj = new object_t;
+		obj->Model = loadedModel;
+		obj->PickingSphere =  mesh::CreatePrimitiveSphereMesh(0.0f, pickingSphereRadius, 15, 15);
+
+		objects->insert({id, obj});
+	    }
+	}
+	ImGui::Separator();
+
+	for (auto it = objects->begin(); it != objects->end(); it++)	 
 	{
 	    char label[128];
-	    sprintf_s(label, "obj: <%s>", it->second->Label);
+	    sprintf_s(label, "obj:%03d-%s", it->first, it->second->Model->ObjFilename.c_str());
 	    if (ImGui::Selectable(label, *selectedObject == it->first))
 	        *selectedObject = it->first;
 	}
@@ -141,20 +183,20 @@ static void object_list_collapse_header(std::map<uint32, object_t*> objects, uin
 	ImGui::BeginChild("right pane", ImVec2(0, 150));
 	if (*selectedObject != 0)
 	{
-	    ImGui::Text("mem: %p", &objects[*selectedObject]);
+	    ImGui::Text("mem: %p", &(*objects)[*selectedObject]);
 	    ImGui::Text("ID: %03d", *selectedObject);
-	    ImGui::Text("Label: %s", objects[*selectedObject]->Label);
-	    ImGui::Text("Filepath: %s", objects[*selectedObject]->Filepath);
+	    ImGui::Text("Label: %s", (*objects)[*selectedObject]->Model->ObjFilename.c_str());
+	    ImGui::Text("Filepath: %s", (*objects)[*selectedObject]->Model->Directory.c_str());
 	    ImGui::Text("Pos x=%.2f y=%.2f z=%.2f",
-			objects[*selectedObject]->Position.x,
-			objects[*selectedObject]->Position.y,
-			objects[*selectedObject]->Position.z);
+		        (*objects)[*selectedObject]->Position.x,
+		        (*objects)[*selectedObject]->Position.y,
+		        (*objects)[*selectedObject]->Position.z);
 	    ImGui::SliderScalar("scale", ImGuiDataType_Float,
-				&objects[*selectedObject]->Scale,
-				&editorGUI::f32_zero, &editorGUI::f32_two);
+	    			&(*objects)[*selectedObject]->Scale,
+	    			&f32_zero, &f32_two);
 	    ImGui::SliderScalar("rotate", ImGuiDataType_Float,
-				&objects[*selectedObject]->Rotate,
-				&editorGUI::f32_zero, &editorGUI::f32_360);
+	    			&(*objects)[*selectedObject]->Rotate,
+	    			&f32_zero, &f32_360);
 	}
 
 	ImGui::EndChild();

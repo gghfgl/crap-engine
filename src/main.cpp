@@ -16,11 +16,9 @@
 
 /* TODO:
    - assimp be carefull of texture path (same dir as the model)
-   - 3d picking + model list + select model from list + move/scale
-   - scale model
-   - list model
-   - load model on the fly with imgui in a list WITH progress bar
+   - improve click setting panel object after selectinID from world
    - improve grid rendering
+   - save / load scene ???
 */
 
 // -------------------------------
@@ -50,9 +48,8 @@ static uint32 g_GridResolutionSlider = 10;
 static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
-const float32 g_PickingSphereRadius = 0.1f;
+const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
 
-static std::map<uint32, object_t*> SCENE_OBJECTS;
 
 int main(int argc, char *argv[])
 {
@@ -75,18 +72,8 @@ int main(int argc, char *argv[])
     std::vector<vertex_t> vRay(2, vertex_t());
     mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
-    // Nanosuit with spheres pos
-    const char* nanosuitFilepath = "../assets/nanosuit/nanosuit.obj";
-    model_t *Nanosuit = model::LoadFromFile(nanosuitFilepath);
-    object_t *TestObject = new object_t;
-    TestObject->Label = "nanosuit";
-    TestObject->Filepath = nanosuitFilepath;
-    TestObject->Model = Nanosuit;
-    TestObject->PickingSphere = CreatePickingSphereMesh(0.0f, g_PickingSphereRadius, 15, 15);
-    TestObject->Position = glm::vec3(0.0f, 0.0f, 0.0f);
-
-    // Object list
-    SCENE_OBJECTS.insert({1, TestObject}); // TODO: ID->object
+    // Objects array
+    std::map<uint32, object_t*> *SCENE_OBJECTS = new std::map<uint32, object_t*>;
     // =================================================
     
     editor_t *Editor = new editor_t;
@@ -121,10 +108,10 @@ int main(int argc, char *argv[])
 	{
 	    if (input::GetMouseScrollOffsetY(InputState->MouseEvent) > 0)
 		camera::ProcessMovementDirectional(Camera, FORWARD,
-						   Window->Time->DeltaTime, 5.0f);
+						   Window->Time->DeltaTime, 10.0f);
 	    else
 		camera::ProcessMovementDirectional(Camera, BACKWARD,
-						   Window->Time->DeltaTime, 5.0f);
+						   Window->Time->DeltaTime, 10.0f);
 	}
 	
 	if (InputState->MouseEvent->LeftButton)
@@ -156,7 +143,7 @@ int main(int argc, char *argv[])
 							   Camera->ProjectionMatrix,
 							   camera::GetViewMatrix(Camera));
 
-	for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
+	for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
 	{
 	    float32 rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
@@ -215,7 +202,7 @@ int main(int argc, char *argv[])
 	shader::UseProgram(DefaultShader);
 	shader::SetUniform4fv(DefaultShader, "view", viewMatrix);    
 	shader::SetUniform4fv(DefaultShader, "model", glm::mat4(1.0f));
-	for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
+	for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
 	{
 	    bool isSelected = false;
 	    if (g_HoveredObject == it->first || g_SelectedObject == it->first)
@@ -250,6 +237,7 @@ int main(int argc, char *argv[])
 				   g_GridMaxResolution,
 				   SCENE_OBJECTS,
 				   &g_SelectedObject,
+				   g_PickingSphereRadius,
 				   g_ActiveWindow);
 	editorGUI::Render();
 	
@@ -259,8 +247,9 @@ int main(int argc, char *argv[])
 	window::SwapBuffer(Window);
     }
 
-    for (auto it = SCENE_OBJECTS.begin(); it != SCENE_OBJECTS.end(); it++)
+    for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
 	object::Delete(it->second);
+    delete SCENE_OBJECTS; // TODO: put in Editor?
     mesh::Delete(Editor->MeshGrid);
     mesh::Delete(Editor->MeshRay);
     delete Editor;
@@ -344,50 +333,6 @@ void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
 		    0,
 		    Mesh->Vertices.size() * sizeof(vertex_t),
 		    &Mesh->Vertices[0]);
-}
-
-mesh_t* CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
-{
-    uint32 nbVerticesPerSphere = 0;
-    std::vector<vertex_t> vertices;
-    std::vector<uint32> indices;
-
-    for (uint32 i = 0; i <= stacks; i++)
-    {
-	GLfloat V   = i / (float) stacks;
-	GLfloat phi = V * glm::pi <float> ();
-        
-	for (uint32 j = 0; j <= slices; ++j)
-	{
-	    GLfloat U = j / (float) slices;
-	    GLfloat theta = U * (glm::pi <float> () * 2);
-            
-	    // Calc The Vertex Positions
-	    GLfloat x = cosf (theta) * sinf (phi);
-	    GLfloat y = cosf (phi);
-	    GLfloat z = sinf (theta) * sinf (phi);
-	    vertex_t Vertex;
-	    Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
-	    vertices.push_back(Vertex);
-	    nbVerticesPerSphere += 1; // nb vertices per sphere reference
-	}
-    }
-
-    for (uint32 i = 0; i < slices * stacks + slices; ++i)
-    {        
-	indices.push_back (i);
-	indices.push_back (i + slices + 1);
-	indices.push_back (i + slices);
-        
-	indices.push_back (i + slices + 1);
-	indices.push_back (i);
-	indices.push_back (i + 1);
-    }
-
-    std::vector<texture_t> tEmpty;
-    mesh_t *Mesh = mesh::Construct(vertices, indices, tEmpty);
-
-    return Mesh;
 }
 
 // NOTE: EDITOR stuff
