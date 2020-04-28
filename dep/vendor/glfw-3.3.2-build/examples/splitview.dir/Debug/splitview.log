@@ -1,0 +1,5 @@
+﻿  Building Custom Rule C:/Users/test/Documents/dev/crapengine/dep/vendor/glfw-3.3.2/glfw-3.3.2/examples/CMakeLists.txt
+  splitview.c
+  glad_gl.c
+  Generating Code...
+  splitview.vcxproj -> C:\Users\test\Documents\dev\crapengine\dep\vendor\glfw-3.3.2-build\examples\Debug\splitview.exe

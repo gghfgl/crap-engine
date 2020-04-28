@@ -9,6 +9,7 @@
    - scene = access engine API for creating game design
    - beautyfull light PBR effects
    - custom GUI for game UI
+   - net code
 
    - learn more compiler stuff
    - learn how properly debug with MSVC
@@ -17,6 +18,8 @@
 /* TODO:
    - assimp be carefull of texture path (same dir as the model)
    - improve click setting panel object after selectinID from world
+   - improve object label without /
+   - add icon cube object list
    - improve grid rendering
    - save / load scene ???
 */
@@ -179,7 +182,7 @@ int main(int argc, char *argv[])
 	// TODO: if editor obj select active
 	shader_t *ColorShader = shader::GetFromCache("color");
 	shader::UseProgram(ColorShader);
-	shader::SetUniform4fv(ColorShader, "view", viewMatrix);    
+	shader::SetUniform4fv(ColorShader, "view", viewMatrix);
 	shader::SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
 
 	if (Editor->GridResolution != g_GridResolutionSlider)
@@ -239,6 +242,7 @@ int main(int argc, char *argv[])
 				   &g_SelectedObject,
 				   g_PickingSphereRadius,
 				   g_ActiveWindow);
+	
 	editorGUI::Render();
 	
 	// TODO:  update memory pool

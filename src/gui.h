@@ -4,6 +4,12 @@ static void window_settings_collapse_header(window_t *Window, input_t *InputStat
 static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
 static void object_list_collapse_header(std::map<uint32, object_t*> *objects, uint32 *selectedObject, float32 pickingSphereRadius);
 
+const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
+
+OPENFILENAME g_Ofn;
+char g_szFile[260];
+HWND g_hwnd;
+
 namespace editorGUI
 {
     void Init(window_t* Window)
@@ -16,6 +22,28 @@ namespace editorGUI
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(Window->PlatformWindow, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	// Fonts
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->AddFontDefault();
+	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
+	//io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges );
+	io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
+
+        // Initialize OPENFILENAME
+	ZeroMemory(&g_Ofn, sizeof(g_Ofn));
+	g_Ofn.lStructSize = sizeof(g_Ofn);
+	g_Ofn.hwndOwner = g_hwnd;
+	g_Ofn.lpstrFile = g_szFile;
+	g_Ofn.lpstrFile[0] = '\0';
+	g_Ofn.nMaxFile = sizeof(g_szFile);
+	g_Ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+	g_Ofn.nFilterIndex = 1;
+	g_Ofn.lpstrFileTitle = NULL;
+	g_Ofn.nMaxFileTitle = 0;
+	g_Ofn.lpstrInitialDir = NULL;
+	g_Ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     }
 
     void Delete()
@@ -120,46 +148,19 @@ static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolu
     }
 }
 
-const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
-OPENFILENAME ofn;       // common dialog box structure
-char szFile[260];       // buffer for file name
-HWND hwnd;              // owner window
-HANDLE hf;              // file handle
 static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
 					uint32 *selectedObject,
 					float32 pickingSphereRadius)
 {
     if (ImGui::CollapsingHeader("Object list", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	// TODO: move from here
-        // Initialize OPENFILENAME
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hwnd;
-	ofn.lpstrFile = szFile;
-        // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
-        // use the contents of szFile to initialize itself.
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-        // =================================
-
-	static uint32 selected = 0;
-	ImGui::BeginChild("left pane", ImVec2(120, 150));
 
 	if (ImGui::Button("open"))
 	{
-	    if (GetOpenFileName(&ofn)==TRUE)
+	    if (GetOpenFileName(&g_Ofn)==TRUE)
 	    {
 		uint32 id = (uint32)objects->size() + 1;
-		// TODO:
-		//model_t *loadedModel = model::LoadFromFile("C:/Users/test/Documents/dev/crapengine/assets/nanosuit/nanosuit.obj");
-		model_t *loadedModel = model::LoadFromFile(szFile);
+		model_t *loadedModel = model::LoadFromFile(g_szFile);
 		object_t *obj = new object_t;
 		obj->Model = loadedModel;
 		obj->PickingSphere =  mesh::CreatePrimitiveSphereMesh(0.0f, pickingSphereRadius, 15, 15);
@@ -169,10 +170,15 @@ static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
 	}
 	ImGui::Separator();
 
+	static uint32 selected = 0;
+	ImGui::BeginChild("left pane", ImVec2(120, 150));
+	ImGui::Dummy(ImVec2(0.0f, 3.0f));	
 	for (auto it = objects->begin(); it != objects->end(); it++)	 
 	{
+	    ImGui::Text( ICON_FA_CUBE );
+	    ImGui::SameLine();
 	    char label[128];
-	    sprintf_s(label, "obj:%03d-%s", it->first, it->second->Model->ObjFilename.c_str());
+	    sprintf_s(label, "%03d %s", it->first, it->second->Model->ObjFilename.c_str());
 	    if (ImGui::Selectable(label, *selectedObject == it->first))
 	        *selectedObject = it->first;
 	}
