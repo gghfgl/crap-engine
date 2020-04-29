@@ -18,9 +18,6 @@
 /* TODO:
    - assimp be carefull of texture path (same dir as the model)
    - improve click setting panel object after selectinID from world
-   - delete object from the list LEAK!!!
-   - reset camera position up and diag preset
-   - switch projection ortho and perspective?
    - improve grid rendering
    - save / load scene ???
 */
@@ -236,6 +233,7 @@ int main(int argc, char *argv[])
 	editorGUI::ShowWindowStatsOverlay(Window, Renderer);
 	editorGUI::ShowEditorPanel(Window,
 				   InputState,
+				   Camera,
 				   g_GridResolutionSlider,
 				   g_GridMaxResolution,
 				   SCENE_OBJECTS,

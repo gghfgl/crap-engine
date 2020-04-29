@@ -65,7 +65,10 @@ namespace camera
 	    Camera->Position -= Camera->Up * velocity;
     }
 
-    void ProcessMovementAngles(camera_t *Camera, float32 xoffset, float32 yoffset, bool constrainPitch = true)
+    void ProcessMovementAngles(camera_t *Camera,
+			       float32 xoffset,
+			       float32 yoffset,
+			       bool constrainPitch = true)
     {
 	xoffset *= Camera->Settings->Sensitivity;
 	yoffset *= Camera->Settings->Sensitivity;

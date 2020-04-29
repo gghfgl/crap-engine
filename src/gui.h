@@ -3,6 +3,7 @@
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
 static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
 static void object_list_collapse_header(std::map<uint32, object_t*> *objects, uint32 *selectedObject, float32 pickingSphereRadius);
+static void camera_settings_collapse_header(camera_t *Camera);
 
 const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
 
@@ -85,8 +86,10 @@ namespace editorGUI
 	}
     }
 
+    // TODO: split panel
     void ShowEditorPanel(window_t *Window,
 			 input_t *InputState,
+			 camera_t *Camera,
 			 uint32 &gridResolution,
 			 uint32 gridMaxResolution,
 			 std::map<uint32, object_t*> *objects,
@@ -100,6 +103,7 @@ namespace editorGUI
 
         window_settings_collapse_header(Window, InputState);
 	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
+	camera_settings_collapse_header(Camera);
         object_list_collapse_header(objects, selectedObject, pickingSphereRadius);
     
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
@@ -234,30 +238,45 @@ static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
     }
 }
 
-    /* // TODO: GUI */
-    /* static void CameraSettingsCollapseHeader(camera *Camera) */
-    /* { */
-    /* 	if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen)) */
-    /* 	{ */
-    /* 	    ImGui::Text("yaw: %.2f", Camera->Settings->Yaw); */
-    /* 	    ImGui::Text("pitch: %.2f", Camera->Settings->Pitch); */
-    /* 	    ImGui::Text("speed: %.2f", Camera->Settings->Speed); */
-    /* 	    ImGui::Text("sensitivity: %.2f", Camera->Settings->Sensitivity); */
-    /* 	    ImGui::Text("fov: %.2f", Camera->Settings->Fov); */
-    /* 	    ImGui::Text("pos: %.2f, %.2f, %.2f", */
-    /* 			Camera->Position.x, */
-    /* 			Camera->Position.y, */
-    /* 			Camera->Position.z); */
+static void camera_settings_collapse_header(camera_t *Camera)
+{
+    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	ImGui::Text("yaw: %.2f", Camera->Settings->Yaw);
+	ImGui::Text("pitch: %.2f", Camera->Settings->Pitch);
+	ImGui::Text("speed: %.2f", Camera->Settings->Speed);
+	ImGui::Text("sensitivity: %.2f", Camera->Settings->Sensitivity);
+	ImGui::Text("fov: %.2f", Camera->Settings->Fov);
+	ImGui::Text("pos: %.2f, %.2f, %.2f",
+		    Camera->Position.x,
+		    Camera->Position.y,
+		    Camera->Position.z);
+	ImGui::Text("worldup: %.2f, %.2f, %.2f",
+		    Camera->WorldUp.x,
+		    Camera->WorldUp.y,
+		    Camera->WorldUp.z);
 
-    /* 	    ImVec2 bSize(100, 20); */
-    /* 	    ImGui::Button("Reset Default", bSize); */
-    /* 	    ImGui::SameLine(); */
-    /* 	    ImGui::Button("Reset Front", bSize); */
-    /* 	    ImGui::SameLine(); */
-    /* 	    ImGui::Button("Reset Up", bSize); */
-    /* 	    ImGui::Separator(); */
-    /* 	} */
-    /* } */
+	ImVec2 bSize(100, 20);
+	if (ImGui::Button("Reset Default", bSize))
+	{
+	    Camera->Position = glm::vec3(0.0f, 5.0f, 10.0f);
+	    Camera->Settings->Yaw = -90.0f;
+	    Camera->Settings->Pitch = 0.0f;
+	    Camera->Settings->Fov = 45.0f;
+	    camera::ProcessMovementAngles(Camera, 0.0f, 0.0f);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Reset Up", bSize))
+	{
+	    Camera->Position = glm::vec3(0.0f, 30.0f, 0.0f);
+	    Camera->Settings->Yaw = -90.0f;
+	    Camera->Settings->Pitch = -90.0f;
+	    Camera->Settings->Fov = 45.0f;
+	    camera::ProcessMovementAngles(Camera, 0.0f, 0.0f);
+	}
+	ImGui::Separator();
+    }
+}
 
 /* // TODO: move to GUI file */
 /*     static void InputStateSettingsCollapseHeader(input_t *InputState) */
