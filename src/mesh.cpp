@@ -27,6 +27,12 @@ namespace mesh
 	glDeleteVertexArrays(1, &Mesh->VAO);
 	glDeleteBuffers(1, &Mesh->VBO);
 	glDeleteBuffers(1, &Mesh->IBO);
+
+	Mesh->Vertices.clear();
+	Mesh->Indices.clear();
+	Mesh->Textures.clear();
+
+	delete Mesh;
     }
 
     mesh_t* CreatePrimitiveSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
@@ -141,9 +147,9 @@ namespace model
 	}
 
 	Model->Directory = path.substr(0, path.find_last_of('\\'));
-	Model->ObjFilename = path.substr(Model->Directory.length(), path.length());
+	Model->ObjFilename = path.substr(Model->Directory.length() + 1, path.length());
 
-	// TODO: !!!!!
+	// TODO: debug!
 	printf("==============================\n");
 	printf("load model from directory: %s\n", Model->Directory.c_str());
 	printf("load model from file: %s\n", Model->ObjFilename.c_str());
@@ -156,15 +162,12 @@ namespace model
     void Delete(model_t *Model)
     {
 	for (auto& m : Model->Meshes)
-	{
-	    delete m;
-	    m = nullptr;
-	}
+	    mesh::Delete(m);
+	Model->Meshes.clear();
 
-	Model->Meshes.erase(std::remove(Model->Meshes.begin(),
-					Model->Meshes.end(),
-					nullptr),
-			    Model->Meshes.end());
+	for (auto& m : Model->TexturesLoadedCache)
+	    glDeleteTextures(1, &m.Id);
+	Model->TexturesLoadedCache.clear();
 	delete Model;
     }
 }
@@ -175,14 +178,14 @@ static void process_node(model_t *Model, aiNode *node, const aiScene *scene)
     for(uint32 i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
-        Model->Meshes.push_back(process_mesh(Model, mesh, scene)); // TODO: array			
+        Model->Meshes.push_back(process_mesh(Model, mesh, scene));
     }
 
     // then do the same for each of its children
     for(uint32 i = 0; i < node->mNumChildren; i++)
     {
         process_node(Model, node->mChildren[i], scene);
-    }    
+    }
 }
 
 static mesh_t* process_mesh(model_t *Model, aiMesh *mesh, const aiScene *scene)
@@ -311,7 +314,7 @@ static std::vector<texture_t> load_material_textures(model_t *Model,
 
 static uint32 load_texture_from_file(const char *path, const std::string &directory)
 {
-    // TODO: !!!!!!!!!!
+    // TODO: debug!
     printf("texture=%s\n", path);
     
     std::string filename = std::string(path);
@@ -342,14 +345,11 @@ static uint32 load_texture_from_file(const char *path, const std::string &direct
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
     }
     else
-    {
         printf("Texture failed to load at path: '%s'\n", path);
-        stbi_image_free(data);
-    }
+
+    stbi_image_free(data);
 
     return textureID;
 }

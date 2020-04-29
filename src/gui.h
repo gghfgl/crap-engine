@@ -178,7 +178,7 @@ static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
 	    ImGui::Text( ICON_FA_CUBE );
 	    ImGui::SameLine();
 	    char label[128];
-	    sprintf_s(label, "%03d %s", it->first, it->second->Model->ObjFilename.c_str());
+	    sprintf_s(label, "%d_%s", it->first, it->second->Model->ObjFilename.c_str());
 	    if (ImGui::Selectable(label, *selectedObject == it->first))
 	        *selectedObject = it->first;
 	}
@@ -203,7 +203,31 @@ static void object_list_collapse_header(std::map<uint32, object_t*> *objects,
 	    ImGui::SliderScalar("rotate", ImGuiDataType_Float,
 	    			&(*objects)[*selectedObject]->Rotate,
 	    			&f32_zero, &f32_360);
+
+	    if (ImGui::Button("delete"))
+	    {
+		ImGui::OpenPopup("Delete?");
+	    }
 	}
+
+	if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("object will be deleted.\nThis operation cannot be undone!\n\n");
+            ImGui::Separator();
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) {
+		object::Delete((*objects)[*selectedObject]);
+		(*objects).erase(*selectedObject);
+		*selectedObject = 0;
+		ImGui::CloseCurrentPopup();
+	    }
+
+            ImGui::SetItemDefaultFocus();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+		ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
 
 	ImGui::EndChild();
 	ImGui::Separator();

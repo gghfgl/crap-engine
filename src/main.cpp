@@ -18,8 +18,9 @@
 /* TODO:
    - assimp be carefull of texture path (same dir as the model)
    - improve click setting panel object after selectinID from world
-   - improve object label without /
-   - add icon cube object list
+   - delete object from the list LEAK!!!
+   - reset camera position up and diag preset
+   - switch projection ortho and perspective?
    - improve grid rendering
    - save / load scene ???
 */
@@ -52,7 +53,6 @@ static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
 const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
-
 
 int main(int argc, char *argv[])
 {
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 
     for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
 	object::Delete(it->second);
-    delete SCENE_OBJECTS; // TODO: put in Editor?
+    delete SCENE_OBJECTS;
     mesh::Delete(Editor->MeshGrid);
     mesh::Delete(Editor->MeshRay);
     delete Editor;
