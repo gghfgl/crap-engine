@@ -19,7 +19,7 @@
    - assimp be carefull of texture path (same dir as the model)
    - improve click setting panel object after selectinID from world
    - improve grid rendering
-   - save / load scene ???
+   - improve scene file format
 */
 
 // -------------------------------
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
     // Objects array
-    std::map<uint32, object_t*> *SCENE_OBJECTS = new std::map<uint32, object_t*>;
+    std::map<uint32, object_t*> *SCENE = new std::map<uint32, object_t*>;
     // =================================================
     
     editor_t *Editor = new editor_t;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 							   Camera->ProjectionMatrix,
 							   camera::GetViewMatrix(Camera));
 
-	for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
+	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 	{
 	    float32 rayIntersection = 0.0f;
 	    glm::vec3 spherePos = glm::vec3(
@@ -176,12 +176,12 @@ int main(int argc, char *argv[])
 	renderer::NewRenderingContext(Renderer);
 	glm::mat4 viewMatrix = camera::GetViewMatrix(Camera);
 
-	// TODO: if editor obj select active
 	shader_t *ColorShader = shader::GetFromCache("color");
 	shader::UseProgram(ColorShader);
 	shader::SetUniform4fv(ColorShader, "view", viewMatrix);
 	shader::SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
 
+	// draw editor grid
 	if (Editor->GridResolution != g_GridResolutionSlider)
 	{
 	    PushGridSubData(Editor->MeshGrid, g_GridResolutionSlider, g_GridMaxResolution);
@@ -193,16 +193,17 @@ int main(int argc, char *argv[])
 	    renderer::DrawLines(Renderer, Editor->MeshGrid, ColorShader);
 	}
 
-	// Test ray  drawing
+	// draw raycasting
 	PushRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
 	shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
 	renderer::DrawLines(Renderer, Editor->MeshRay, ColorShader);
 
+	// draw objs
 	shader_t *DefaultShader = shader::GetFromCache("default");
 	shader::UseProgram(DefaultShader);
 	shader::SetUniform4fv(DefaultShader, "view", viewMatrix);    
 	shader::SetUniform4fv(DefaultShader, "model", glm::mat4(1.0f));
-	for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
+	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 	{
 	    bool isSelected = false;
 	    if (g_HoveredObject == it->first || g_SelectedObject == it->first)
@@ -229,6 +230,7 @@ int main(int argc, char *argv[])
 	    renderer::DrawMesh(Renderer, it->second->PickingSphere, DefaultShader);
 	}
 
+	// draw GUI
 	editorGUI::NewFrame();
 	editorGUI::ShowWindowStatsOverlay(Window, Renderer);
 	editorGUI::ShowEditorPanel(Window,
@@ -236,7 +238,7 @@ int main(int argc, char *argv[])
 				   Camera,
 				   g_GridResolutionSlider,
 				   g_GridMaxResolution,
-				   SCENE_OBJECTS,
+				   SCENE,
 				   &g_SelectedObject,
 				   g_PickingSphereRadius,
 				   g_ActiveWindow);
@@ -249,9 +251,9 @@ int main(int argc, char *argv[])
 	window::SwapBuffer(Window);
     }
 
-    for (auto it = SCENE_OBJECTS->begin(); it != SCENE_OBJECTS->end(); it++)
+    for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 	object::Delete(it->second);
-    delete SCENE_OBJECTS;
+    delete SCENE;
     mesh::Delete(Editor->MeshGrid);
     mesh::Delete(Editor->MeshRay);
     delete Editor;

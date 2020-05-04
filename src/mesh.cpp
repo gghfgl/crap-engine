@@ -137,12 +137,29 @@ namespace model
     model_t* LoadFromFile(std::string const &path)
     {
 	model_t *Model = new model_t;
-	Assimp::Importer import;
-	const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+	Assimp::Importer importer;
+	// const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate
+	// 				       | aiProcess_FlipUVs
+	// 				       | aiProcess_CalcTangentSpace
+	// 				       | aiProcess_JoinIdenticalVertices);
+
+	const aiScene *scene = importer.ReadFile(path, aiProcess_FlipWindingOrder
+//						 | aiProcess_MakeLeftHanded
+						 | aiProcess_Triangulate
+						 | aiProcess_FlipUVs
+						 | aiProcess_PreTransformVertices
+						 | aiProcess_JoinIdenticalVertices
+						 | aiProcess_CalcTangentSpace
+						 | aiProcess_GenSmoothNormals
+						 | aiProcess_Triangulate
+						 | aiProcess_FixInfacingNormals
+						 | aiProcess_FindInvalidData
+						 | aiProcess_ValidateDataStructure
+						 | 0);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
-	    printf("ASSIMP::Error '%s'\n", import.GetErrorString());
+	    printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
 	    return nullptr;
 	}
 
@@ -361,5 +378,152 @@ namespace object
 	model::Delete(Object->Model);
 	mesh::Delete(Object->PickingSphere);
 	delete Object;
+    }
+}
+
+namespace scene
+{
+    // TODO: make binary version?
+    int32 SaveTextFormat(char *filepath, std::map<uint32, object_t*> *Scene)
+    {
+	FILE *file;
+	errno_t err;
+	err = fopen_s(&file, filepath, "w");
+	if (err != 0 || file == NULL)
+	{
+	    printf("open file error!\n");
+	    return err;
+	}
+
+	for (auto it = Scene->begin(); it != Scene->end(); it++)
+	{
+	    fprintf(file, "###\n");
+	    fprintf(file, "directory=%s\n", it->second->Model->Directory.c_str());
+	    fprintf(file, "filename=%s\n", it->second->Model->ObjFilename.c_str());
+	    fprintf(file, "id=%d\n", it->first);
+	    fprintf(file, "posx=%f\n", it->second->Position.x);
+	    fprintf(file, "posy=%f\n", it->second->Position.y);
+	    fprintf(file, "posz=%f\n", it->second->Position.z);
+	    fprintf(file, "scale=%f\n", it->second->Scale);
+	    fprintf(file, "rotate=%f\n", it->second->Rotate);
+	}
+
+	fclose(file);
+
+	// TODO: debug!!!!
+	printf("saved: %s\n", filepath);
+	return 0;
+    }
+
+    int32 OpenTextFormat(char *filepath, std::map<uint32, object_t*> *Scene)
+    {
+	std::ifstream file(filepath);
+	if (!file.is_open())
+	{
+	    printf("open file error!\n");
+	    return -1;
+	}
+
+	for (auto it = Scene->begin(); it != Scene->end(); it++)
+	    object::Delete(it->second);
+	Scene->clear();
+
+	uint32 fetch = 0;
+	uint32 nbFields = 8;
+	uint32 id = 0;
+	std::string fullpath = "";
+	glm::vec3 position = glm::vec3(0.0f);
+	float32 scale = 0.0f;
+	float32 rotate = 0.0f;
+	std::string line;
+	while (std::getline(file, line))
+	{
+	    line.erase(std::remove_if(line.begin(), line.end(), isspace),
+		       line.end());
+
+            if(line[0] == '#' || line.empty())
+		continue;
+
+	    auto delimiterPos = line.find("=");
+	    auto key = line.substr(0, delimiterPos);
+	    auto value = line.substr(delimiterPos + 1);
+
+	    if (key.compare("directory") == 0)
+	    {
+	    	fullpath = value ;
+	    	fetch++;
+	    }
+
+	    if (key.compare("filename") == 0)
+	    {
+	    	fullpath += "\\" + value;
+	    	fetch++;
+	    }
+	    
+	    if (key.compare("id") == 0)
+	    {
+		id = std::stoi(value);
+	    	fetch++;
+	    }
+
+	    if (key.compare("posx") == 0)
+	    {
+	    	position.x = std::stof(value);
+	    	fetch++;
+	    }
+
+	    if (key.compare("posy") == 0)
+	    {
+	    	position.y = std::stof(value);
+	    	fetch++;
+	    }
+
+	    if (key.compare("posz") == 0)
+	    {
+	        position.z = std::stof(value);
+	    	fetch++;
+	    }
+
+	    if (key.compare("scale") == 0)
+	    {
+	    	scale = std::stof(value);
+	    	fetch++;
+	    }
+
+	    if (key.compare("rotate") == 0)
+	    {
+	    	rotate = std::stof(value);
+	    	fetch++;
+	    }
+
+	    if (fetch == nbFields)
+	    {
+		model_t *loadedModel = model::LoadFromFile(fullpath);
+		object_t *obj = new object_t;
+		obj->Model = loadedModel;
+		obj->PickingSphere =  mesh::CreatePrimitiveSphereMesh(0.0f, 0.2f, 15, 15);
+		obj->Position = position;
+		obj->Scale = scale;
+		obj->Rotate = rotate;
+
+		Scene->insert({id, obj});
+
+		printf("fullpath= %s\n", fullpath.c_str());
+		printf("id= %d\n", id);
+		printf("posx= %f\n", position.x);
+		printf("posy= %f\n", position.y);
+		printf("posz= %f\n", position.z);
+		printf("scale= %f\n", scale);
+		printf("rotate= %f\n", rotate);
+		
+		fetch = 0;
+	    }
+	}
+
+	file.close();
+
+	// TODO: debug!!!!
+	printf("opened: %s", filepath);
+	return 0;
     }
 }

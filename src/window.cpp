@@ -131,6 +131,8 @@ static render_API_info init_render_API()
     //glEnable(GL_CULL_FACE); // face culling
     //glCullFace(GL_FRONT); // face culling
     // glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //glEnable(GL_STENCIL_TEST);
     // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
