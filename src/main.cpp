@@ -8,18 +8,25 @@
    - move from editing to running scene on the fly
    - scene = access engine API for creating game design
    - beautyfull light PBR effects
-   - custom GUI for game UI
+   - custom GUI for ingame UI
    - net code
 
    - learn more compiler stuff
    - learn how properly debug with MSVC
 */
 
-/* TODO:
+/* TODO Improvments:
    - assimp be carefull of texture path (same dir as the model)
    - improve click setting panel object after selectinID from world
    - improve grid rendering
    - improve scene file format
+*/
+
+/* TODO Improvments:
+   - load sounds?
+   - extend obj with fields (interact, soundId)
+   - add skybox image
+   - extend save scene with sound and skybox
 */
 
 // -------------------------------
