@@ -23,9 +23,11 @@
 */
 
 /* TODO Improvments:
+   - add skybox image
+   - box limit collision + draw box debug geometry shader
+   - loader progress bar load scene
    - load sounds?
    - extend obj with fields (interact, soundId)
-   - add skybox image
    - extend save scene with sound and skybox
 */
 
@@ -45,6 +47,8 @@ struct editor_t
     mesh_t *MeshGrid;
     mesh_t *MeshRay;
     uint32 GridResolution;
+    skybox_t *Skybox;
+    bool ShowSkybox;
 };
 
 const uint32 g_Width = 1280;
@@ -67,6 +71,7 @@ int main(int argc, char *argv[])
 
     shader::CompileAndCache("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
     shader::CompileAndCache("../shaders/color.glsl", "color", Camera->ProjectionMatrix);
+    shader::CompileAndCache("../shaders/skybox.glsl", "skybox", Camera->ProjectionMatrix);
 
     // =================================================
     // Grid
@@ -81,14 +86,26 @@ int main(int argc, char *argv[])
 
     // Objects array
     std::map<uint32, object_t*> *SCENE = new std::map<uint32, object_t*>;
-    // =================================================
+
+    // Skybox
+    std::vector<std::string> faces {
+	"../assets/skyboxes/test/right.jpg",
+	    "../assets/skyboxes/test/left.jpg",
+	    "../assets/skyboxes/test/top.jpg",
+	    "../assets/skyboxes/test/bottom.jpg",
+	    "../assets/skyboxes/test/front.jpg",
+	    "../assets/skyboxes/test/back.jpg"};
+   // =================================================
     
     editor_t *Editor = new editor_t;
     Editor->Active = true;
     Editor->GridResolution = 0;
     Editor->MeshGrid = MeshGrid;
     Editor->MeshRay = MeshRay;
+    Editor->Skybox = skybox::GenerateFromFiles(faces);
+    Editor->ShowSkybox = false;
     editorGUI::Init(Window);
+    // =============================
 
     while (Editor->Active)
     {
@@ -237,6 +254,15 @@ int main(int argc, char *argv[])
 	    renderer::DrawMesh(Renderer, it->second->PickingSphere, DefaultShader);
 	}
 
+	// Skybox
+	if (Editor->Skybox != NULL && Editor->ShowSkybox)
+	{
+	    shader_t *SkyboxShader = shader::GetFromCache("skybox");
+	    shader::UseProgram(SkyboxShader);
+	    shader::SetUniform4fv(SkyboxShader, "view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
+	    renderer::DrawSkybox(Renderer, Editor->Skybox, SkyboxShader);
+	}
+
 	// draw GUI
 	editorGUI::NewFrame();
 	editorGUI::ShowWindowStatsOverlay(Window, Renderer);
@@ -245,6 +271,7 @@ int main(int argc, char *argv[])
 				   Camera,
 				   g_GridResolutionSlider,
 				   g_GridMaxResolution,
+				   &Editor->ShowSkybox,
 				   SCENE,
 				   &g_SelectedObject,
 				   g_PickingSphereRadius,
@@ -263,6 +290,7 @@ int main(int argc, char *argv[])
     delete SCENE;
     mesh::Delete(Editor->MeshGrid);
     mesh::Delete(Editor->MeshRay);
+    skybox::Delete(Editor->Skybox);
     delete Editor;
 
     editorGUI::Delete();

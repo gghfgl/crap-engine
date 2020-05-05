@@ -27,6 +27,15 @@ struct mesh_t
     std::vector<texture_t> Textures;
 };
 
+
+struct skybox_t
+{
+    uint32 VAO;
+    uint32 VBO;
+    uint32 TextureId;
+};
+
+
 struct model_t
 {
     std::vector<mesh_t*> Meshes;

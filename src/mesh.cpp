@@ -5,6 +5,7 @@ static void process_node(model_t *Model, aiNode *node, const aiScene *scene);
 static mesh_t* process_mesh(model_t *Model, aiMesh *mesh, const aiScene *scene);
 static std::vector<texture_t> load_material_textures(model_t *Model, aiMaterial *mat, aiTextureType type, std::string typeName);
 static uint32 load_texture_from_file(const char *path, const std::string &directory);
+static uint32 load_cubemap_texture_from_file(std::vector<std::string> faces);
 
 namespace mesh
 {
@@ -526,4 +527,107 @@ namespace scene
 	printf("opened: %s", filepath);
 	return 0;
     }
+}
+
+namespace skybox
+{
+    skybox_t* GenerateFromFiles(std::vector<std::string> faces)
+    {
+	float skyboxVertices[] = {
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f, -1.0f, -1.0f,
+	    1.0f, -1.0f, -1.0f,
+	    1.0f, -1.0f, -1.0f,
+	    1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+
+	    -1.0f, -1.0f,  1.0f,
+	    -1.0f, -1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	    -1.0f, -1.0f,  1.0f,
+
+	    1.0f, -1.0f, -1.0f,
+	    1.0f, -1.0f,  1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    1.0f,  1.0f, -1.0f,
+	    1.0f, -1.0f, -1.0f,
+
+	    -1.0f, -1.0f,  1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    1.0f, -1.0f,  1.0f,
+	    -1.0f, -1.0f,  1.0f,
+
+	    -1.0f,  1.0f, -1.0f,
+	    1.0f,  1.0f, -1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    1.0f,  1.0f,  1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	    -1.0f,  1.0f, -1.0f,
+
+	    -1.0f, -1.0f, -1.0f,
+	    -1.0f, -1.0f,  1.0f,
+	    1.0f, -1.0f, -1.0f,
+	    1.0f, -1.0f, -1.0f,
+	    -1.0f, -1.0f,  1.0f,
+	    1.0f, -1.0f,  1.0f
+	};
+
+	uint32 VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	uint32 textureID = load_cubemap_texture_from_file(faces);  
+
+	skybox_t *Skybox = new skybox_t;
+	Skybox->VAO = VAO;
+	Skybox->VBO = VBO;
+	Skybox->TextureId = textureID;
+	
+	return Skybox;
+    }
+
+    void Delete(skybox_t *Skybox)
+    {
+	glDeleteVertexArrays(1, &Skybox->VAO);
+	glDeleteBuffers(1, &Skybox->VBO);
+	glDeleteTextures(1, &Skybox->TextureId);
+
+	delete Skybox;
+    }
+}
+
+static uint32 load_cubemap_texture_from_file(std::vector<std::string> faces)
+{
+    uint32 textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (uint32 i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else
+            printf("Cubemap texture failed to load at path: %s", faces[i].c_str());
+	stbi_image_free(data);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
 }

@@ -89,4 +89,17 @@ namespace renderer
 	for (uint32 i = 0; i < Model->Meshes.size(); i++)
 	    DrawMesh(Renderer, Model->Meshes[i], Shader);
     }
+
+    void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t *Shader)
+    {
+        glDepthFunc(GL_LEQUAL);
+
+        glBindVertexArray(Skybox->VAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, Skybox->TextureId);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+
+        glDepthFunc(GL_LESS);
+    }
 }

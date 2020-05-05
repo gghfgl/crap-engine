@@ -1,11 +1,11 @@
 #pragma once
 
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
-static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution);
+static void editor_settings_collapse_header(uint32 &resolution, uint32 gridMaxResolution, bool *showSkybox);
 static void object_list_collapse_header(std::map<uint32, object_t*> *objects, uint32 *selectedObject, float32 pickingSphereRadius);
 static void camera_settings_collapse_header(camera_t *Camera);
 
-const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_360 = 360.0f;
+const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f;
 
 OPENFILENAME g_Ofn;
 char g_szFile[260];
@@ -92,6 +92,7 @@ namespace editorGUI
 			 camera_t *Camera,
 			 uint32 &gridResolution,
 			 uint32 gridMaxResolution,
+			 bool *showSkybox,
 			 std::map<uint32, object_t*> *objects,
 			 uint32 *selectedObject,
 			 float32 pickingSphereRadius,
@@ -102,7 +103,7 @@ namespace editorGUI
 	ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
         window_settings_collapse_header(Window, InputState);
-	editor_grid_collapse_header(gridResolution, gridMaxResolution - 2);
+	editor_settings_collapse_header(gridResolution, gridMaxResolution - 2, showSkybox);
 	camera_settings_collapse_header(Camera);
         object_list_collapse_header(objects, selectedObject, pickingSphereRadius);
     
@@ -141,13 +142,16 @@ static void window_settings_collapse_header(window_t *Window, input_t *InputStat
     }
 }
 
-static void editor_grid_collapse_header(uint32 &resolution, uint32 gridMaxResolution)
+static void editor_settings_collapse_header(uint32 &resolution,
+					    uint32 gridMaxResolution,
+					    bool *showSkybox)
 {
-    if (ImGui::CollapsingHeader("Grid", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Editor", ImGuiTreeNodeFlags_DefaultOpen))
     {
 	ImGui::SliderInt("res", &(int)resolution, 0, gridMaxResolution);
 	ImGui::SameLine();
 	ImGui::Text("max: %dx%d", gridMaxResolution, gridMaxResolution);
+	ImGui::Checkbox("skybox", showSkybox);
 	ImGui::Separator();
     }
 }
@@ -202,7 +206,7 @@ static void object_list_collapse_header(std::map<uint32, object_t*> *Scene,
 		        (*Scene)[*selectedObject]->Position.z);
 	    ImGui::SliderScalar("scale", ImGuiDataType_Float,
 	    			&(*Scene)[*selectedObject]->Scale,
-	    			&f32_zero, &f32_two);
+	    			&f32_zero, &f32_ten);
 	    ImGui::SliderScalar("rotate", ImGuiDataType_Float,
 	    			&(*Scene)[*selectedObject]->Rotate,
 	    			&f32_zero, &f32_360);
