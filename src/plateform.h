@@ -11,9 +11,9 @@
 #include "IMGUI/imgui_impl_glfw.h"
 #include "IMGUI/imgui_impl_opengl3.h"
 
-#include "../dep/stb_image.cpp"
-#include "../dep/glad.c"
-#include "../dep/IconsFontAwesome5.h"
+#include "../dep/src/stb_image.cpp"
+#include "../dep/src/glad.c"
+#include "../dep/src/IconsFontAwesome5.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

@@ -1,4 +1,1 @@
-build/
-src/.vs/
-slib/
-assets/
+/build

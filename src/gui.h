@@ -25,14 +25,14 @@ namespace editorGUI
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
 	// Fonts
-	ImGuiIO& io = ImGui::GetIO();
+ 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
 	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
 	ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
 	//io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges );
-	io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
+	io.Fonts->AddFontFromFileTTF( "../assets/fonts/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
 
-        // Initialize OPENFILENAME
+     // Initialize OPENFILENAME
 	ZeroMemory(&g_Ofn, sizeof(g_Ofn));
 	g_Ofn.lStructSize = sizeof(g_Ofn);
 	g_Ofn.hwndOwner = g_hwnd;
