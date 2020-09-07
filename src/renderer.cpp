@@ -47,6 +47,8 @@ namespace renderer
     {
         glBindVertexArray(Mesh->VAO);
         glDrawArrays(GL_LINES, 0, (GLsizei)Mesh->Vertices.size());
+
+        glBindVertexArray(0);         // good practice
         Renderer->Stats.DrawCalls++;
     }
 
@@ -94,43 +96,49 @@ namespace renderer
     void PrepareInstancedRendering(renderer_t *Renderer,
                                    model_t *Model,
                                    glm::mat4 *modelMatrices,
-                                   uint32 count)
+                                   uint32 instanceCount)
     {
         uint32 buffer;
         glGenBuffers(1, &buffer);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER,
+                     instanceCount * sizeof(glm::mat4),
+                     &modelMatrices[0],
+                     GL_STATIC_DRAW);
 
         for (uint32 i = 0; i < Model->Meshes.size(); i++)
         {
-            glEnableVertexAttribArray(3);
-            glVertexAttribPointer(3, 4,
-                                  GL_FLOAT, GL_FALSE,
-                                  sizeof(glm::mat4), (void*)0);
-            glEnableVertexAttribArray(4);
-            glVertexAttribPointer(4, 4,
-                                  GL_FLOAT, GL_FALSE,
-                                  sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+            uint32 VAO = Model->Meshes[i]->VAO;
+            glBindVertexArray(VAO);
+
             glEnableVertexAttribArray(5);
             glVertexAttribPointer(5, 4,
                                   GL_FLOAT, GL_FALSE,
-                                  sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+                                  sizeof(glm::mat4), (void*)0);
             glEnableVertexAttribArray(6);
             glVertexAttribPointer(6, 4,
                                   GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+            glEnableVertexAttribArray(7);
+            glVertexAttribPointer(7, 4,
+                                  GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+            glEnableVertexAttribArray(8);
+            glVertexAttribPointer(8, 4,
+                                  GL_FLOAT, GL_FALSE,
                                   sizeof(glm::mat4),(void*)(3 * sizeof(glm::vec4)));
 
-            glVertexAttribDivisor(3, 1);
-            glVertexAttribDivisor(4, 1);
             glVertexAttribDivisor(5, 1);
             glVertexAttribDivisor(6, 1);
+            glVertexAttribDivisor(7, 1);
+            glVertexAttribDivisor(8, 1);
 
             glBindVertexArray(0);
         }
     }
     
     // TODO
-    void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uint32 count)
+    void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uint32 instanceCount)
     {
         uint32 diffuseNr = 1;
         uint32 specularNr = 1;
@@ -157,7 +165,11 @@ namespace renderer
         }
 
         glBindVertexArray(Mesh->VAO);
-        glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, 0, count);
+        glDrawElementsInstanced(GL_TRIANGLES,
+                                (GLsizei)Mesh->Indices.size(),
+                                GL_UNSIGNED_INT,
+                                0,
+                                instanceCount);
 
         glBindVertexArray(0);         // good practice
         glActiveTexture(GL_TEXTURE0); // good practice
@@ -165,10 +177,10 @@ namespace renderer
     }
 
     // TODO
-    void DrawModelInstanced(renderer_t *Renderer, model_t *Model, shader_t *Shader, uint32 count)
+    void DrawModelInstanced(renderer_t *Renderer, model_t *Model, shader_t *Shader, uint32 instanceCount)
     {
         for (uint32 i = 0; i < Model->Meshes.size(); i++)
-            DrawMeshInstanced(Renderer, Model->Meshes[i], Shader, count);
+            DrawMeshInstanced(Renderer, Model->Meshes[i], Shader, instanceCount);
     }
     
     void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t *Shader)
@@ -179,8 +191,9 @@ namespace renderer
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, Skybox->TextureId);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
 
+        glBindVertexArray(0);
         glDepthFunc(GL_LESS);
+        Renderer->Stats.DrawCalls++;
     }
 } // namespace renderer

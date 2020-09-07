@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 	renderer_t *Renderer = renderer::Construct();
 
 	shader::CompileAndCache("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
+	shader::CompileAndCache("../shaders/instanced.glsl", "instanced", Camera->ProjectionMatrix);
 	shader::CompileAndCache("../shaders/color.glsl", "color", Camera->ProjectionMatrix);
 	shader::CompileAndCache("../shaders/skybox.glsl", "skybox", Camera->ProjectionMatrix);
 
@@ -248,16 +249,20 @@ int main(int argc, char *argv[])
 
         // =================== M.O.D.E.L.S ===================
 
-        // TODO: draw terrain MOVE to instanced rendering
-		shader_t *InstancedShader = shader::GetFromCache("default");
+        // draw terrain
+        renderer::PrepareInstancedRendering(Renderer,
+                                            terrainModel,
+                                            terrainModelMatrices,
+                                            g_TerrainSideLenght * g_TerrainSideLenght);
+		shader_t *InstancedShader = shader::GetFromCache("instanced");
 		shader::UseProgram(InstancedShader);
 		shader::SetUniform4fv(InstancedShader, "view", viewMatrix);
 		shader::SetUniform4fv(InstancedShader, "model", glm::mat4(1.0f));
-        for (uint32 i = 0; i < g_TerrainSideLenght * g_TerrainSideLenght; i++)
-        {
-            shader::SetUniform4fv(InstancedShader, "model", terrainModelMatrices[i]);
-            renderer::DrawModel(Renderer, terrainModel, InstancedShader);
-        }
+        renderer::DrawModelInstanced(Renderer,
+                                     terrainModel,
+                                     InstancedShader,
+                                     g_TerrainSideLenght * g_TerrainSideLenght);
+        
                   
 		// draw objs
 		shader_t *DefaultShader = shader::GetFromCache("default");
