@@ -62,7 +62,7 @@ glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 static const uint32 g_GridMaxResolution = 52;
 static uint32 g_GridResolutionSlider = 10;
 const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
-static uint32 g_TerrainSideLenght = 2;
+static uint32 g_TerrainSideLenght = 100;
 static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 
         // =================== M.O.D.E.L.S ===================
 
-        // TODO: draw terrain
+        // TODO: draw terrain MOVE to instanced rendering
 		shader_t *InstancedShader = shader::GetFromCache("default");
 		shader::UseProgram(InstancedShader);
 		shader::SetUniform4fv(InstancedShader, "view", viewMatrix);
@@ -258,20 +258,7 @@ int main(int argc, char *argv[])
             shader::SetUniform4fv(InstancedShader, "model", terrainModelMatrices[i]);
             renderer::DrawModel(Renderer, terrainModel, InstancedShader);
         }
-        
-		// for (auto it = TERRAIN->begin(); it != TERRAIN->end(); it++)
-		// {
-		// 	// Model
-		// 	glm::mat4 model = glm::mat4(1.0f);
-		// 	model = glm::translate(model, it->second->Position);
-		// 	model = glm::scale(model, glm::vec3(it->second->Scale));
-		// 	model = glm::rotate(model, glm::radians(it->second->Rotate),
-		// 						glm::vec3(0.0f, 1.0f, 0.0f));
-		// 	shader::SetUniform4fv(InstancedShader, "model", model);
-		// 	//shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		// 	renderer::DrawModel(Renderer, it->second->Model, InstancedShader);
-		// }
-          
+                  
 		// draw objs
 		shader_t *DefaultShader = shader::GetFromCache("default");
 		shader::UseProgram(DefaultShader);
@@ -380,8 +367,6 @@ void PrepareAxisDebug(mesh_t *Mesh)
     vertex_t vZb;
     vZb.Position = glm::vec3(0.0f, 0.1f, -2.0f);
     Mesh->Vertices.push_back(vZb);
-
-    std::cout << Mesh->Vertices.size() << std::endl;
     
     glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
@@ -548,43 +533,6 @@ bool RayPlaneIntersection(glm::vec3 rayOriginWorld,
 	return true;
 }
 
-// void GenerateTerrain(std::map<uint32, object_t *> *Terrain, model_t *model, uint32 tSize)
-// {
-//     Terrain->clear();
-//     //slots.clear(); // TODO: carefull overflow
-
-//     glm::vec3 size = { 1.0f, 1.0f, 1.0f };
-//     float posX = 0.0f;
-//     //bool slot = true;
-//     uint32 id = 1;
-//     int side = (int)std::sqrt(tSize);
-
-//     for (int i = 0; i < side; i++)
-//     {
-//         float posZ = -size.z;
-//         for (int y = 0; y < side; y++)
-//         {
-//             // entity_state s = state;
-//             // if (slot && i % 4 == 1)
-//             //   {
-//             //     s = ENTITY_STATE_SLOT;
-//             //     if (slots[id] == 0)
-//             //       slots[id] = 0;
-//             //   }
-
-//             object_t *obj = new object_t;
-//             obj->Model = model;
-//             obj->Position = { posX, 0.0f, posZ };
-//             Terrain->insert({id, obj});
-
-//             posZ -= size.z;
-//             //slot = !slot;
-//             id++;
-//         }
-//         posX += size.x;
-//     }
-// }
-
 glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght)
 {
     glm::mat4 *modelMatrices;
@@ -592,20 +540,21 @@ glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght)
     glm::vec3 size = { 1.0f, 1.0f, 1.0f };
     float posX = 0.0f;
 
+    uint32 index = 0;
     for (uint32 i = 0; i < squareSideLenght; i++)
     {
         float posZ = -size.z;
         for (uint32 y = 0; y < squareSideLenght; y++)
         {
-            std::cout << posX << " - " << posZ << std::endl;
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, { posX, 0.0f, posZ });
             model = glm::scale(model, glm::vec3(1.0f));
             model = glm::rotate(model, glm::radians(0.0f),
                                 glm::vec3(0.0f, 1.0f, 0.0f));
-            modelMatrices[i] = model;
+            modelMatrices[index] = model;
 
             posZ -= size.z;
+            index++;
         }
         posX += size.x;
     }

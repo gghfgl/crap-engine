@@ -90,6 +90,87 @@ namespace renderer
             DrawMesh(Renderer, Model->Meshes[i], Shader);
     }
 
+    // TODO
+    void PrepareInstancedRendering(renderer_t *Renderer,
+                                   model_t *Model,
+                                   glm::mat4 *modelMatrices,
+                                   uint32 count)
+    {
+        uint32 buffer;
+        glGenBuffers(1, &buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, count * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+        for (uint32 i = 0; i < Model->Meshes.size(); i++)
+        {
+            glEnableVertexAttribArray(3);
+            glVertexAttribPointer(3, 4,
+                                  GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4), (void*)0);
+            glEnableVertexAttribArray(4);
+            glVertexAttribPointer(4, 4,
+                                  GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+            glEnableVertexAttribArray(5);
+            glVertexAttribPointer(5, 4,
+                                  GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+            glEnableVertexAttribArray(6);
+            glVertexAttribPointer(6, 4,
+                                  GL_FLOAT, GL_FALSE,
+                                  sizeof(glm::mat4),(void*)(3 * sizeof(glm::vec4)));
+
+            glVertexAttribDivisor(3, 1);
+            glVertexAttribDivisor(4, 1);
+            glVertexAttribDivisor(5, 1);
+            glVertexAttribDivisor(6, 1);
+
+            glBindVertexArray(0);
+        }
+    }
+    
+    // TODO
+    void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uint32 count)
+    {
+        uint32 diffuseNr = 1;
+        uint32 specularNr = 1;
+        uint32 normalNr = 1;
+        uint32 heightNr = 1;
+
+        // TODO: improve texture management
+        for (uint32 i = 0; i < Mesh->Textures.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+            std::string number;
+            std::string name = Mesh->Textures[i].Type;
+            if (name == "texture_diffuse")
+                number = std::to_string(diffuseNr++);
+            else if (name == "texture_specular")
+                number = std::to_string(specularNr++); // transfer unsigned int to stream
+            else if (name == "texture_normal")
+                number = std::to_string(normalNr++); // transfer unsigned int to stream
+            else if (name == "texture_height")
+                number = std::to_string(heightNr++); // transfer unsigned int to stream
+
+            shader::SetUniform1i(Shader, (name + number).c_str(), i);
+            glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].Id);
+        }
+
+        glBindVertexArray(Mesh->VAO);
+        glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, 0, count);
+
+        glBindVertexArray(0);         // good practice
+        glActiveTexture(GL_TEXTURE0); // good practice
+        Renderer->Stats.DrawCalls++;
+    }
+
+    // TODO
+    void DrawModelInstanced(renderer_t *Renderer, model_t *Model, shader_t *Shader, uint32 count)
+    {
+        for (uint32 i = 0; i < Model->Meshes.size(); i++)
+            DrawMeshInstanced(Renderer, Model->Meshes[i], Shader, count);
+    }
+    
     void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t *Shader)
     {
         glDepthFunc(GL_LEQUAL);
