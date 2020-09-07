@@ -43,56 +43,6 @@ namespace renderer
         // ========================================================
     }
 
-    void DrawLines(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
-    {
-        glBindVertexArray(Mesh->VAO);
-        glDrawArrays(GL_LINES, 0, (GLsizei)Mesh->Vertices.size());
-
-        glBindVertexArray(0);         // good practice
-        Renderer->Stats.DrawCalls++;
-    }
-
-    void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
-    {
-        uint32 diffuseNr = 1;
-        uint32 specularNr = 1;
-        uint32 normalNr = 1;
-        uint32 heightNr = 1;
-
-        // TODO: improve texture management
-        for (uint32 i = 0; i < Mesh->Textures.size(); i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
-            std::string number;
-            std::string name = Mesh->Textures[i].Type;
-            if (name == "texture_diffuse")
-                number = std::to_string(diffuseNr++);
-            else if (name == "texture_specular")
-                number = std::to_string(specularNr++); // transfer unsigned int to stream
-            else if (name == "texture_normal")
-                number = std::to_string(normalNr++); // transfer unsigned int to stream
-            else if (name == "texture_height")
-                number = std::to_string(heightNr++); // transfer unsigned int to stream
-
-            shader::SetUniform1i(Shader, (name + number).c_str(), i);
-            glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].Id);
-        }
-
-        glBindVertexArray(Mesh->VAO);
-        glDrawElements(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
-
-        glBindVertexArray(0);         // good practice
-        glActiveTexture(GL_TEXTURE0); // good practice
-        Renderer->Stats.DrawCalls++;
-    }
-
-    void DrawModel(renderer_t *Renderer, model_t *Model, shader_t *Shader)
-    {
-        for (uint32 i = 0; i < Model->Meshes.size(); i++)
-            DrawMesh(Renderer, Model->Meshes[i], Shader);
-    }
-
-    // TODO
     void PrepareInstancedRendering(renderer_t *Renderer,
                                    model_t *Model,
                                    glm::mat4 *modelMatrices,
@@ -136,8 +86,50 @@ namespace renderer
             glBindVertexArray(0);
         }
     }
+
+    void DrawLines(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
+    {
+        glBindVertexArray(Mesh->VAO);
+        glDrawArrays(GL_LINES, 0, (GLsizei)Mesh->Vertices.size());
+
+        glBindVertexArray(0);         // good practice
+        Renderer->Stats.DrawCalls++;
+    }
+
+    void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
+    {
+        uint32 diffuseNr = 1;
+        uint32 specularNr = 1;
+        uint32 normalNr = 1;
+        uint32 heightNr = 1;
+
+        // TODO: improve texture management
+        for (uint32 i = 0; i < Mesh->Textures.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+            std::string number;
+            std::string name = Mesh->Textures[i].Type;
+            if (name == "texture_diffuse")
+                number = std::to_string(diffuseNr++);
+            else if (name == "texture_specular")
+                number = std::to_string(specularNr++); // transfer unsigned int to stream
+            else if (name == "texture_normal")
+                number = std::to_string(normalNr++); // transfer unsigned int to stream
+            else if (name == "texture_height")
+                number = std::to_string(heightNr++); // transfer unsigned int to stream
+
+            shader::SetUniform1i(Shader, (name + number).c_str(), i);
+            glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].Id);
+        }
+
+        glBindVertexArray(Mesh->VAO);
+        glDrawElements(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
+
+        glBindVertexArray(0);         // good practice
+        glActiveTexture(GL_TEXTURE0); // good practice
+        Renderer->Stats.DrawCalls++;
+    }
     
-    // TODO
     void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uint32 instanceCount)
     {
         uint32 diffuseNr = 1;
@@ -176,7 +168,12 @@ namespace renderer
         Renderer->Stats.DrawCalls++;
     }
 
-    // TODO
+    void DrawModel(renderer_t *Renderer, model_t *Model, shader_t *Shader)
+    {
+        for (uint32 i = 0; i < Model->Meshes.size(); i++)
+            DrawMesh(Renderer, Model->Meshes[i], Shader);
+    }
+
     void DrawModelInstanced(renderer_t *Renderer, model_t *Model, shader_t *Shader, uint32 instanceCount)
     {
         for (uint32 i = 0; i < Model->Meshes.size(); i++)
