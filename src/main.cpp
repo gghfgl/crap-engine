@@ -33,17 +33,22 @@
 */
 
 // -------------------------------
+
 void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
 void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution);
+void PrepareAxisDebug(mesh_t *Mesh);
 mesh_t *CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
 bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float32 sphereRadius, float32 *intersectionDistance);
 bool RayPlaneIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 planeCoord, glm::vec3 planeNormal, glm::vec3 *intersectionPoint);
+glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght);
+
 // -------------------------------
 
 struct editor_t
 {
 	bool Active;
 	mesh_t *MeshGrid;
+	mesh_t *MeshAxisDebug;
 	mesh_t *MeshRay;
 	uint32 GridResolution;
 	skybox_t *Skybox;
@@ -56,12 +61,12 @@ static bool g_ActiveWindow = false;
 glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 static const uint32 g_GridMaxResolution = 52;
 static uint32 g_GridResolutionSlider = 10;
+const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
+static uint32 g_TerrainSideLenght = 2;
 static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
 const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
-
-// TODO: data structure for terrain cubes list
 
 int main(int argc, char *argv[])
 {
@@ -75,18 +80,23 @@ int main(int argc, char *argv[])
 	shader::CompileAndCache("../shaders/skybox.glsl", "skybox", Camera->ProjectionMatrix);
 
 	// =================================================
-	// Grid
-	std::vector<vertex_t> vGrid(g_GridMaxResolution * 4, vertex_t());
+	// Grid & Axis Debug
 	std::vector<uint32> uEmpty;
 	std::vector<texture_t> tEmpty;
+	std::vector<vertex_t> vGrid(g_GridMaxResolution * 4, vertex_t());
 	mesh_t *MeshGrid = mesh::Construct(vGrid, uEmpty, tEmpty);
-
+	std::vector<vertex_t> vAxisDebug(6, vertex_t());
+	mesh_t *MeshAxisDebug = mesh::Construct(vAxisDebug, uEmpty, tEmpty);
+    
 	// Ray
 	std::vector<vertex_t> vRay(2, vertex_t());
 	mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
-     // TODO: Generate terrain cubes list
-     
+    // TODO: Generate terrain cubes list
+    // TODO: Generate only if sidelenght different from matrices.size()
+    glm::mat4 *terrainModelMatrices = GenerateTerrainModelMatrices(g_TerrainSideLenght);
+    model_t *terrainModel = model::LoadFromFile(g_TerrainModelFile);
+
 	// Objects array
 	std::map<uint32, object_t *> *SCENE = new std::map<uint32, object_t *>;
 
@@ -104,6 +114,7 @@ int main(int argc, char *argv[])
 	Editor->Active = true;
 	Editor->GridResolution = 0;
 	Editor->MeshGrid = MeshGrid;
+	Editor->MeshAxisDebug = MeshAxisDebug;
 	Editor->MeshRay = MeshRay;
 	Editor->Skybox = skybox::GenerateFromFiles(faces);
 	Editor->ShowSkybox = false;
@@ -152,27 +163,27 @@ int main(int argc, char *argv[])
 				g_DragObject = g_SelectedObject;
 
 			if (!g_ActiveWindow && !g_SelectedObject)
-                 {
-                   input::UpdateMouseOffsets(InputState->MouseEvent);
-                   camera::ProcessMovementAngles(Camera,
-                                                 InputState->MouseEvent->OffsetX,
-                                                 InputState->MouseEvent->OffsetY);
-                 }
+            {
+                input::UpdateMouseOffsets(InputState->MouseEvent);
+                camera::ProcessMovementAngles(Camera,
+                                              InputState->MouseEvent->OffsetX,
+                                              InputState->MouseEvent->OffsetY);
+            }
 		}
 		else
             g_DragObject = 0;
 
 		// NOTE: SIMULATE  ======================================>
 		glm::vec3 rayWorld = input::MouseRayDirectionWorld((float32)InputState->MouseEvent->PosX,
-                                                             (float32)InputState->MouseEvent->PosY,
-                                                             Window->Width,
-                                                             Window->Height,
-                                                             Camera->ProjectionMatrix,
-                                                             camera::GetViewMatrix(Camera));
+                                                           (float32)InputState->MouseEvent->PosY,
+                                                           Window->Width,
+                                                           Window->Height,
+                                                           Camera->ProjectionMatrix,
+                                                           camera::GetViewMatrix(Camera));
 
-          // TODO: mouse ray intersection terrain cubes
+        // TODO: mouse ray intersection terrain cubes
           
-          // mouse ray intersection sphere selector objects
+        // mouse ray intersection sphere selector objects
 		for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 		{
 			float32 rayIntersection = 0.0f;
@@ -211,6 +222,8 @@ int main(int argc, char *argv[])
 		shader::SetUniform4fv(ColorShader, "view", viewMatrix);
 		shader::SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
 
+        // =================== D.E.B.U.G ===================
+        
 		// draw editor grid
 		if (Editor->GridResolution != g_GridResolutionSlider)
 		{
@@ -223,12 +236,41 @@ int main(int argc, char *argv[])
 			renderer::DrawLines(Renderer, Editor->MeshGrid, ColorShader);
 		}
 
+        // draw axis debug
+        PrepareAxisDebug(Editor->MeshAxisDebug);
+        shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        renderer::DrawLines(Renderer, MeshAxisDebug, ColorShader);
+
 		// draw raycasting
 		PushRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
-		shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0));
+		shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
 		renderer::DrawLines(Renderer, Editor->MeshRay, ColorShader);
 
-          // TODO: draw terrain
+        // =================== M.O.D.E.L.S ===================
+
+        // TODO: draw terrain
+		shader_t *InstancedShader = shader::GetFromCache("default");
+		shader::UseProgram(InstancedShader);
+		shader::SetUniform4fv(InstancedShader, "view", viewMatrix);
+		shader::SetUniform4fv(InstancedShader, "model", glm::mat4(1.0f));
+        for (uint32 i = 0; i < g_TerrainSideLenght * g_TerrainSideLenght; i++)
+        {
+            shader::SetUniform4fv(InstancedShader, "model", terrainModelMatrices[i]);
+            renderer::DrawModel(Renderer, terrainModel, InstancedShader);
+        }
+        
+		// for (auto it = TERRAIN->begin(); it != TERRAIN->end(); it++)
+		// {
+		// 	// Model
+		// 	glm::mat4 model = glm::mat4(1.0f);
+		// 	model = glm::translate(model, it->second->Position);
+		// 	model = glm::scale(model, glm::vec3(it->second->Scale));
+		// 	model = glm::rotate(model, glm::radians(it->second->Rotate),
+		// 						glm::vec3(0.0f, 1.0f, 0.0f));
+		// 	shader::SetUniform4fv(InstancedShader, "model", model);
+		// 	//shader::SetUniform1ui(DefaultShader, "flip_color", isSelected);
+		// 	renderer::DrawModel(Renderer, it->second->Model, InstancedShader);
+		// }
           
 		// draw objs
 		shader_t *DefaultShader = shader::GetFromCache("default");
@@ -262,6 +304,8 @@ int main(int argc, char *argv[])
 			renderer::DrawMesh(Renderer, it->second->PickingSphere, DefaultShader);
 		}
 
+        // =================== E.N.V.I.R.O.N.M.E.N.T ===================
+
 		// Skybox
 		if (Editor->Skybox != NULL && Editor->ShowSkybox)
 		{
@@ -270,6 +314,8 @@ int main(int argc, char *argv[])
 			shader::SetUniform4fv(SkyboxShader, "view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
 			renderer::DrawSkybox(Renderer, Editor->Skybox, SkyboxShader);
 		}
+
+        // =================== G.U.I ===================
 
 		// draw GUI
 		editorGUI::NewFrame();
@@ -308,6 +354,40 @@ int main(int argc, char *argv[])
 	input::Delete(InputState);
 	window::Delete(Window);
 	return 0;
+}
+
+void PrepareAxisDebug(mesh_t *Mesh)
+{    
+    Mesh->Vertices.clear();
+
+    vertex_t vXa;
+    vXa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
+    Mesh->Vertices.push_back(vXa);
+    vertex_t vXb;
+    vXb.Position = glm::vec3(2.0f, 0.1f, 0.0f);
+    Mesh->Vertices.push_back(vXb);
+
+    vertex_t vYa;
+    vYa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
+    Mesh->Vertices.push_back(vYa);
+    vertex_t vYb;
+    vYb.Position = glm::vec3(0.0f, 2.0f, 0.0f);
+    Mesh->Vertices.push_back(vYb);
+
+    vertex_t vZa;
+    vZa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
+    Mesh->Vertices.push_back(vZa);
+    vertex_t vZb;
+    vZb.Position = glm::vec3(0.0f, 0.1f, -2.0f);
+    Mesh->Vertices.push_back(vZb);
+
+    std::cout << Mesh->Vertices.size() << std::endl;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    Mesh->Vertices.size() * sizeof(vertex_t),
+                    &Mesh->Vertices[0]);
 }
 
 void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution)
@@ -355,7 +435,7 @@ void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution)
 			Mesh->Vertices.push_back(v);
 			i++;
 		}
-
+        
 		glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
 		glBufferSubData(GL_ARRAY_BUFFER,
 						0,
@@ -381,41 +461,6 @@ void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
 					Mesh->Vertices.size() * sizeof(vertex_t),
 					&Mesh->Vertices[0]);
 }
-
-// NOTE: EDITOR stuff
-// // TODO: use for moving / scaling model ?
-// void LoadDebugAxis(uint32 *VAO, uint32 *vCount)
-// {
-//     float debug_axis[] =
-// 	{
-// 	    0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-// 	    3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-
-// 	    0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-// 	    0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-
-// 	    0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-// 	    0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 1.0f, 1.0f
-// 	};
-
-//     *vCount = 6;
-
-//     glGenVertexArrays(1, &VAO);
-//     glBindVertexArray(VAO);
-
-//     uint32 VBO;
-//     glGenBuffers(1, &VBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(debug_axis), debug_axis, GL_STATIC_DRAW);
-
-//     // Position
-//     glEnableVertexAttribArray(0);
-//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)0);
-
-//     // Color
-//     glEnableVertexAttribArray(1);
-//     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float32), (void*)(3 * sizeof(float32)));
-// }
 
 bool RaySphereIntersection(glm::vec3 rayOriginWorld,
 						   glm::vec3 rayDirectionWorld,
@@ -501,4 +546,69 @@ bool RayPlaneIntersection(glm::vec3 rayOriginWorld,
 	// output itersec point
 	*intersectionPoint = rayOriginWorld + rayDirectionWorld * x;
 	return true;
+}
+
+// void GenerateTerrain(std::map<uint32, object_t *> *Terrain, model_t *model, uint32 tSize)
+// {
+//     Terrain->clear();
+//     //slots.clear(); // TODO: carefull overflow
+
+//     glm::vec3 size = { 1.0f, 1.0f, 1.0f };
+//     float posX = 0.0f;
+//     //bool slot = true;
+//     uint32 id = 1;
+//     int side = (int)std::sqrt(tSize);
+
+//     for (int i = 0; i < side; i++)
+//     {
+//         float posZ = -size.z;
+//         for (int y = 0; y < side; y++)
+//         {
+//             // entity_state s = state;
+//             // if (slot && i % 4 == 1)
+//             //   {
+//             //     s = ENTITY_STATE_SLOT;
+//             //     if (slots[id] == 0)
+//             //       slots[id] = 0;
+//             //   }
+
+//             object_t *obj = new object_t;
+//             obj->Model = model;
+//             obj->Position = { posX, 0.0f, posZ };
+//             Terrain->insert({id, obj});
+
+//             posZ -= size.z;
+//             //slot = !slot;
+//             id++;
+//         }
+//         posX += size.x;
+//     }
+// }
+
+glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght)
+{
+    glm::mat4 *modelMatrices;
+    modelMatrices = new glm::mat4[squareSideLenght * squareSideLenght];    
+    glm::vec3 size = { 1.0f, 1.0f, 1.0f };
+    float posX = 0.0f;
+
+    for (uint32 i = 0; i < squareSideLenght; i++)
+    {
+        float posZ = -size.z;
+        for (uint32 y = 0; y < squareSideLenght; y++)
+        {
+            std::cout << posX << " - " << posZ << std::endl;
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, { posX, 0.0f, posZ });
+            model = glm::scale(model, glm::vec3(1.0f));
+            model = glm::rotate(model, glm::radians(0.0f),
+                                glm::vec3(0.0f, 1.0f, 0.0f));
+            modelMatrices[i] = model;
+
+            posZ -= size.z;
+        }
+        posX += size.x;
+    }
+
+    return modelMatrices;
 }
