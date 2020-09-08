@@ -65,6 +65,8 @@ void RenderEditorGui()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+// ================================================================
+
 // TODO: switch to string rendering
 void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
 {
@@ -84,7 +86,7 @@ void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
     }
 }
 
-// TODO: split panel
+// TODO: pass function signature directly? panel as a service?
 void ShowEditorPanel(window_t *Window,
                      input_t *InputState,
                      camera_t *Camera,

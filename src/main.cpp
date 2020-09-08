@@ -2,39 +2,45 @@
 
 #include "unity_build.h"
 
-/* TODO:
-   - infinite grid in editor? with shader instead of cpp?
-   - clean shaders
+/* TODO: EDITOR
+   - clean code in services and APIs (editor / engine / render-test)
    - implement memorypool visualizer
+   - move skybox and entities in dedicated "Data" panel
+   - improve click setting panel object after selectinID from world
    - improve coordinate system for positionning objects
    - improve skybox loading assets with hdr
-   - clean code in services and APIs (editor / engine / gameplay)
    - run rendering scene from editor
    - fix / improve texture management from assimp model
+   - assimp be carefull of texture path (need to update blender mtl file)
    - change to ortho projection
    - beautyfull light PBR effects
+   - improve scene file format (extend with skybox, etc ...)
+*/
 
+/* TODO GAME:
+   - near / far plan boundary camera
+*/
+
+/* TODO Improvments:
    - learn more compiler stuff
    - learn how properly debug with MSVC
    - IMGUI check examples through all versions
 */
 
-/* TODO Improvments:
-   - assimp be carefull of texture path (need to update blender mtl file)
-   - improve click setting panel object after selectinID from world
-   - improve grid rendering
-   - improve scene file format (extend with skybox, etc ...)
-*/
-
 // -------------------------------
+enum program_mode
+{
+    EDITOR_MODE,
+    RENDER_MODE,
+};
 
-void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
-void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution);
-void PrepareAxisDebug(mesh_t *Mesh);
+// void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
+// void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution);
+// void PrepareAxisDebug(mesh_t *Mesh);
 mesh_t *CreatePickingSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
 bool RaySphereIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 sphereCenterWorld, float32 sphereRadius, float32 *intersectionDistance);
 bool RayPlaneIntersection(glm::vec3 rayOriginWorld, glm::vec3 rayDirectionWorld, glm::vec3 planeCoord, glm::vec3 planeNormal, glm::vec3 *intersectionPoint);
-glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght);
+//glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght);
 
 // -------------------------------
 
@@ -45,23 +51,26 @@ struct editor_t
 	mesh_t *MeshAxisDebug;
 	mesh_t *MeshRay;
 	uint32 GridResolution;
-	skybox_t *Skybox;
+	skybox_t *Skybox; // TODO: add skybox load from file in panel with min
 	bool ShowSkybox;
 };
 
 const uint32 g_Width = 1280;
 const uint32 g_Height = 960;
-static bool g_ActiveWindow = false;
 glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
+static uint32 g_CurrentMode = EDITOR_MODE;
+
+// TODO: Editor
+static bool g_ActiveWindow = false;
 static const uint32 g_GridMaxResolution = 98;
 static uint32 g_GridResolutionSlider = 52;
-const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
-static uint32 g_TerrainSideLenght = 10;
-static bool g_TerrainPrepared = false; // TODO: tmp wainting terrain dedicated struct
 static uint32 g_HoveredEntity = 0;
 static uint32 g_SelectedEntity = 0;
 static uint32 g_DragEntity = 0;
 const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
+const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
+static uint32 g_TerrainSideLenght = 10;
+static bool g_TerrainPrepared = false; // TODO: tmp wainting terrain dedicated struct
 
 int main(int argc, char *argv[])
 {
@@ -243,7 +252,7 @@ int main(int argc, char *argv[])
         DrawLines(Renderer, MeshAxisDebug, 2.0f, ColorShader);
 
 		// draw raycasting
-		PushRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
+	    PushMouseRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
 	    SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
 	    DrawLines(Renderer, Editor->MeshRay, 1.0f, ColorShader);
 
@@ -339,7 +348,7 @@ int main(int argc, char *argv[])
 	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 	    Delete(it->second);
 	delete SCENE;
-    // TODO: implement complete delete method Editor
+    // TODO: implement complete full delete Editor method
     Delete(Editor->MeshGrid);
     Delete(Editor->MeshAxisDebug);
     Delete(Editor->MeshRay);
@@ -352,138 +361,24 @@ int main(int argc, char *argv[])
     Delete(Renderer);
     Delete(InputState);
     Delete(Window);
-	return 0;
-}
 
-void PrepareAxisDebug(mesh_t *Mesh)
-{    
-    Mesh->Vertices.clear();
-
-    vertex_t vXa;
-    vXa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vXa);
-    vertex_t vXb;
-    vXb.Position = glm::vec3(2.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vXb);
-
-    vertex_t vYa;
-    vYa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vYa);
-    vertex_t vYb;
-    vYb.Position = glm::vec3(0.0f, 2.0f, 0.0f);
-    Mesh->Vertices.push_back(vYb);
-
-    vertex_t vZa;
-    vZa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vZa);
-    vertex_t vZb;
-    vZb.Position = glm::vec3(0.0f, 0.1f, -2.0f);
-    Mesh->Vertices.push_back(vZb);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    Mesh->Vertices.size() * sizeof(vertex_t),
-                    &Mesh->Vertices[0]);
-}
-
-void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution)
-{
-	if (resolution <= maxResolution)
-	{
-		uint32 vCount = resolution * 4 + 4;			   // 44
-		float32 b = (float32)resolution / 2.0f + 1.0f; // 6
-		float32 a = -b;								   // -6
-		float32 xPos = -((float32)resolution / 2.0f);  // -5
-		float32 zPos = xPos;						   // -5
-
-		Mesh->Vertices.clear();
-		uint32 i = 0;
-		while (i < vCount / 2)
-		{
-			vertex_t v;
-			if (i % 2 == 0)
-			{
-				v.Position = glm::vec3(a, 0.0f, zPos);
-			}
-			else
-			{
-				v.Position = glm::vec3(b, 0.0f, zPos);
-				zPos += 1.0f;
-			}
-
-			Mesh->Vertices.push_back(v);
-			i++;
-		}
-
-		while (i < vCount)
-		{
-			vertex_t v;
-			if (i % 2 == 0)
-			{
-				v.Position = glm::vec3(xPos, 0.0f, a);
-			}
-			else
-			{
-				v.Position = glm::vec3(xPos, 0.0f, b);
-				xPos += 1.0f;
-			}
-
-			Mesh->Vertices.push_back(v);
-			i++;
-		}
-        
-		glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
-		glBufferSubData(GL_ARRAY_BUFFER,
-						0,
-						Mesh->Vertices.size() * sizeof(vertex_t),
-						&Mesh->Vertices[0]);
-	}
-}
-
-void PushRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
-{
-	glm::vec3 target = origin + (direction * 1.0f);
-
-	Mesh->Vertices.clear();
-	vertex_t v;
-	v.Position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
-	Mesh->Vertices.push_back(v);
-	v.Position = target;
-	Mesh->Vertices.push_back(v);
-
-	glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,
-					0,
-					Mesh->Vertices.size() * sizeof(vertex_t),
-					&Mesh->Vertices[0]);
-}
-
-glm::mat4* GenerateTerrainModelMatrices(uint32 squareSideLenght)
-{
-    glm::mat4 *modelMatrices;
-    modelMatrices = new glm::mat4[squareSideLenght * squareSideLenght];    
-    glm::vec3 size = { 1.0f, 1.0f, 1.0f };
-    float posX = 0.0f;
-
-    uint32 index = 0;
-    for (uint32 i = 0; i < squareSideLenght; i++)
+// ============================================
+    // TODO
+    switch(g_CurrentMode)
     {
-        float posZ = -size.z;
-        for (uint32 y = 0; y < squareSideLenght; y++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, { posX, 0.0f, posZ });
-            model = glm::scale(model, glm::vec3(1.0f));
-            model = glm::rotate(model, glm::radians(0.0f),
-                                glm::vec3(0.0f, 1.0f, 0.0f));
-            modelMatrices[index] = model;
-
-            posZ -= size.z;
-            index++;
-        }
-        posX += size.x;
-    }
-
-    return modelMatrices;
+    case EDITOR_MODE:
+        // encapsulate editor code
+        // create a world saved in file
+        break;
+    case RENDER_MODE:
+        // encapsulte game code
+        // Render a world from file
+        break;
+    default:
+        // here ...
+        break;
+    };
+// ============================================
+    
+	return 0;
 }

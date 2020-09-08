@@ -26,6 +26,8 @@
 // #include "texture.cpp"
 #include "mesh.cpp"
 #include "ray.cpp"
+#include "editor.cpp"
+#include "game.cpp"
 #include "renderer.cpp"
 #include "window.cpp"
 #include "gui.h"
