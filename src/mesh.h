@@ -45,7 +45,7 @@ struct model_t
     bool GammaCorrection;
 };
 
-struct object_t
+struct entity_t
 {
 //    const char* Label;
 //    const char* Filepath;

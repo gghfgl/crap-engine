@@ -10,111 +10,109 @@ static shader_t* load_shader_from_file(const char* shaderFile, const std::string
 static uint32 get_uniform_location_cache(shader_t *Shader, const char* name);
 
 // TODO: implement memory pool
-namespace shader
+void UseProgram(shader_t *Shader)
 {
-    void UseProgram(shader_t *Shader)
-    {
 	glUseProgram(Shader->ID);
-    }
+}
 
-    void SetUniform1f(shader_t *Shader, const char* name, float32 value)
-    {
+void SetUniform1f(shader_t *Shader, const char* name, float32 value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform1f(id, value);
-    }
+}
 
-    void SetUniform1i(shader_t *Shader, const char* name, int32 value)
-    {
+void SetUniform1i(shader_t *Shader, const char* name, int32 value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform1i(id, value);
-    }
+}
 
-    void SetUniform1iv(shader_t *Shader, const char* name, int32 *value)
-    {
+void SetUniform1iv(shader_t *Shader, const char* name, int32 *value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform1iv(id, (GLsizei)(sizeof(value)/sizeof(value[0])), value);
-    }
+}
 
-    void SetUniform1ui(shader_t *Shader, const char* name, uint32 value)
-    {
+void SetUniform1ui(shader_t *Shader, const char* name, uint32 value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform1ui(id, value);
-    }
+}
 
-    void SetUniform2f(shader_t *Shader, const char* name, float32 x, float32 y)
-    {
+void SetUniform2f(shader_t *Shader, const char* name, float32 x, float32 y)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform2f(id, x, y);
-    }
+}
 
-    void SetUniform2f(shader_t *Shader, const char* name, const glm::vec2 &value)
-    {
+void SetUniform2f(shader_t *Shader, const char* name, const glm::vec2 &value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform2f(id, value.x, value.y);
-    }
+}
 
-    void SetUniform3f(shader_t *Shader, const char* name, float32 x, float32 y, float32 z)
-    {
+void SetUniform3f(shader_t *Shader, const char* name, float32 x, float32 y, float32 z)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform3f(id, x, y, z);
-    }
+}
 
-    void SetUniform3f(shader_t *Shader, const char* name, const glm::vec3 &value)
-    {
+void SetUniform3f(shader_t *Shader, const char* name, const glm::vec3 &value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform3f(id, value.x, value.y, value.z);
-    }
+}
 
-    void SetUniform4f(shader_t *Shader, const char* name, float32 x, float32 y, float32 z, float32 w)
-    {
+void SetUniform4f(shader_t *Shader, const char* name, float32 x, float32 y, float32 z, float32 w)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform4f(id, x, y, z, w);
-    }
+}
 
-    void SetUniform4f(shader_t *Shader, const char* name, const glm::vec4 &value)
-    {
+void SetUniform4f(shader_t *Shader, const char* name, const glm::vec4 &value)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniform4f(id, value.x, value.y, value.z, value.w);
-    }
+}
 
-    void SetUniform4fv(shader_t *Shader, const char* name, const glm::mat4 &matrix)
-    {
+void SetUniform4fv(shader_t *Shader, const char* name, const glm::mat4 &matrix)
+{
 	uint32 id = get_uniform_location_cache(Shader, name);
 	glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(matrix));
-    }
+}
 
-    // void CompileAndCache(const char* vShaderFile,
-    // 			       const char* fShaderFile,
-    // 			       const char* gShaderFile,
-    // 			       const std::string& name,
-    // 			       glm::mat4 projectionMatrix)
-    // {
-    // 	shader_t *Shader = load_shader_from_file(vShaderFile, fShaderFile, gShaderFile, name);
+// void CompileAndCache(const char* vShaderFile,
+// 			       const char* fShaderFile,
+// 			       const char* gShaderFile,
+// 			       const std::string& name,
+// 			       glm::mat4 projectionMatrix)
+// {
+// 	shader_t *Shader = load_shader_from_file(vShaderFile, fShaderFile, gShaderFile, name);
 
-    // 	c_Shaders[name] = Shader; // TODO: make cache static func with memory pool update
+// 	c_Shaders[name] = Shader; // TODO: make cache static func with memory pool update
 	
-    // 	UseProgram(Shader);
-    // 	SetUniform4fv(Shader, "projection", projectionMatrix);
-    // }
+// 	UseProgram(Shader);
+// 	SetUniform4fv(Shader, "projection", projectionMatrix);
+// }
 
-    void CompileAndCache(const char* shaderFile, const std::string& name, glm::mat4 projectionMatrix)
-    {
+void CompileAndCacheShader(const char* shaderFile, const std::string& name, glm::mat4 projectionMatrix)
+{
 	shader_t *Shader = load_shader_from_file(shaderFile, name);
 
 	c_Shaders[name] = Shader; // TODO: make cache static func with memory pool update
 	
 	UseProgram(Shader);
-        SetUniform4fv(Shader, "projection", projectionMatrix);
-    }
+    SetUniform4fv(Shader, "projection", projectionMatrix);
+}
 
-    shader_t* GetFromCache(const std::string& name)
-    {
+shader_t* GetShaderFromCache(const std::string& name)
+{
 	return c_Shaders[name];
-    }
+}
 
-    // clearing cache
-    void ClearCache()
-    {
+// clearing cache
+void ClearShaderCache()
+{
 	for (auto iter : c_Shaders)
 	{
 	    glDeleteProgram(iter.second->ID);
@@ -123,7 +121,6 @@ namespace shader
 	}
 
 	c_UniformLocations.clear();
-    }
 }
 
 static uint32 get_uniform_location_cache(shader_t *Shader, const char* name)

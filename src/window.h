@@ -17,11 +17,10 @@ struct window_time {
 };
 
 struct window_t {
-    GLFWwindow  *PlatformWindow; // TODO: using GLFW atm
-
     int Width, Height;
     render_API_info APIinfo;
-    const char*  WindowTitle;
+    GLFWwindow *PlatformWindow; // TODO: using GLFW atm
+    const char* WindowTitle;
     window_time *Time;
     bool DebugMode = 0;
     bool Vsync;

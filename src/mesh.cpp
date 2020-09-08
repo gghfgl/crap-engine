@@ -7,78 +7,75 @@ static std::vector<texture_t> load_material_textures(model_t *Model, aiMaterial 
 static uint32 load_texture_from_file(const char *path, const std::string &directory);
 static uint32 load_cubemap_texture_from_file(std::vector<std::string> faces);
 
-namespace mesh
+mesh_t* AllocAndInit(std::vector<vertex_t> vertices,
+                     std::vector<uint32> indices,
+                     std::vector<texture_t> textures)
 {
-    mesh_t* Construct(std::vector<vertex_t> vertices,
-                      std::vector<uint32> indices,
-                      std::vector<texture_t> textures)
+    mesh_t *Mesh = new mesh_t;
+    Mesh->Vertices = vertices;
+    Mesh->Indices = indices;
+    Mesh->Textures = textures;
+
+    allocate_mesh(Mesh);
+
+    return Mesh;
+}
+
+void Delete(mesh_t *Mesh)
+{
+    glDeleteVertexArrays(1, &Mesh->VAO);
+    glDeleteBuffers(1, &Mesh->VBO);
+    glDeleteBuffers(1, &Mesh->IBO);
+
+    Mesh->Vertices.clear();
+    Mesh->Indices.clear();
+    Mesh->Textures.clear();
+
+    delete Mesh;
+}
+
+mesh_t* CreatePrimitiveSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
+{
+    uint32 nbVerticesPerSphere = 0;
+    std::vector<vertex_t> vertices;
+    std::vector<uint32> indices;
+
+    for (uint32 i = 0; i <= stacks; i++)
     {
-        mesh_t *Mesh = new mesh_t;
-        Mesh->Vertices = vertices;
-        Mesh->Indices = indices;
-        Mesh->Textures = textures;
-
-        allocate_mesh(Mesh);
-
-        return Mesh;
-    }
-
-    void Delete(mesh_t *Mesh)
-    {
-        glDeleteVertexArrays(1, &Mesh->VAO);
-        glDeleteBuffers(1, &Mesh->VBO);
-        glDeleteBuffers(1, &Mesh->IBO);
-
-        Mesh->Vertices.clear();
-        Mesh->Indices.clear();
-        Mesh->Textures.clear();
-
-        delete Mesh;
-    }
-
-    mesh_t* CreatePrimitiveSphereMesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
-    {
-        uint32 nbVerticesPerSphere = 0;
-        std::vector<vertex_t> vertices;
-        std::vector<uint32> indices;
-
-        for (uint32 i = 0; i <= stacks; i++)
+        GLfloat V   = i / (float) stacks;
+        GLfloat phi = V * glm::pi <float> ();
+        
+        for (uint32 j = 0; j <= slices; ++j)
         {
-            GLfloat V   = i / (float) stacks;
-            GLfloat phi = V * glm::pi <float> ();
-        
-            for (uint32 j = 0; j <= slices; ++j)
-            {
-                GLfloat U = j / (float) slices;
-                GLfloat theta = U * (glm::pi <float> () * 2);
+            GLfloat U = j / (float) slices;
+            GLfloat theta = U * (glm::pi <float> () * 2);
             
-                // Calc The Vertex Positions
-                GLfloat x = cosf (theta) * sinf (phi);
-                GLfloat y = cosf (phi);
-                GLfloat z = sinf (theta) * sinf (phi);
-                vertex_t Vertex;
-                Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
-                vertices.push_back(Vertex);
-                nbVerticesPerSphere += 1; // nb vertices per sphere reference
-            }
+            // Calc The Vertex Positions
+            GLfloat x = cosf (theta) * sinf (phi);
+            GLfloat y = cosf (phi);
+            GLfloat z = sinf (theta) * sinf (phi);
+            vertex_t Vertex;
+            Vertex.Position = glm::vec3(x * radius + margin, y * radius, z * radius);
+            vertices.push_back(Vertex);
+            nbVerticesPerSphere += 1; // nb vertices per sphere reference
         }
-
-        for (uint32 i = 0; i < slices * stacks + slices; ++i)
-        {        
-            indices.push_back (i);
-            indices.push_back (i + slices + 1);
-            indices.push_back (i + slices);
-        
-            indices.push_back (i + slices + 1);
-            indices.push_back (i);
-            indices.push_back (i + 1);
-        }
-
-        std::vector<texture_t> tEmpty;
-        mesh_t *Mesh = mesh::Construct(vertices, indices, tEmpty);
-
-        return Mesh;
     }
+
+    for (uint32 i = 0; i < slices * stacks + slices; ++i)
+    {        
+        indices.push_back (i);
+        indices.push_back (i + slices + 1);
+        indices.push_back (i + slices);
+        
+        indices.push_back (i + slices + 1);
+        indices.push_back (i);
+        indices.push_back (i + 1);
+    }
+
+    std::vector<texture_t> tEmpty;
+    mesh_t *Mesh = AllocAndInit(vertices, indices, tEmpty);
+
+    return Mesh;
 }
 
 static void allocate_mesh(mesh_t *Mesh)
@@ -133,61 +130,58 @@ static void allocate_mesh(mesh_t *Mesh)
     glBindVertexArray(0);
 }
 
-namespace model
+model_t* LoadModelFromFile(std::string const &path)
 {
-    model_t* LoadFromFile(std::string const &path)
+    model_t *Model = new model_t;
+    Assimp::Importer importer;
+    // const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate
+    // 				       | aiProcess_FlipUVs
+    // 				       | aiProcess_CalcTangentSpace
+    // 				       | aiProcess_JoinIdenticalVertices);
+
+    const aiScene *scene = importer.ReadFile(path, aiProcess_FlipWindingOrder
+                                             //						 | aiProcess_MakeLeftHanded
+                                             | aiProcess_Triangulate
+                                             | aiProcess_FlipUVs
+                                             | aiProcess_PreTransformVertices
+                                             | aiProcess_JoinIdenticalVertices
+                                             | aiProcess_CalcTangentSpace
+                                             | aiProcess_GenSmoothNormals
+                                             | aiProcess_Triangulate
+                                             | aiProcess_FixInfacingNormals
+                                             | aiProcess_FindInvalidData
+                                             | aiProcess_ValidateDataStructure
+                                             | 0);
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        model_t *Model = new model_t;
-        Assimp::Importer importer;
-        // const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate
-        // 				       | aiProcess_FlipUVs
-        // 				       | aiProcess_CalcTangentSpace
-        // 				       | aiProcess_JoinIdenticalVertices);
-
-        const aiScene *scene = importer.ReadFile(path, aiProcess_FlipWindingOrder
-                                                 //						 | aiProcess_MakeLeftHanded
-                                                 | aiProcess_Triangulate
-                                                 | aiProcess_FlipUVs
-                                                 | aiProcess_PreTransformVertices
-                                                 | aiProcess_JoinIdenticalVertices
-                                                 | aiProcess_CalcTangentSpace
-                                                 | aiProcess_GenSmoothNormals
-                                                 | aiProcess_Triangulate
-                                                 | aiProcess_FixInfacingNormals
-                                                 | aiProcess_FindInvalidData
-                                                 | aiProcess_ValidateDataStructure
-                                                 | 0);
-
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-        {
-            printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
-            return nullptr;
-        }
-
-        Model->Directory = path.substr(0, path.find_last_of('\\'));
-        Model->ObjFilename = path.substr(Model->Directory.length() + 1, path.length());
-
-        // DEBUG:
-        printf("==============================\n");
-        printf("load model from directory: %s\n", Model->Directory.c_str());
-        printf("load model from file: %s\n", Model->ObjFilename.c_str());
-
-        process_node(Model, scene->mRootNode, scene);
-
-        return Model;
+        printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
+        return nullptr;
     }
 
-    void Delete(model_t *Model)
-    {
-        for (auto& m : Model->Meshes)
-            mesh::Delete(m);
-        Model->Meshes.clear();
+    Model->Directory = path.substr(0, path.find_last_of('\\'));
+    Model->ObjFilename = path.substr(Model->Directory.length() + 1, path.length());
 
-        for (auto& m : Model->TexturesLoadedCache)
-            glDeleteTextures(1, &m.Id);
-        Model->TexturesLoadedCache.clear();
-        delete Model;
-    }
+    // DEBUG:
+    printf("==============================\n");
+    printf("load model from directory: %s\n", Model->Directory.c_str());
+    printf("load model from file: %s\n", Model->ObjFilename.c_str());
+
+    process_node(Model, scene->mRootNode, scene);
+
+    return Model;
+}
+
+void Delete(model_t *Model)
+{
+    for (auto& m : Model->Meshes)
+        Delete(m);
+    Model->Meshes.clear();
+
+    for (auto& m : Model->TexturesLoadedCache)
+        glDeleteTextures(1, &m.Id);
+    Model->TexturesLoadedCache.clear();
+    delete Model;
 }
 
 static void process_node(model_t *Model, aiNode *node, const aiScene *scene)
@@ -289,7 +283,7 @@ static mesh_t* process_mesh(model_t *Model, aiMesh *mesh, const aiScene *scene)
                                                                "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-    return mesh::Construct(vertices, indices, textures);
+    return AllocAndInit(vertices, indices, textures);
 }
 
 static std::vector<texture_t> load_material_textures(model_t *Model,
@@ -372,238 +366,229 @@ static uint32 load_texture_from_file(const char *path, const std::string &direct
     return textureID;
 }
 
-namespace object
+void Delete(entity_t* Entity)
 {
-    void Delete(object_t* Object)
-    {
-        model::Delete(Object->Model);
-        mesh::Delete(Object->PickingSphere);
-        delete Object;
-    }
+    Delete(Entity->Model);
+    Delete(Entity->PickingSphere);
+    delete Entity;
 }
 
-namespace scene
+// TODO: make binary version?
+int32 SaveSceneInTextFormat(char *filepath, std::map<uint32, entity_t*> *Scene)
 {
-    // TODO: make binary version?
-    int32 SaveTextFormat(char *filepath, std::map<uint32, object_t*> *Scene)
+    FILE *file;
+    errno_t err;
+    err = fopen_s(&file, filepath, "w");
+    if (err != 0 || file == NULL)
     {
-        FILE *file;
-        errno_t err;
-        err = fopen_s(&file, filepath, "w");
-        if (err != 0 || file == NULL)
-        {
-            printf("open file error!\n");
-            return err;
-        }
-
-        for (auto it = Scene->begin(); it != Scene->end(); it++)
-        {
-            fprintf(file, "###\n");
-            fprintf(file, "directory=%s\n", it->second->Model->Directory.c_str());
-            fprintf(file, "filename=%s\n", it->second->Model->ObjFilename.c_str());
-            fprintf(file, "id=%d\n", it->first);
-            fprintf(file, "posx=%f\n", it->second->Position.x);
-            fprintf(file, "posy=%f\n", it->second->Position.y);
-            fprintf(file, "posz=%f\n", it->second->Position.z);
-            fprintf(file, "scale=%f\n", it->second->Scale);
-            fprintf(file, "rotate=%f\n", it->second->Rotate);
-        }
-
-        fclose(file);
-
-        // DEBUG:
-        printf("saved: %s\n", filepath);
-        return 0;
+        printf("open file error!\n");
+        return err;
     }
 
-    int32 OpenTextFormat(char *filepath, std::map<uint32, object_t*> *Scene)
+    for (auto it = Scene->begin(); it != Scene->end(); it++)
     {
-        std::ifstream file(filepath);
-        if (!file.is_open())
+        fprintf(file, "###\n");
+        fprintf(file, "directory=%s\n", it->second->Model->Directory.c_str());
+        fprintf(file, "filename=%s\n", it->second->Model->ObjFilename.c_str());
+        fprintf(file, "id=%d\n", it->first);
+        fprintf(file, "posx=%f\n", it->second->Position.x);
+        fprintf(file, "posy=%f\n", it->second->Position.y);
+        fprintf(file, "posz=%f\n", it->second->Position.z);
+        fprintf(file, "scale=%f\n", it->second->Scale);
+        fprintf(file, "rotate=%f\n", it->second->Rotate);
+    }
+
+    fclose(file);
+
+    // DEBUG:
+    printf("saved: %s\n", filepath);
+    return 0;
+}
+
+int32 OpenSceneFromTextFormat(char *filepath, std::map<uint32, entity_t*> *Scene)
+{
+    std::ifstream file(filepath);
+    if (!file.is_open())
+    {
+        printf("open file error!\n");
+        return -1;
+    }
+
+    for (auto it = Scene->begin(); it != Scene->end(); it++)
+        Delete(it->second);
+    Scene->clear();
+
+    uint32 fetch = 0;
+    uint32 nbFields = 8;
+    uint32 id = 0;
+    std::string fullpath = "";
+    glm::vec3 position = glm::vec3(0.0f);
+    float32 scale = 0.0f;
+    float32 rotate = 0.0f;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        line.erase(std::remove_if(line.begin(), line.end(), isspace),
+                   line.end());
+
+        if(line[0] == '#' || line.empty())
+            continue;
+
+        auto delimiterPos = line.find("=");
+        auto key = line.substr(0, delimiterPos);
+        auto value = line.substr(delimiterPos + 1);
+
+        if (key.compare("directory") == 0)
         {
-            printf("open file error!\n");
-            return -1;
+            fullpath = value ;
+            fetch++;
         }
 
-        for (auto it = Scene->begin(); it != Scene->end(); it++)
-            object::Delete(it->second);
-        Scene->clear();
-
-        uint32 fetch = 0;
-        uint32 nbFields = 8;
-        uint32 id = 0;
-        std::string fullpath = "";
-        glm::vec3 position = glm::vec3(0.0f);
-        float32 scale = 0.0f;
-        float32 rotate = 0.0f;
-        std::string line;
-        while (std::getline(file, line))
+        if (key.compare("filename") == 0)
         {
-            line.erase(std::remove_if(line.begin(), line.end(), isspace),
-                       line.end());
-
-            if(line[0] == '#' || line.empty())
-                continue;
-
-            auto delimiterPos = line.find("=");
-            auto key = line.substr(0, delimiterPos);
-            auto value = line.substr(delimiterPos + 1);
-
-            if (key.compare("directory") == 0)
-            {
-                fullpath = value ;
-                fetch++;
-            }
-
-            if (key.compare("filename") == 0)
-            {
-                fullpath += "\\" + value;
-                fetch++;
-            }
+            fullpath += "\\" + value;
+            fetch++;
+        }
 	    
-            if (key.compare("id") == 0)
-            {
-                id = std::stoi(value);
-                fetch++;
-            }
-
-            if (key.compare("posx") == 0)
-            {
-                position.x = std::stof(value);
-                fetch++;
-            }
-
-            if (key.compare("posy") == 0)
-            {
-                position.y = std::stof(value);
-                fetch++;
-            }
-
-            if (key.compare("posz") == 0)
-            {
-                position.z = std::stof(value);
-                fetch++;
-            }
-
-            if (key.compare("scale") == 0)
-            {
-                scale = std::stof(value);
-                fetch++;
-            }
-
-            if (key.compare("rotate") == 0)
-            {
-                rotate = std::stof(value);
-                fetch++;
-            }
-
-            if (fetch == nbFields)
-            {
-                model_t *loadedModel = model::LoadFromFile(fullpath);
-                object_t *obj = new object_t;
-                obj->Model = loadedModel;
-                obj->PickingSphere =  mesh::CreatePrimitiveSphereMesh(0.0f, 0.2f, 15, 15);
-                obj->Position = position;
-                obj->Scale = scale;
-                obj->Rotate = rotate;
-
-                Scene->insert({id, obj});
-
-                printf("fullpath= %s\n", fullpath.c_str());
-                printf("id= %d\n", id);
-                printf("posx= %f\n", position.x);
-                printf("posy= %f\n", position.y);
-                printf("posz= %f\n", position.z);
-                printf("scale= %f\n", scale);
-                printf("rotate= %f\n", rotate);
-		
-                fetch = 0;
-            }
+        if (key.compare("id") == 0)
+        {
+            id = std::stoi(value);
+            fetch++;
         }
 
-        file.close();
+        if (key.compare("posx") == 0)
+        {
+            position.x = std::stof(value);
+            fetch++;
+        }
 
-        // DEBUG:
-        printf("opened: %s", filepath);
-        return 0;
+        if (key.compare("posy") == 0)
+        {
+            position.y = std::stof(value);
+            fetch++;
+        }
+
+        if (key.compare("posz") == 0)
+        {
+            position.z = std::stof(value);
+            fetch++;
+        }
+
+        if (key.compare("scale") == 0)
+        {
+            scale = std::stof(value);
+            fetch++;
+        }
+
+        if (key.compare("rotate") == 0)
+        {
+            rotate = std::stof(value);
+            fetch++;
+        }
+
+        if (fetch == nbFields)
+        {
+            model_t *loadedModel = LoadModelFromFile(fullpath);
+            entity_t *entity = new entity_t;
+            entity->Model = loadedModel;
+            entity->PickingSphere =  CreatePrimitiveSphereMesh(0.0f, 0.2f, 15, 15);
+            entity->Position = position;
+            entity->Scale = scale;
+            entity->Rotate = rotate;
+
+            Scene->insert({id, entity});
+
+            printf("fullpath= %s\n", fullpath.c_str());
+            printf("id= %d\n", id);
+            printf("posx= %f\n", position.x);
+            printf("posy= %f\n", position.y);
+            printf("posz= %f\n", position.z);
+            printf("scale= %f\n", scale);
+            printf("rotate= %f\n", rotate);
+		
+            fetch = 0;
+        }
     }
+
+    file.close();
+
+    // DEBUG:
+    printf("opened: %s", filepath);
+    return 0;
 }
 
-namespace skybox
+skybox_t* GenerateSkyboxFromFiles(std::vector<std::string> faces)
 {
-    skybox_t* GenerateFromFiles(std::vector<std::string> faces)
-    {
-        float skyboxVertices[] = {
-            -1.0f,  1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
+    float skyboxVertices[] = {
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
 
-            -1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
 
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
 
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
 
-            -1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
 
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f
-        };
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
 
-        uint32 VAO, VBO;
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    uint32 VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-        uint32 textureID = load_cubemap_texture_from_file(faces);  
+    uint32 textureID = load_cubemap_texture_from_file(faces);  
 
-        skybox_t *Skybox = new skybox_t;
-        Skybox->VAO = VAO;
-        Skybox->VBO = VBO;
-        Skybox->TextureId = textureID;
+    skybox_t *Skybox = new skybox_t;
+    Skybox->VAO = VAO;
+    Skybox->VBO = VBO;
+    Skybox->TextureId = textureID;
 	
-        return Skybox;
-    }
+    return Skybox;
+}
 
-    void Delete(skybox_t *Skybox)
-    {
-        glDeleteVertexArrays(1, &Skybox->VAO);
-        glDeleteBuffers(1, &Skybox->VBO);
-        glDeleteTextures(1, &Skybox->TextureId);
+void Delete(skybox_t *Skybox)
+{
+    glDeleteVertexArrays(1, &Skybox->VAO);
+    glDeleteBuffers(1, &Skybox->VBO);
+    glDeleteTextures(1, &Skybox->TextureId);
 
-        delete Skybox;
-    }
+    delete Skybox;
 }
 
 static uint32 load_cubemap_texture_from_file(std::vector<std::string> faces)

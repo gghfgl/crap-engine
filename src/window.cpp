@@ -10,81 +10,78 @@ static render_API_info init_render_API();
 static void swap_buffer_and_finish(window_t *Window);
 static void terminate_window(window_t *Window);
 
-namespace window
+window_t *AllocAndInit(uint32 width, uint32 height, const char *windowTitle)
 {
-	window_t *Construct(uint32 width, uint32 height, const char *windowTitle)
-	{
-		// ===================== platform code =====================
-		GLFWwindow *window = init_window(width, height, windowTitle);
-		render_API_info APIinfo = init_render_API();
+    // ===================== platform code =====================
+    GLFWwindow *window = init_window(width, height, windowTitle);
+    render_API_info APIinfo = init_render_API();
 
-		LARGE_INTEGER perfCountFrequencyResult;
-		QueryPerformanceFrequency(&perfCountFrequencyResult);
-		LARGE_INTEGER lastPerfCount;
-		QueryPerformanceCounter(&lastPerfCount);
-		uint64 lastCycleCount = __rdtsc();
-		// ========================================================
+    LARGE_INTEGER perfCountFrequencyResult;
+    QueryPerformanceFrequency(&perfCountFrequencyResult);
+    LARGE_INTEGER lastPerfCount;
+    QueryPerformanceCounter(&lastPerfCount);
+    uint64 lastCycleCount = __rdtsc();
+    // ========================================================
 
-		window_time *Time = new window_time;
-		Time->PerfCountFrequency = perfCountFrequencyResult.QuadPart;
-		Time->LastPerfCount = lastPerfCount.QuadPart;
-		Time->LastCycleCount = lastCycleCount;
+    window_time *Time = new window_time;
+    Time->PerfCountFrequency = perfCountFrequencyResult.QuadPart;
+    Time->LastPerfCount = lastPerfCount.QuadPart;
+    Time->LastCycleCount = lastCycleCount;
 
-		window_t *Window = new window_t;
-		Window->PlatformWindow = window;
-		Window->Width = width;
-		Window->Height = height;
-		Window->APIinfo = APIinfo;
-		Window->WindowTitle = windowTitle;
-		Window->Time = Time;
-		Window->Vsync = true;
+    window_t *Window = new window_t;
+    Window->PlatformWindow = window;
+    Window->Width = width;
+    Window->Height = height;
+    Window->APIinfo = APIinfo;
+    Window->WindowTitle = windowTitle;
+    Window->Time = Time;
+    Window->Vsync = true;
 
-		return Window;
-	}
+    return Window;
+}
 
-	void UpdateTime(window_time *Time)
-	{
-		LARGE_INTEGER currentPerfCount;
-		QueryPerformanceCounter(&currentPerfCount);
-		float32 counterElapsed = (float32)(currentPerfCount.QuadPart - Time->LastPerfCount);
-		float32 msPerFrame = (1000 * counterElapsed) / (float32)Time->PerfCountFrequency;
-		int32 fps = (int32)(Time->PerfCountFrequency / counterElapsed);
+void Delete(window_t *Window)
+{
+    terminate_window(Window);
+    delete Window->Time;
+    delete Window;
+}
 
-		uint64 currentCycleCount = __rdtsc();
-		int64 cyclesElapsed = currentCycleCount - Time->LastCycleCount;
-		int32 MCPF = (int32)(cyclesElapsed / (1000 * 1000));
+void UpdateTime(window_time *Time)
+{
+    LARGE_INTEGER currentPerfCount;
+    QueryPerformanceCounter(&currentPerfCount);
+    float32 counterElapsed = (float32)(currentPerfCount.QuadPart - Time->LastPerfCount);
+    float32 msPerFrame = (1000 * counterElapsed) / (float32)Time->PerfCountFrequency;
+    int32 fps = (int32)(Time->PerfCountFrequency / counterElapsed);
 
-		Time->MsPerFrame = msPerFrame;			// ms
-		Time->DeltaTime = msPerFrame / 1000.0f; // s
-		Time->LastPerfCount = currentPerfCount.QuadPart;
-		Time->FPS = fps;
-		Time->MegaCyclePerFrame = MCPF;
-		Time->LastCycleCount = currentCycleCount;
-	}
+    uint64 currentCycleCount = __rdtsc();
+    int64 cyclesElapsed = currentCycleCount - Time->LastCycleCount;
+    int32 MCPF = (int32)(cyclesElapsed / (1000 * 1000));
 
-	void ToggleVsync(window_t *Window)
-	{
-		Window->Vsync = !Window->Vsync;
-		glfwSwapInterval(Window->Vsync);
-	}
+    Time->MsPerFrame = msPerFrame;			// ms
+    Time->DeltaTime = msPerFrame / 1000.0f; // s
+    Time->LastPerfCount = currentPerfCount.QuadPart;
+    Time->FPS = fps;
+    Time->MegaCyclePerFrame = MCPF;
+    Time->LastCycleCount = currentCycleCount;
+}
 
-	void ToggleDebugMode(window_t *Window)
-	{
-		Window->DebugMode = !Window->DebugMode;
-	}
+void ToggleVsync(window_t *Window)
+{
+    Window->Vsync = !Window->Vsync;
+    glfwSwapInterval(Window->Vsync);
+}
 
-	void SwapBuffer(window_t *Window)
-	{
-		swap_buffer_and_finish(Window);
-	}
+void ToggleDebugMode(window_t *Window)
+{
+    Window->DebugMode = !Window->DebugMode;
+}
 
-	void Delete(window_t *Window)
-	{
-		terminate_window(Window);
-		delete Window->Time;
-		delete Window;
-	}
-} // namespace window
+void SwapBuffer(window_t *Window)
+{
+    swap_buffer_and_finish(Window);
+}
 
 // ===================== platform code =====================
 static GLFWwindow *init_window(uint32 width, uint32 height, const char *windowTitle)
@@ -94,7 +91,7 @@ static GLFWwindow *init_window(uint32 width, uint32 height, const char *windowTi
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	// glfwWindowHint(GLFW_SAMPLES, 4); // MSAA 4 samples
+	glfwWindowHint(GLFW_SAMPLES, 4); // MSAA 4 samples
 
 	GLFWwindow *window = glfwCreateWindow(width, height, windowTitle, nullptr, nullptr);
 	glfwMakeContextCurrent(window);
@@ -129,13 +126,15 @@ static render_API_info init_render_API()
 	glDepthFunc(GL_LESS);
 	// glEnable(GL_CULL_FACE); // face culling
 	// glCullFace(GL_FRONT); // face culling
-	// glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
+	glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
 	// glEnable(GL_BLEND);
 	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// glEnable(GL_STENCIL_TEST);
 	// glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 	// glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glEnable(GL_LINE_SMOOTH); // TODO: meh? ...
 
 	glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
 	// glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

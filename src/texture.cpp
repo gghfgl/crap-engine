@@ -1,6 +1,6 @@
 #include "texture.h"
 
-static uint32 TextureLoadFromFile(const std::string& path)
+static uint32 LoadTextureFromFile(const std::string& path)
 {
     int w, h, bits;
     stbi_set_flip_vertically_on_load(1);
