@@ -1,20 +1,12 @@
 #pragma once
 
-enum entity_state
-{
-    ENTITY_STATE_STATIC,
-    ENTITY_STATE_DYNAMIC,
-    ENTITY_STATE_SLOT
-};
-
-struct entity_cube
-{
-    uint32 ID;
-    const char* Name;
-    glm::vec3 Position;
-    glm::vec3 Size;
-    float32 Scale;
-    glm::vec4 Color;
-    bool IsSelected = false;
-    entity_state State;
-};
+/* struct entity_t */
+/* { */
+/* //    const char* Label; */
+/* //    const char* Filepath; */
+/*     model_t *Model; */
+/*     mesh_t *PickingSphere; */
+/*     glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f); */
+/*     float32 Scale = 1.0f; */
+/*     float32 Rotate = 0.0f; // degeres */
+/* }; */

@@ -3,13 +3,16 @@
 #include "plateform.h"
 
 /* TODO:
-   - load assets (models, sound, skybox, etc ...)
-   - create and save level from editor
-   - move from editing to running scene on the fly
-   - scene = access engine API for creating game design
+   - infinite grid in editor? with shader instead of cpp?
+   - clean shaders
+   - implement memorypool visualizer
+   - improve coordinate system for positionning objects
+   - improve skybox loading assets with hdr
+   - clean code in services and APIs (editor / engine / gameplay)
+   - run rendering scene from editor
+   - fix / improve texture management from assimp model
+   - change to ortho projection
    - beautyfull light PBR effects
-   - custom GUI for ingame UI
-   - net code
 
    - learn more compiler stuff
    - learn how properly debug with MSVC
@@ -17,19 +20,10 @@
 */
 
 /* TODO Improvments:
-   - assimp be carefull of texture path (same dir as the model)
+   - assimp be carefull of texture path (need to update blender mtl file)
    - improve click setting panel object after selectinID from world
    - improve grid rendering
-   - improve scene file format
-*/
-
-/* TODO Improvments:
-   - add skybox image
-   - box limit collision + draw box debug geometry shader
-   - loader progress bar load scene
-   - load sounds?
-   - extend obj with fields (interact, soundId)
-   - extend save scene with sound and skybox
+   - improve scene file format (extend with skybox, etc ...)
 */
 
 // -------------------------------
@@ -62,7 +56,8 @@ glm::vec3 g_CameraStartPosition = glm::vec3(0.0f, 5.0f, 10.0f);
 static const uint32 g_GridMaxResolution = 52;
 static uint32 g_GridResolutionSlider = 10;
 const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
-static uint32 g_TerrainSideLenght = 100;
+static uint32 g_TerrainSideLenght = 10;
+static bool g_TerrainPrepared = false; // TODO: tmp wainting terrain dedicated struct
 static uint32 g_HoveredObject = 0;
 static uint32 g_SelectedObject = 0;
 static uint32 g_DragObject = 0;
@@ -81,22 +76,24 @@ int main(int argc, char *argv[])
 	shader::CompileAndCache("../shaders/skybox.glsl", "skybox", Camera->ProjectionMatrix);
 
 	// =================================================
-	// Grid & Axis Debug
+	// Grid
 	std::vector<uint32> uEmpty;
 	std::vector<texture_t> tEmpty;
 	std::vector<vertex_t> vGrid(g_GridMaxResolution * 4, vertex_t());
 	mesh_t *MeshGrid = mesh::Construct(vGrid, uEmpty, tEmpty);
+
+    // Axis Debug
 	std::vector<vertex_t> vAxisDebug(6, vertex_t());
 	mesh_t *MeshAxisDebug = mesh::Construct(vAxisDebug, uEmpty, tEmpty);
-    
+
 	// Ray
 	std::vector<vertex_t> vRay(2, vertex_t());
 	mesh_t *MeshRay = mesh::Construct(vRay, uEmpty, tEmpty);
 
-    // TODO: Generate terrain cubes list
-    // TODO: Generate only if sidelenght different from matrices.size()
-    glm::mat4 *terrainModelMatrices = GenerateTerrainModelMatrices(g_TerrainSideLenght);
+    // Generate terrain
+    // TODO: Generate from imgui slider?
     model_t *terrainModel = model::LoadFromFile(g_TerrainModelFile);
+    glm::mat4 *terrainModelMatrices = GenerateTerrainModelMatrices(g_TerrainSideLenght);
 
 	// Objects array
 	std::map<uint32, object_t *> *SCENE = new std::map<uint32, object_t *>;
@@ -120,6 +117,10 @@ int main(int argc, char *argv[])
 	Editor->Skybox = skybox::GenerateFromFiles(faces);
 	Editor->ShowSkybox = false;
 	editorGUI::Init(Window);
+
+    // TODO: tmp wainting editor struct
+    PrepareAxisDebug(Editor->MeshAxisDebug);
+
 	// =============================
 
 	while (Editor->Active)
@@ -238,7 +239,6 @@ int main(int argc, char *argv[])
 		}
 
         // draw axis debug
-        PrepareAxisDebug(Editor->MeshAxisDebug);
         shader::SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         renderer::DrawLines(Renderer, MeshAxisDebug, ColorShader);
 
@@ -250,10 +250,14 @@ int main(int argc, char *argv[])
         // =================== M.O.D.E.L.S ===================
 
         // draw terrain
-        renderer::PrepareInstancedRendering(Renderer,
-                                            terrainModel,
-                                            terrainModelMatrices,
-                                            g_TerrainSideLenght * g_TerrainSideLenght);
+        if (!g_TerrainPrepared)
+        {
+            renderer::PrepareInstancedRendering(Renderer,
+                                                terrainModel,
+                                                terrainModelMatrices,
+                                                g_TerrainSideLenght * g_TerrainSideLenght);
+            g_TerrainPrepared = true;
+        }
 		shader_t *InstancedShader = shader::GetFromCache("instanced");
 		shader::UseProgram(InstancedShader);
 		shader::SetUniform4fv(InstancedShader, "view", viewMatrix);
@@ -331,10 +335,13 @@ int main(int argc, char *argv[])
 		window::SwapBuffer(Window);
 	}
 
+    delete []terrainModelMatrices;
 	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 		object::Delete(it->second);
 	delete SCENE;
+    // TODO: implement complete delete method Editor
 	mesh::Delete(Editor->MeshGrid);
+    mesh::Delete(Editor->MeshAxisDebug);
 	mesh::Delete(Editor->MeshRay);
 	skybox::Delete(Editor->Skybox);
 	delete Editor;

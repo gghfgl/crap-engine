@@ -58,8 +58,7 @@ namespace renderer
 
         for (uint32 i = 0; i < Model->Meshes.size(); i++)
         {
-            uint32 VAO = Model->Meshes[i]->VAO;
-            glBindVertexArray(VAO);
+            glBindVertexArray(Model->Meshes[i]->VAO);
 
             glEnableVertexAttribArray(5);
             glVertexAttribPointer(5, 4,

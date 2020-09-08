@@ -24,7 +24,7 @@ namespace camera
  		glm::mat4 projection = glm::perspective(
 			glm::radians(fov),
 			windowWidth / windowHeight,
-			0.1f, 100.0f);
+			0.1f, 100.0f); // TODO: near / far plane
 			
 		// TODO: glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 

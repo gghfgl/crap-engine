@@ -2,26 +2,6 @@
 
 #include "entity.h"
 
-entity_cube EntityCubeConstruct(uint32 id,
-				const char* name,
-				glm::vec3 position,
-				glm::vec3 size,
-				float32 scale,
-				glm::vec4 color,
-				entity_state state=ENTITY_STATE_STATIC)
-{
-    entity_cube Entity;
-    Entity.ID = id;
-    Entity.Name = name;
-    Entity.Position = position;
-    Entity.Size = size;
-    Entity.Scale = scale;
-    Entity.Color = color;
-    Entity.State = state;
-
-    return Entity;
-}
-
 glm::vec3 MouseRayDirectionWorld(float32 mouseX,float32 mouseY,
 				 int width, int height,
 				 glm::mat4 projectionMatrix,
