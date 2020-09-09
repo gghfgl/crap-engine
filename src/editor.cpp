@@ -2,7 +2,7 @@
 
 #include "Engine/unity_build.h"
 #include "editor.h"
-#include "editor_gui.h"
+#include "gui.h"
 
 /* TODO: EDITOR
    - working on terrain editor
@@ -26,6 +26,11 @@ void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
 const uint32 g_Width = 1280;
 const uint32 g_Height = 960;
 
+static uint32 g_TerrainResolution = 10;
+static const uint32 g_TerrainMaxResolution = 100;
+glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
+const char* g_TerrainDefaultModelFile = "..\\assets\\models\\terrain\\untitled.obj";
+// TODO: Clean mess below
 static const uint32 g_GridMaxResolution = 98;
 static uint32 g_GridResolutionSlider = 52;
 static uint32 g_HoveredEntity = 0;
@@ -33,7 +38,6 @@ static uint32 g_SelectedEntity = 0;
 static uint32 g_DragEntity = 0;
 const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
 
-const char* g_TerrainModelFile = "..\\assets\\models\\terrain\\untitled.obj";
 
 void RunEditorMode(uint32 currentMode)
 {
@@ -63,7 +67,8 @@ void RunEditorMode(uint32 currentMode)
 	mesh_t *MeshRay = AllocAndInit(vRay, uEmpty, tEmpty);
 
     // Generate terrain
-    terrain_t *Terrain = AllocAndInit(g_TerrainModelFile);
+    terrain_t *Terrain = AllocAndInit(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
+    Terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
 
 	// Entitys array
 	std::map<uint32, entity_t *> *SCENE = new std::map<uint32, entity_t *>;
@@ -153,7 +158,12 @@ void RunEditorMode(uint32 currentMode)
                                                            GetViewMatrix(Camera));
 
         // TODO: mouse ray intersection terrain cubes
-          
+        if (g_TerrainResolution != Terrain->Resolution)
+        {
+            Terrain->IsGenerated = false;
+            Terrain->Resolution = g_TerrainResolution;
+        }
+        
         // mouse ray intersection sphere selector objects
 		for (auto it = SCENE->begin(); it != SCENE->end(); it++)
 		{
@@ -221,10 +231,12 @@ void RunEditorMode(uint32 currentMode)
         // draw terrain
         if (!Terrain->IsGenerated)
         {
-            PrepareInstancedRendering(Renderer,
-                                      Terrain->Entity->Model,
-                                      Terrain->ModelMatrices,
-                                      Terrain->SideLenght * Terrain->SideLenght);
+            CleanInstance(Terrain); // Needed to clear previous matrices pointer and glBuffer
+            Terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
+            Terrain->InstanceBufferID = PrepareInstancedRendering(Renderer,
+                                                        Terrain->Entity->Model,
+                                                        Terrain->ModelMatrices,
+                                                        Terrain->Resolution * Terrain->Resolution);
             Terrain->IsGenerated = true;
         }
 		shader_t *InstancedShader = GetShaderFromCache("instanced");
@@ -234,7 +246,7 @@ void RunEditorMode(uint32 currentMode)
         DrawModelInstanced(Renderer,
                            Terrain->Entity->Model,
                            InstancedShader,
-                           Terrain->SideLenght * Terrain->SideLenght);
+                           Terrain->Resolution * Terrain->Resolution);
         
                   
 		// draw objs
@@ -288,8 +300,8 @@ void RunEditorMode(uint32 currentMode)
 	    ShowEditorPanel(Window,
 								   InputState,
 								   Camera,
-								   g_GridResolutionSlider,
-								   g_GridMaxResolution,
+								   g_TerrainResolution,
+								   g_TerrainMaxResolution,
 								   &Editor->ShowSkybox,
 								   SCENE,
 								   &g_SelectedEntity,

@@ -1,7 +1,7 @@
 #pragma once
 
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
-static void editor_settings_collapse_header(uint32 &resolution, uint32 gridMaxResolution, bool *showSkybox);
+static void terrain_settings_collapse_header(uint32 &resolution, uint32 maxResolution, bool *showSkybox);
 static void entities_list_collapse_header(std::map<uint32, entity_t*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
 static void camera_settings_collapse_header(camera_t *Camera);
 
@@ -91,8 +91,8 @@ void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
 void ShowEditorPanel(window_t *Window,
                      input_t *InputState,
                      camera_t *Camera,
-                     uint32 &gridResolution,
-                     uint32 gridMaxResolution,
+                     uint32 &terrainResolution,
+                     uint32 terrainMaxResolution,
                      bool *showSkybox,
                      std::map<uint32, entity_t*> *entities,
                      uint32 *selectedEntity,
@@ -104,7 +104,7 @@ void ShowEditorPanel(window_t *Window,
     ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
     window_settings_collapse_header(Window, InputState);
-    editor_settings_collapse_header(gridResolution, gridMaxResolution - 2, showSkybox);
+    terrain_settings_collapse_header(terrainResolution, terrainMaxResolution, showSkybox);
     camera_settings_collapse_header(Camera);
     entities_list_collapse_header(entities, selectedEntity, pickingSphereRadius);
     
@@ -142,15 +142,16 @@ static void window_settings_collapse_header(window_t *Window, input_t *InputStat
     }
 }
 
-static void editor_settings_collapse_header(uint32 &resolution,
-                                            uint32 gridMaxResolution,
+static void terrain_settings_collapse_header(uint32 &resolution,
+                                            uint32 maxResolution,
                                             bool *showSkybox)
 {
-    if (ImGui::CollapsingHeader("Editor", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Terrain", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::SliderInt("res", &(int)resolution, 0, gridMaxResolution);
+        ImGui::SliderInt("res", &(int)resolution, 0, maxResolution);
         ImGui::SameLine();
-        ImGui::Text("max: %dx%d", gridMaxResolution, gridMaxResolution);
+        ImGui::Text("max: %dx%d", maxResolution, maxResolution);
+        ImGui::Separator();
         ImGui::Checkbox("skybox", showSkybox);
         ImGui::Separator();
     }

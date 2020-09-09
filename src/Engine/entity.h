@@ -16,7 +16,9 @@ struct entity_t
 struct terrain_t
 {
     entity_t *Entity;
-    uint32 SideLenght = 6; // default size
+    uint32 Resolution; // default size
+    glm::vec3 UnitSize;
+    uint32 InstanceBufferID;
     bool IsGenerated = false;
     glm::mat4 *ModelMatrices;
 };

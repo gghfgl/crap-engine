@@ -41,7 +41,7 @@ void ToggleWireframeMode(renderer_t *Renderer)
     // ========================================================
 }
 
-void PrepareInstancedRendering(renderer_t *Renderer,
+uint32 PrepareInstancedRendering(renderer_t *Renderer,
                                model_t *Model,
                                glm::mat4 *modelMatrices,
                                uint32 instanceCount)
@@ -82,6 +82,8 @@ void PrepareInstancedRendering(renderer_t *Renderer,
 
         glBindVertexArray(0);
     }
+
+    return buffer;
 }
 
 void DrawLines(renderer_t *Renderer, mesh_t *Mesh, float32 width, shader_t *Shader)

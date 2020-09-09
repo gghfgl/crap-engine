@@ -11,22 +11,58 @@ void Delete(entity_t *Entity)
     delete Entity;
 }
 
-terrain_t* AllocAndInit(std::string const &modelFilePath)
+terrain_t* AllocAndInit(uint32 resolution, glm::vec3 unitSize, std::string const &modelFilePath)
 {
     terrain_t *Terrain = new terrain_t;
+    Terrain->Resolution = resolution;
+    Terrain->UnitSize = unitSize;
     Terrain->Entity = new entity_t;
     Terrain->Entity->PickingSphere = nullptr;
     Terrain->Entity->Model = LoadModelFromFile(modelFilePath);
-    Terrain->ModelMatrices = generate_terrain_model_matrices(Terrain->SideLenght);
 
     return Terrain;
+}
+
+void CleanInstance(terrain_t *Terrain)
+{
+    delete[] Terrain->ModelMatrices;
+    glDeleteBuffers(1, &Terrain->InstanceBufferID);
 }
 
 void Delete(terrain_t *Terrain)
 {
     Delete(Terrain->Entity);
-    delete []Terrain->ModelMatrices;
+    delete[] Terrain->ModelMatrices;
     delete Terrain;
+}
+
+glm::mat4* GenerateTerrainModelMatrices(uint32 sideLenght)
+{
+    glm::mat4 *modelMatrices;
+    modelMatrices = new glm::mat4[sideLenght * sideLenght];    
+    glm::vec3 size = { 1.0f, 1.0f, 1.0f };
+    float32 posX = -((float32)sideLenght / 2.0f - 0.5f);
+
+    uint32 index = 0;
+    for (uint32 i = 0; i < sideLenght; i++)
+    {
+        float32 posZ = ((float32)sideLenght / 2.0f - 0.5f);
+        for (uint32 y = 0; y < sideLenght; y++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, { posX, 0.0f, posZ });
+            model = glm::scale(model, glm::vec3(1.0f));
+            model = glm::rotate(model, glm::radians(0.0f),
+                                glm::vec3(0.0f, 1.0f, 0.0f));
+            modelMatrices[index] = model;
+
+            posZ -= size.z;
+            index++;
+        }
+        posX += size.x;
+    }
+
+    return modelMatrices;
 }
 
 skybox_t* GenerateSkyboxFromFiles(std::vector<std::string> faces)
@@ -245,35 +281,6 @@ int32 OpenSceneFromTextFormat(char *filepath, std::map<uint32, entity_t*> *Scene
     // DEBUG:
     printf("opened: %s", filepath);
     return 0;
-}
-
-static glm::mat4* generate_terrain_model_matrices(uint32 sideLenght)
-{
-    glm::mat4 *modelMatrices;
-    modelMatrices = new glm::mat4[sideLenght * sideLenght];    
-    glm::vec3 size = { 1.0f, 1.0f, 1.0f };
-    float32 posX = -((float32)sideLenght / 2.0f - 0.5f);
-
-    uint32 index = 0;
-    for (uint32 i = 0; i < sideLenght; i++)
-    {
-        float32 posZ = ((float32)sideLenght / 2.0f - 0.5f);
-        for (uint32 y = 0; y < sideLenght; y++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, { posX, 0.0f, posZ });
-            model = glm::scale(model, glm::vec3(1.0f));
-            model = glm::rotate(model, glm::radians(0.0f),
-                                glm::vec3(0.0f, 1.0f, 0.0f));
-            modelMatrices[index] = model;
-
-            posZ -= size.z;
-            index++;
-        }
-        posX += size.x;
-    }
-
-    return modelMatrices;
 }
 
 static uint32 load_cubemap_texture_from_file(std::vector<std::string> faces)
