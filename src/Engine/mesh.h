@@ -27,15 +27,6 @@ struct mesh_t
     std::vector<texture_t> Textures;
 };
 
-
-struct skybox_t
-{
-    uint32 VAO;
-    uint32 VBO;
-    uint32 TextureId;
-};
-
-
 struct model_t
 {
     std::vector<mesh_t*> Meshes;
@@ -43,15 +34,4 @@ struct model_t
     std::string Directory;
     std::vector<texture_t> TexturesLoadedCache;
     bool GammaCorrection;
-};
-
-struct entity_t
-{
-//    const char* Label;
-//    const char* Filepath;
-    model_t *Model;
-    mesh_t *PickingSphere;
-    glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
-    float32 Scale = 1.0f;
-    float32 Rotate = 0.0f; // degeres
 };

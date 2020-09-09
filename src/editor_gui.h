@@ -5,6 +5,7 @@ static void editor_settings_collapse_header(uint32 &resolution, uint32 gridMaxRe
 static void entities_list_collapse_header(std::map<uint32, entity_t*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
 static void camera_settings_collapse_header(camera_t *Camera);
 
+static bool g_ActiveWindow = false;
 const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f;
 
 OPENFILENAME g_Ofn;
@@ -86,7 +87,7 @@ void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
     }
 }
 
-// TODO: pass function signature directly? panel as a service?
+// TODO: pass func signature directly? panel as a service?
 void ShowEditorPanel(window_t *Window,
                      input_t *InputState,
                      camera_t *Camera,

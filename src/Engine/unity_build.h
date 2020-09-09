@@ -11,9 +11,9 @@
 #include "IMGUI/imgui_impl_glfw.h"
 #include "IMGUI/imgui_impl_opengl3.h"
 
-#include "../dep/src/stb_image.cpp"
-#include "../dep/src/glad.c"
-#include "../dep/src/IconsFontAwesome5.h"
+#include "../../dep/src/stb_image.cpp"
+#include "../../dep/src/glad.c"
+#include "../../dep/src/IconsFontAwesome5.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -25,9 +25,7 @@
 #include "shader.cpp"
 // #include "texture.cpp"
 #include "mesh.cpp"
+#include "entity.cpp"
 #include "ray.cpp"
-#include "editor.cpp"
-#include "game.cpp"
 #include "renderer.cpp"
 #include "window.cpp"
-#include "gui.h"
