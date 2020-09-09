@@ -1,7 +1,7 @@
 #pragma once
 
 static void window_settings_collapse_header(window_t *Window, input_t *InputState);
-static void terrain_settings_collapse_header(uint32 &resolution, uint32 maxResolution, bool *showSkybox);
+static void terrain_settings_collapse_header(terrain_t *Terrain, uint32 &resolution, uint32 maxResolution, bool *showSkybox);
 static void entities_list_collapse_header(std::map<uint32, entity_t*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
 static void camera_settings_collapse_header(camera_t *Camera);
 
@@ -91,6 +91,7 @@ void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
 void ShowEditorPanel(window_t *Window,
                      input_t *InputState,
                      camera_t *Camera,
+                     terrain_t *Terrain,
                      uint32 &terrainResolution,
                      uint32 terrainMaxResolution,
                      bool *showSkybox,
@@ -104,8 +105,8 @@ void ShowEditorPanel(window_t *Window,
     ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
     window_settings_collapse_header(Window, InputState);
-    terrain_settings_collapse_header(terrainResolution, terrainMaxResolution, showSkybox);
     camera_settings_collapse_header(Camera);
+    terrain_settings_collapse_header(Terrain, terrainResolution, terrainMaxResolution, showSkybox);
     entities_list_collapse_header(entities, selectedEntity, pickingSphereRadius);
     
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
@@ -142,12 +143,34 @@ static void window_settings_collapse_header(window_t *Window, input_t *InputStat
     }
 }
 
-static void terrain_settings_collapse_header(uint32 &resolution,
-                                            uint32 maxResolution,
-                                            bool *showSkybox)
+// TODO: 
+static void terrain_settings_collapse_header(terrain_t *Terrain,
+                                             uint32 &resolution,
+                                             uint32 maxResolution,
+                                             bool *showSkybox)
 {
     if (ImGui::CollapsingHeader("Terrain", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+        ImGui::Text( ICON_FA_CUBE );
+        ImGui::SameLine();
+        ImGui::Text("%s", Terrain->Entity->Model->ObjFilename.c_str());
+        ImGui::Text("path: %s", Terrain->Entity->Model->Directory.c_str());
+
+        if (ImGui::Button("change"))
+        {
+            if (GetOpenFileName(&g_Ofn)==TRUE)
+            {
+                model_t *loadedModel = LoadModelFromFile(g_szFile);
+                if (loadedModel != nullptr)
+                {
+                    Delete(Terrain->Entity->Model);
+                    Terrain->Entity->Model = loadedModel;
+                    Terrain->IsGenerated = false;
+                }
+            }
+        }
+
         ImGui::SliderInt("res", &(int)resolution, 0, maxResolution);
         ImGui::SameLine();
         ImGui::Text("max: %dx%d", maxResolution, maxResolution);

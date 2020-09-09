@@ -298,15 +298,16 @@ void RunEditorMode(uint32 currentMode)
 	    NewFrameEditorGui();
 	    ShowWindowStatsOverlay(Window, Renderer);
 	    ShowEditorPanel(Window,
-								   InputState,
-								   Camera,
-								   g_TerrainResolution,
-								   g_TerrainMaxResolution,
-								   &Editor->ShowSkybox,
-								   SCENE,
-								   &g_SelectedEntity,
-								   g_PickingSphereRadius,
-								   g_ActiveWindow);
+                        InputState,
+                        Camera,
+                        Terrain,
+                        g_TerrainResolution,
+                        g_TerrainMaxResolution,
+                        &Editor->ShowSkybox,
+                        SCENE,
+                        &g_SelectedEntity,
+                        g_PickingSphereRadius,
+                        g_ActiveWindow);
 
 	    RenderEditorGui();
 

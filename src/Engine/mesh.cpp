@@ -77,58 +77,6 @@ mesh_t* CreatePrimitiveSphereMesh(float32 margin, float32 radius, uint32 stacks,
     return Mesh;
 }
 
-static void allocate_mesh(mesh_t *Mesh)
-{
-    glGenVertexArrays(1, &Mesh->VAO);
-    glGenBuffers(1, &Mesh->VBO);
-    glGenBuffers(1, &Mesh->IBO);
-  
-    glBindVertexArray(Mesh->VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
-
-    if (!Mesh->Vertices.empty())
-    {
-        glBufferData(GL_ARRAY_BUFFER,
-                     Mesh->Vertices.size() * sizeof(vertex_t),
-                     &Mesh->Vertices[0], GL_STATIC_DRAW);  
-
-        // vertex positions
-        glEnableVertexAttribArray(0);	
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-                              (void*)0);
-
-        // vertex normals
-        glEnableVertexAttribArray(1);	
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-                              (void*)offsetof(vertex_t, Normal));
-
-        // vertex texture coords
-        glEnableVertexAttribArray(2);	
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-                              (void*)offsetof(vertex_t, TexCoords));
-
-        // vertex tangent
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-                              (void*)offsetof(vertex_t, Tangent));
-
-        // vertex bitangent
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
-                              (void*)offsetof(vertex_t, Bitangent));
-    }
-
-    if (!Mesh->Indices.empty())
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Mesh->IBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     Mesh->Indices.size() * sizeof(uint32), 
-                     &Mesh->Indices[0], GL_STATIC_DRAW);
-    }
-    
-    glBindVertexArray(0);
-}
-
 model_t* LoadModelFromFile(std::string const &path)
 {
     model_t *Model = new model_t;
@@ -181,6 +129,58 @@ void Delete(model_t *Model)
         glDeleteTextures(1, &m.Id);
     Model->TexturesLoadedCache.clear();
     delete Model;
+}
+
+static void allocate_mesh(mesh_t *Mesh)
+{
+    glGenVertexArrays(1, &Mesh->VAO);
+    glGenBuffers(1, &Mesh->VBO);
+    glGenBuffers(1, &Mesh->IBO);
+  
+    glBindVertexArray(Mesh->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+
+    if (!Mesh->Vertices.empty())
+    {
+        glBufferData(GL_ARRAY_BUFFER,
+                     Mesh->Vertices.size() * sizeof(vertex_t),
+                     &Mesh->Vertices[0], GL_STATIC_DRAW);  
+
+        // vertex positions
+        glEnableVertexAttribArray(0);	
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+                              (void*)0);
+
+        // vertex normals
+        glEnableVertexAttribArray(1);	
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+                              (void*)offsetof(vertex_t, Normal));
+
+        // vertex texture coords
+        glEnableVertexAttribArray(2);	
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+                              (void*)offsetof(vertex_t, TexCoords));
+
+        // vertex tangent
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+                              (void*)offsetof(vertex_t, Tangent));
+
+        // vertex bitangent
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t),
+                              (void*)offsetof(vertex_t, Bitangent));
+    }
+
+    if (!Mesh->Indices.empty())
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Mesh->IBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     Mesh->Indices.size() * sizeof(uint32), 
+                     &Mesh->Indices[0], GL_STATIC_DRAW);
+    }
+    
+    glBindVertexArray(0);
 }
 
 static void process_node(model_t *Model, aiNode *node, const aiScene *scene)
