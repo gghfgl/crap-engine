@@ -5,7 +5,6 @@
 #include "gui.h"
 
 /* TODO: EDITOR
-   - working on terrain editor
    - implement memorypool visualizer
    - move skybox and entities in dedicated "Data" panel
    - improve click setting panel object after selectinID from world
@@ -27,9 +26,10 @@ const uint32 g_Width = 1280;
 const uint32 g_Height = 960;
 
 static uint32 g_TerrainResolution = 10;
-static const uint32 g_TerrainMaxResolution = 100;
+static const uint32 g_TerrainMaxResolution = 50;
 glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
 const char* g_TerrainDefaultModelFile = "..\\assets\\models\\terrain\\untitled.obj";
+
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
 static uint32 g_SelectedEntity = 0;
@@ -73,13 +73,21 @@ void RunEditorMode(uint32 currentMode)
 	std::map<uint32, entity_t *> *SCENE = new std::map<uint32, entity_t *>;
 
 	// Skybox
+	// std::vector<std::string> faces{
+	// 	"../assets/skybox/test/right.jpg",
+	// 	"../assets/skybox/test/left.jpg",
+	// 	"../assets/skybox/test/top.jpg",
+	// 	"../assets/skybox/test/bottom.jpg",
+	// 	"../assets/skybox/test/front.jpg",
+	// 	"../assets/skybox/test/back.jpg"};
+
 	std::vector<std::string> faces{
-		"../assets/skybox/test/right.jpg",
-		"../assets/skybox/test/left.jpg",
-		"../assets/skybox/test/top.jpg",
-		"../assets/skybox/test/bottom.jpg",
-		"../assets/skybox/test/front.jpg",
-		"../assets/skybox/test/back.jpg"};
+		"../assets/skybox/night/right.jpg",
+		"../assets/skybox/night/left.jpg",
+		"../assets/skybox/night/top.jpg",
+		"../assets/skybox/night/bottom.jpg",
+		"../assets/skybox/night/front.jpg",
+		"../assets/skybox/night/back.jpg"};
 	// =================================================
     
 	editor_t *Editor = new editor_t;
