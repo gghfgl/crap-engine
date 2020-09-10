@@ -5,8 +5,10 @@
 #include "gui.h"
 
 /* TODO: EDITOR
-   - implement memorypool visualizer
+   - improve skybox import assets
+   - rework editor struct and debug rendering tools
    - move skybox and entities in dedicated "Data" panel
+   - implement memorypool visualizer
    - improve click setting panel object after selectinID from world
    - improve coordinate system for positionning objects
    - improve skybox loading assets with hdr
@@ -73,21 +75,13 @@ void RunEditorMode(uint32 currentMode)
 	std::map<uint32, entity_t *> *SCENE = new std::map<uint32, entity_t *>;
 
 	// Skybox
-	// std::vector<std::string> faces{
-	// 	"../assets/skybox/test/right.jpg",
-	// 	"../assets/skybox/test/left.jpg",
-	// 	"../assets/skybox/test/top.jpg",
-	// 	"../assets/skybox/test/bottom.jpg",
-	// 	"../assets/skybox/test/front.jpg",
-	// 	"../assets/skybox/test/back.jpg"};
-
 	std::vector<std::string> faces{
-		"../assets/skybox/night/right.jpg",
-		"../assets/skybox/night/left.jpg",
-		"../assets/skybox/night/top.jpg",
-		"../assets/skybox/night/bottom.jpg",
-		"../assets/skybox/night/front.jpg",
-		"../assets/skybox/night/back.jpg"};
+		"../assets/skybox/test/right.jpg",
+		"../assets/skybox/test/left.jpg",
+		"../assets/skybox/test/top.jpg",
+		"../assets/skybox/test/bottom.jpg",
+		"../assets/skybox/test/front.jpg",
+		"../assets/skybox/test/back.jpg"};
 	// =================================================
     
 	editor_t *Editor = new editor_t;
