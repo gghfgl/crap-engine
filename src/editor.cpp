@@ -20,7 +20,7 @@
 */
 
 void PrepareAxisDebug(mesh_t *Mesh);
-void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution);
+void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution);
 void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 const uint32 g_Width = 1280;
@@ -31,13 +31,12 @@ static const uint32 g_TerrainMaxResolution = 100;
 glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
 const char* g_TerrainDefaultModelFile = "..\\assets\\models\\terrain\\untitled.obj";
 // TODO: Clean mess below
-static const uint32 g_GridMaxResolution = 98;
-static uint32 g_GridResolutionSlider = 52;
 static uint32 g_HoveredEntity = 0;
 static uint32 g_SelectedEntity = 0;
 static uint32 g_DragEntity = 0;
 const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
 
+const uint32 g_ReferenceGridResolution = 50;
 
 void RunEditorMode(uint32 currentMode)
 {
@@ -55,7 +54,7 @@ void RunEditorMode(uint32 currentMode)
 	// Grid
 	std::vector<uint32> uEmpty;
 	std::vector<texture_t> tEmpty;
-	std::vector<vertex_t> vGrid(g_GridMaxResolution * 4, vertex_t());
+	std::vector<vertex_t> vGrid(g_ReferenceGridResolution * 4 + 4, vertex_t());
 	mesh_t *MeshGrid = AllocAndInit(vGrid, uEmpty, tEmpty);
 
     // Axis Debug
@@ -85,7 +84,7 @@ void RunEditorMode(uint32 currentMode)
     
 	editor_t *Editor = new editor_t;
 	Editor->Active = true;
-	Editor->GridResolution = 0;
+	Editor->GridResolution = 0; //TODO: remove?
 	Editor->MeshGrid = MeshGrid;
 	Editor->MeshAxisDebug = MeshAxisDebug;
 	Editor->MeshRay = MeshRay;
@@ -95,6 +94,7 @@ void RunEditorMode(uint32 currentMode)
 
     // TODO: tmp wainting editor struct
     PrepareAxisDebug(Editor->MeshAxisDebug);
+    PushReferenceGridSubData(Editor->MeshGrid, g_ReferenceGridResolution);
 	// =============================
 
 	while (Editor->Active)
@@ -157,7 +157,7 @@ void RunEditorMode(uint32 currentMode)
                                                            Camera->ProjectionMatrix,
                                                            GetViewMatrix(Camera));
 
-        // TODO: mouse ray intersection terrain cubes
+        // terrain slider
         if (g_TerrainResolution != Terrain->Resolution)
         {
             Terrain->IsGenerated = false;
@@ -203,30 +203,18 @@ void RunEditorMode(uint32 currentMode)
 		SetUniform4fv(ColorShader, "view", viewMatrix);
 	    SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
 
-        // =================== D.E.B.U.G ===================
-        
-		// draw editor grid
-		if (Editor->GridResolution != g_GridResolutionSlider)
-		{
-			PushGridSubData(Editor->MeshGrid, g_GridResolutionSlider, g_GridMaxResolution);
-			Editor->GridResolution = g_GridResolutionSlider;
-		}
-		if (Editor->GridResolution > 0)
-		{
-		    SetUniform4f(ColorShader, "color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-		    DrawLines(Renderer, Editor->MeshGrid, 1.0f, ColorShader);
-		}
+		// draw reference grid
+        SetUniform4f(ColorShader, "color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
+        DrawLines(Renderer, Editor->MeshGrid, 1.0f, ColorShader);
 
         // draw axis debug
         SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        DrawLines(Renderer, MeshAxisDebug, 2.0f, ColorShader);
+        DrawLines(Renderer, Editor->MeshAxisDebug, 2.0f, ColorShader);
 
-		// draw raycasting
+		// draw mouse ray
 	    PushMouseRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
 	    SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
 	    DrawLines(Renderer, Editor->MeshRay, 1.0f, ColorShader);
-
-        // =================== M.O.D.E.L.S ===================
 
         // draw terrain
         if (!Terrain->IsGenerated)
@@ -369,58 +357,55 @@ void PrepareAxisDebug(mesh_t *Mesh)
                     &Mesh->Vertices[0]);
 }
 
-void PushGridSubData(mesh_t *Mesh, uint32 resolution, uint32 maxResolution)
+void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution)
 {
-	if (resolution <= maxResolution)
-	{
-		uint32 vCount = resolution * 4 + 4;			   // 44
-		float32 b = (float32)resolution / 2.0f + 1.0f; // 6
-		float32 a = -b;								   // -6
-		float32 xPos = -((float32)resolution / 2.0f);  // -5
-		float32 zPos = xPos;						   // -5
+    uint32 vCount = resolution * 4 + 4;			   // 44
+    float32 b = (float32)resolution / 2.0f + 1.0f; // 6
+    float32 a = -b;								   // -6
+    float32 xPos = -((float32)resolution / 2.0f);  // -5
+    float32 zPos = xPos;						   // -5
 
-		Mesh->Vertices.clear();
-		uint32 i = 0;
-		while (i < vCount / 2)
-		{
-			vertex_t v;
-			if (i % 2 == 0)
-			{
-				v.Position = glm::vec3(a, 0.0f, zPos);
-			}
-			else
-			{
-				v.Position = glm::vec3(b, 0.0f, zPos);
-				zPos += 1.0f;
-			}
+    Mesh->Vertices.clear();
+    uint32 i = 0;
+    while (i < vCount / 2) // z axis ->
+    {
+        vertex_t v;
+        if (i % 2 == 0)
+        {
+            v.Position = glm::vec3(a, 0.0f, zPos);
+        }
+        else
+        {
+            v.Position = glm::vec3(b, 0.0f, zPos);
+            zPos += 1.0f;
+        }
 
-			Mesh->Vertices.push_back(v);
-			i++;
-		}
+        Mesh->Vertices.push_back(v);
+        i++;
+    }
 
-		while (i < vCount)
-		{
-			vertex_t v;
-			if (i % 2 == 0)
-			{
-				v.Position = glm::vec3(xPos, 0.0f, a);
-			}
-			else
-			{
-				v.Position = glm::vec3(xPos, 0.0f, b);
-				xPos += 1.0f;
-			}
+    while (i < vCount) // x axis ->
+    {
+        vertex_t v;
+        if (i % 2 == 0)
+        {
+            v.Position = glm::vec3(xPos, 0.0f, a);
+        }
+        else
+        {
+            v.Position = glm::vec3(xPos, 0.0f, b);
+            xPos += 1.0f;
+        }
 
-			Mesh->Vertices.push_back(v);
-			i++;
-		}
+        Mesh->Vertices.push_back(v);
+        i++;
+    }
         
-		glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
-		glBufferSubData(GL_ARRAY_BUFFER,
-						0,
-						Mesh->Vertices.size() * sizeof(vertex_t),
-						&Mesh->Vertices[0]);
-	}
+    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    Mesh->Vertices.size() * sizeof(vertex_t),
+                    &Mesh->Vertices[0]);
 }
 
 void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
