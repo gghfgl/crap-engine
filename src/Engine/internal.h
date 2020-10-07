@@ -21,6 +21,7 @@ struct memory_pool
     size_t MaxUsed;
 };
 
+// TODO: implement a decent mem pool
 inline void InitMemoryPool(memory_pool *MemPool, size_t size, int64 *base)
 {
     MemPool->Size = size;

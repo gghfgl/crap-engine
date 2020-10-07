@@ -20,7 +20,7 @@ void InitEditorGui(window_t* Window)
     //ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(Window->PlatformWindow, true);
+    ImGui_ImplGlfw_InitForOpenGL(Window->Win32Window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Fonts
@@ -75,9 +75,9 @@ void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
     {
-        ImGui::Text(Window->APIinfo.Vendor);
-        ImGui::Text(Window->APIinfo.Renderer);
-        ImGui::Text(Window->APIinfo.Version);
+        ImGui::Text(Window->RenderAPIinfo.Vendor);
+        ImGui::Text(Window->RenderAPIinfo.Renderer);
+        ImGui::Text(Window->RenderAPIinfo.Version);
         ImGui::Separator();
         ImGui::Text("ms/f: %.3fms", Window->Time->MsPerFrame);
         //ImGui::Text("fps: %d", Window->Time->FPS);
@@ -129,14 +129,14 @@ static void window_settings_collapse_header(window_t *Window, input_t *InputStat
 
         ImGui::PushID(1);
         if (ImGui::Button(Window->Vsync ? "on" : "off", bSize))
-            ToggleVsync(Window);
+            win32_toggle_vsync(Window);
         ImGui::SameLine();
         ImGui::Text("VSYNC: ");
         ImGui::PopID();
 
         ImGui::PushID(2);
-        if (ImGui::Button(Window->DebugMode ? "on" : "off", bSize))
-            ToggleDebugMode(Window);
+        if (ImGui::Button(Window->Debug ? "on" : "off", bSize))
+            ToggleDebug(Window);
         ImGui::SameLine();
         ImGui::Text("DEBUG: ");
         ImGui::PopID();

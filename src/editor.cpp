@@ -1,8 +1,5 @@
-#include <iostream>
-
-#include "Engine/unity_build.h"
 #include "editor.h"
-#include "gui.h"
+#include "editor_gui.h"
 
 /* TODO: EDITOR
    - improve skybox import assets
@@ -16,21 +13,22 @@
    - fix / improve texture management from assimp model
    - assimp be carefull of texture path (need to update blender mtl file)
    - change to ortho projection
+   - implement a console
    - beautyfull light PBR effects
    - improve scene file format (extend with skybox, etc ...)
 */
 
-void PrepareAxisDebug(mesh_t *Mesh);
+void PrepareAxisDebug(mesh_t *Mesh); // TODO: rename origin
 void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution);
 void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
 
-const uint32 g_Width = 1280;
-const uint32 g_Height = 960;
+// const uint32 g_Width = 1280;
+// const uint32 g_Height = 960;
 
 static uint32 g_TerrainResolution = 10;
 static const uint32 g_TerrainMaxResolution = 50;
 glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
-const char* g_TerrainDefaultModelFile = "..\\assets\\models\\terrain\\untitled.obj";
+const char* g_TerrainDefaultModelFile = "..\\assets\\models\\terrain\\untitled.obj"; // TODO: read all this kind of stuff from a default config file
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -40,13 +38,14 @@ const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray inte
 
 const uint32 g_ReferenceGridResolution = 50;
 
-void RunEditorMode(uint32 currentMode)
+void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 {
-	window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
-	input_t *InputState = AllocAndInit(Window->PlatformWindow);
-	camera_t *Camera = AllocAndInit((float32)g_Width, (float32)g_Height, glm::vec3(0.0f, 5.0f, 10.0f));
+	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
+	// input_t *InputState = AllocAndInit(Window->PlatformWindow);
+	camera_t *Camera = AllocAndInit((float32)Window->Width, (float32)Window->Height, glm::vec3(0.0f, 5.0f, 10.0f));
 	renderer_t *Renderer = AllocAndInit();
 
+    // TODO: parese a list in a dedicated header file
     CompileAndCacheShader("../shaders/default.glsl", "default", Camera->ProjectionMatrix);
     CompileAndCacheShader("../shaders/instanced.glsl", "instanced", Camera->ProjectionMatrix);
     CompileAndCacheShader("../shaders/color.glsl", "color", Camera->ProjectionMatrix);
@@ -101,10 +100,10 @@ void RunEditorMode(uint32 currentMode)
 
 	while (Editor->Active)
 	{
-	    UpdateTime(Window->Time);
+	    win32_update_time(Window->Time);
 
 		// NOTE: INPUTS ======================================>
-	    PollEvents();
+	    win32_poll_events();
 		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_ESCAPE])
 			Editor->Active = false;
 		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_W])
@@ -304,7 +303,7 @@ void RunEditorMode(uint32 currentMode)
 		// TODO:  update memory pool
 		//Renderer->MemoryArena->MaxUsed = 0;
 
-	    SwapBuffer(Window);
+	    win32_swap_buffer(Window);
 	}
 
 	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
@@ -325,6 +324,8 @@ void RunEditorMode(uint32 currentMode)
     Delete(Renderer);
     Delete(Camera);
     Delete(InputState);
+
+    win32_terminate_window(Window);
     Delete(Window);
 }
 void PrepareAxisDebug(mesh_t *Mesh)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <windows.h>
 
 #include <glad/glad.h>
@@ -19,13 +21,13 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "intrinsic.h"
-#include "input.cpp"
-#include "camera.cpp"
-#include "shader.cpp"
-// #include "texture.cpp"
-#include "mesh.cpp"
-#include "entity.cpp"
-#include "ray.cpp"
-#include "renderer.cpp"
-#include "window.cpp"
+#include "Engine/internal.h"
+#include "Engine/input.cpp"
+#include "Engine/camera.cpp"
+#include "Engine/shader.cpp"
+// #include "Engine/texture.cpp"
+#include "Engine/mesh.cpp"
+#include "Engine/entity.cpp"
+#include "Engine/ray.cpp"
+#include "Engine/renderer.cpp"
+#include "Engine/window.cpp"

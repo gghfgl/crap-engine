@@ -10,7 +10,8 @@ camera_t *AllocAndInit(
     float32 pitch = g_DefaultPitchSetting,
     float32 speed = g_DefaultSpeedSetting,
     float32 sensitivity = g_DefaultSensitivitySetting,
-    float32 fov = g_DefaultFovSetting)
+    float32 fov = g_DefaultFovSetting,
+    float32 nearPlane = 0.1f, float32 farPlane = 100.0f)
 {
     camera_settings *Settings = new camera_settings;
     Settings->Yaw = yaw;
@@ -22,7 +23,7 @@ camera_t *AllocAndInit(
     glm::mat4 projection = glm::perspective(
         glm::radians(fov),
         windowWidth / windowHeight,
-        0.1f, 100.0f); // TODO: near / far plane
+        nearPlane, farPlane);
 			
     // TODO: glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 

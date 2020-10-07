@@ -6,7 +6,7 @@ struct render_API_info {
     const char*  Version;
 };
 
-struct window_time {
+struct frame_time {
     float32 MsPerFrame;
     float32 DeltaTime;
     int64   LastPerfCount;
@@ -18,10 +18,10 @@ struct window_time {
 
 struct window_t {
     int Width, Height;
-    render_API_info APIinfo;
-    GLFWwindow *PlatformWindow; // TODO: using GLFW atm
+    render_API_info RenderAPIinfo;
+    GLFWwindow *Win32Window;
     const char* WindowTitle;
-    window_time *Time;
-    bool DebugMode = 0;
+    frame_time *Time;
+    bool Debug = 0;
     bool Vsync;
 };
