@@ -1,6 +1,6 @@
 #include "precompile.h"
 
-#if 1 // TODO pass arg from compiler
+#if PLATEFORM_WIN32
 #include "Plateform/win32_plateform.cpp"
 #endif
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     Window->Time = new frame_time;
     input_t *Input = new input_t;
 
-#if 1
+#if PLATEFORM_WIN32
     win32_init_window(g_Width, g_Height, "CrapEngine", Window);
     win32_init_time(Window->Time);
     win32_init_input(Window->Win32Window, Input);
