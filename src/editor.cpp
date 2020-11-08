@@ -38,11 +38,11 @@ const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray inte
 
 const uint32 g_ReferenceGridResolution = 50;
 
-void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
+void RunEditorMode(WindowWrapper *Window, InputState *Input)
 {
 	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
-	// input_t *InputState = AllocAndInit(Window->PlatformWindow);
-	camera_t *Camera = AllocAndInit((float32)Window->Width, (float32)Window->Height, glm::vec3(0.0f, 5.0f, 10.0f));
+	// input_t *Input = AllocAndInit(Window->PlatformWindow);
+	camera_t *Camera = AllocAndInit((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
 	renderer_t *Renderer = AllocAndInit();
 
     // TODO: parese a list in a dedicated header file
@@ -100,36 +100,36 @@ void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 
 	while (Editor->Active)
 	{
-	    win32_update_time(Window->Time);
+	    Window->updateTime();
 
 		// NOTE: INPUTS ======================================>
-	    win32_poll_events();
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_ESCAPE])
+	    Window->pollEvents();
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_ESCAPE])
 			Editor->Active = false;
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_W])
-		    ProcessMovementDirectional(Camera, FORWARD, Window->Time->DeltaTime);
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_S])
-		    ProcessMovementDirectional(Camera, BACKWARD, Window->Time->DeltaTime);
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_A])
-		    ProcessMovementDirectional(Camera, LEFT, Window->Time->DeltaTime);
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_D])
-		    ProcessMovementDirectional(Camera, RIGHT, Window->Time->DeltaTime);
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_SPACE])
-		    ProcessMovementDirectional(Camera, UP, Window->Time->DeltaTime);
-		if (InputState->KeyboardEvent->IsPressed[CRAP_KEY_LEFT_CONTROL])
-		    ProcessMovementDirectional(Camera, DOWN, Window->Time->DeltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_W])
+		    ProcessMovementDirectional(Camera, FORWARD, Window->Time->deltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_S])
+		    ProcessMovementDirectional(Camera, BACKWARD, Window->Time->deltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_A])
+		    ProcessMovementDirectional(Camera, LEFT, Window->Time->deltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_D])
+		    ProcessMovementDirectional(Camera, RIGHT, Window->Time->deltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_SPACE])
+		    ProcessMovementDirectional(Camera, UP, Window->Time->deltaTime);
+		if (Input->KeyboardEvent->isPressed[CRAP_KEY_LEFT_CONTROL])
+		    ProcessMovementDirectional(Camera, DOWN, Window->Time->deltaTime);
 
-		if (InputState->MouseEvent->ScrollOffsetY != 0.0f)
+		if (Input->MouseEvent->scrollOffsetY != 0.0f)
 		{
-			if (GetMouseScrollOffsetY(InputState->MouseEvent) > 0)
+			if (Input->getMouseScrollOffsetY() > 0)
 			    ProcessMovementDirectional(Camera, FORWARD,
-												   Window->Time->DeltaTime, 10.0f);
+												   Window->Time->deltaTime, 10.0f);
 			else
 			    ProcessMovementDirectional(Camera, BACKWARD,
-												   Window->Time->DeltaTime, 10.0f);
+												   Window->Time->deltaTime, 10.0f);
 		}
 
-		if (InputState->MouseEvent->LeftButton)
+		if (Input->MouseEvent->leftButton)
 		{
 			if (g_HoveredEntity != 0)
 				g_SelectedEntity = g_HoveredEntity;
@@ -141,22 +141,22 @@ void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 
 			if (!g_ActiveWindow && !g_SelectedEntity)
             {
-                UpdateMouseOffsets(InputState->MouseEvent);
+                Input->updateMouseOffsets();
                 ProcessMovementAngles(Camera,
-                                              InputState->MouseEvent->OffsetX,
-                                              InputState->MouseEvent->OffsetY);
+                                              Input->MouseEvent->offsetX,
+                                              Input->MouseEvent->offsetY);
             }
 		}
 		else
             g_DragEntity = 0;
 
 		// NOTE: SIMULATE  ======================================>
-		glm::vec3 rayWorld = MouseRayDirectionWorld((float32)InputState->MouseEvent->PosX,
-                                                           (float32)InputState->MouseEvent->PosY,
-                                                           Window->Width,
-                                                           Window->Height,
-                                                           Camera->ProjectionMatrix,
-                                                           GetViewMatrix(Camera));
+		glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->MouseEvent->posX,
+                                                    (float32)Input->MouseEvent->posY,
+                                                    Window->getWidth(),
+                                                    Window->getHeight(),
+                                                    Camera->ProjectionMatrix,
+                                                    GetViewMatrix(Camera));
 
         // terrain slider
         if (g_TerrainResolution != Terrain->Resolution)
@@ -287,7 +287,7 @@ void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 	    NewFrameEditorGui();
 	    ShowWindowStatsOverlay(Window, Renderer);
 	    ShowEditorPanel(Window,
-                        InputState,
+                        Input,
                         Camera,
                         Terrain,
                         g_TerrainResolution,
@@ -303,7 +303,7 @@ void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 		// TODO:  update memory pool
 		//Renderer->MemoryArena->MaxUsed = 0;
 
-	    win32_swap_buffer(Window);
+	    Window->swapBuffer();
 	}
 
 	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
@@ -323,10 +323,6 @@ void RunEditorMode(uint32 currentMode, window_t *Window, input_t *InputState)
 
     Delete(Renderer);
     Delete(Camera);
-    Delete(InputState);
-
-    win32_terminate_window(Window);
-    Delete(Window);
 }
 void PrepareAxisDebug(mesh_t *Mesh)
 {    
