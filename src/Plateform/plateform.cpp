@@ -176,6 +176,10 @@ void WindowWrapper::updateTime()
     int64 cyclesElapsed = currentCycleCount - Time->lastCycleCount;
     int32 MCPF = (int32)(cyclesElapsed / (1000 * 1000));
 
+    // float currentFrame = (float32)glfwGetTime();
+    // Time->deltaTime = currentFrame - Time->msPerFrame; // s
+    // Time->msPerFrame = currentFrame;
+    
     Time->msPerFrame = msPerFrame;			// ms
     Time->deltaTime = msPerFrame / 1000.0f; // s
     Time->lastPerfCount = currentPerfCount.QuadPart;
@@ -196,6 +200,9 @@ void WindowWrapper::set_time()
     Time->perfCountFrequency = perfCountFrequencyResult.QuadPart;
     Time->lastPerfCount = lastPerfCount.QuadPart;
     Time->lastCycleCount = lastCycleCount;
+
+    // Time->deltaTime = 0.0; // s
+    // Time->lastFrame = 0.0;
 }
 
 

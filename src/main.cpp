@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
         plateform->Window->updateTime();
 	    plateform->Window->pollEvents();
-		if (plateform->Input->KeyboardEvent->isPressed[CRAP_KEY_ESCAPE])
+		if (plateform->Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_ESCAPE])
 		    running = false;
     }
     

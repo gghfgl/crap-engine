@@ -104,19 +104,19 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 
 		// NOTE: INPUTS ======================================>
 	    Window->pollEvents();
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_ESCAPE])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_ESCAPE])
 			Editor->Active = false;
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_W])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_W])
 		    ProcessMovementDirectional(Camera, FORWARD, Window->Time->deltaTime);
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_S])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_S])
 		    ProcessMovementDirectional(Camera, BACKWARD, Window->Time->deltaTime);
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_A])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_A])
 		    ProcessMovementDirectional(Camera, LEFT, Window->Time->deltaTime);
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_D])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_D])
 		    ProcessMovementDirectional(Camera, RIGHT, Window->Time->deltaTime);
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_SPACE])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_SPACE])
 		    ProcessMovementDirectional(Camera, UP, Window->Time->deltaTime);
-		if (Input->KeyboardEvent->isPressed[CRAP_KEY_LEFT_CONTROL])
+		if (Input->KeyboardEvent->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
 		    ProcessMovementDirectional(Camera, DOWN, Window->Time->deltaTime);
 
 		if (Input->MouseEvent->scrollOffsetY != 0.0f)
