@@ -5,5 +5,5 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Plateform/internal.h"
-#include "Plateform/plateform.cpp"
+#include "internal.h"
+#include "plateform.cpp"
