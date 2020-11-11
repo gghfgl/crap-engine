@@ -1,18 +1,18 @@
 #pragma once
 
-static void window_settings_collapse_header(window_t *Window, input_t *InputState);
+static void window_settings_collapse_header(WindowWrapper *Window, InputState *Input);
 static void terrain_settings_collapse_header(terrain_t *Terrain, uint32 &resolution, uint32 maxResolution, bool *showSkybox);
 static void entities_list_collapse_header(std::map<uint32, entity_t*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
 static void camera_settings_collapse_header(camera_t *Camera);
 
 static bool g_ActiveWindow = false;
-const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f;
+const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f; // TODO: static
 
 OPENFILENAME g_Ofn;
 char g_szFile[260];
 HWND g_hwnd;
 
-void InitEditorGui(window_t* Window)
+void InitEditorGui(WindowWrapper* Window)
 {
     const char* glsl_version = "#version 450";
     IMGUI_CHECKVERSION();
@@ -20,7 +20,7 @@ void InitEditorGui(window_t* Window)
     //ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(Window->Win32Window, true);
+    ImGui_ImplGlfw_InitForOpenGL(Window->Context, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Fonts
@@ -69,27 +69,28 @@ void RenderEditorGui()
 // ================================================================
 
 // TODO: switch to string rendering
-void ShowWindowStatsOverlay(window_t *Window, renderer_t *Renderer)
+void ShowWindowStatsOverlay(WindowWrapper *Window, renderer_t *Renderer)
 {
-    ImGui::SetNextWindowPos(ImVec2((float32)Window->Width - 210, 10));
+    ImGui::SetNextWindowPos(ImVec2((float32)(Window->getWidth() - 210), 10));
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
     {
-        ImGui::Text(Window->RenderAPIinfo.Vendor);
-        ImGui::Text(Window->RenderAPIinfo.Renderer);
-        ImGui::Text(Window->RenderAPIinfo.Version);
-        ImGui::Separator();
-        ImGui::Text("ms/f: %.3fms", Window->Time->MsPerFrame);
+        // TODO: string rendering
+        /* ImGui::Text(Window->RenderAPIinfo.Vendor); */
+        /* ImGui::Text(Window->RenderAPIinfo.Renderer); */
+        /* ImGui::Text(Window->RenderAPIinfo.Version); */
+        /* ImGui::Separator(); */
+        ImGui::Text("ms/f: %.3fms", Window->Time->msPerFrame);
         //ImGui::Text("fps: %d", Window->Time->FPS);
-        ImGui::Text("mcy/f: %d", Window->Time->MegaCyclePerFrame);
+        ImGui::Text("mcy/f: %d", Window->Time->megaCyclePerFrame);
         ImGui::Text("drawCalls: %d", Renderer->Stats.DrawCalls);
         ImGui::End();
     }
 }
 
 // TODO: pass func signature directly? panel as a service?
-void ShowEditorPanel(window_t *Window,
-                     input_t *InputState,
+void ShowEditorPanel(WindowWrapper *Window,
+                     InputState *Input,
                      camera_t *Camera,
                      terrain_t *Terrain,
                      uint32 &terrainResolution,
@@ -101,10 +102,10 @@ void ShowEditorPanel(window_t *Window,
                      bool &focus)
 {
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(410, (float32)Window->Height - 20));
+    ImGui::SetNextWindowSize(ImVec2(410, (float32)(Window->getHeight() - 20)));
     ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
-    window_settings_collapse_header(Window, InputState);
+    window_settings_collapse_header(Window, Input);
     camera_settings_collapse_header(Camera);
     terrain_settings_collapse_header(Terrain, terrainResolution, terrainMaxResolution, showSkybox);
     entities_list_collapse_header(entities, selectedEntity, pickingSphereRadius);
@@ -116,27 +117,27 @@ void ShowEditorPanel(window_t *Window,
     ImGui::End();
 }
 
-static void window_settings_collapse_header(window_t *Window, input_t *InputState)
+static void window_settings_collapse_header(WindowWrapper *Window, InputState *Input)
 {
     if (ImGui::CollapsingHeader("Window settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImVec2 bSize(40, 20);
-        ImGui::Text("SCREEN: %d x %d", Window->Width, Window->Height);
+        ImGui::Text("SCREEN: %d x %d", Window->getWidth(), Window->getHeight());
         ImGui::Text("MousePos: %d x %d",
-                    (uint32)InputState->MouseEvent->PosX,
-                    (uint32)InputState->MouseEvent->PosY);
+                    (uint32)Input->MouseEvent->posX,
+                    (uint32)Input->MouseEvent->posY);
         ImGui::Separator();
 
         ImGui::PushID(1);
-        if (ImGui::Button(Window->Vsync ? "on" : "off", bSize))
-            win32_toggle_vsync(Window);
+        if (ImGui::Button(Window->getVsync() ? "on" : "off", bSize))
+            Window->toggleVsync();
         ImGui::SameLine();
         ImGui::Text("VSYNC: ");
         ImGui::PopID();
 
         ImGui::PushID(2);
-        if (ImGui::Button(Window->Debug ? "on" : "off", bSize))
-            ToggleDebug(Window);
+        if (ImGui::Button(Window->debug ? "on" : "off", bSize))
+            Window->debug = !Window->debug;
         ImGui::SameLine();
         ImGui::Text("DEBUG: ");
         ImGui::PopID();

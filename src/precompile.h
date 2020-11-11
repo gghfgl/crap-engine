@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <windows.h>
+//#include <windows.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -22,7 +22,6 @@
 #include <assimp/postprocess.h>
 
 #include "Engine/internal.h"
-#include "Engine/input.cpp"
 #include "Engine/camera.cpp"
 #include "Engine/shader.cpp"
 // #include "Engine/texture.cpp"
@@ -30,4 +29,5 @@
 #include "Engine/entity.cpp"
 #include "Engine/ray.cpp"
 #include "Engine/renderer.cpp"
-#include "Engine/window.cpp"
+
+#include "Plateform/plateform.cpp"
