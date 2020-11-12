@@ -1,12 +1,12 @@
 INCLUDE=-Idep/include
 LIBDIR=-Ldep/lib
-ADDSRC=dep/src/glad.c
+#ADDSRC=dep/src/glad.c
 
 CC=g++ -std=c++17
-HARDFLAGS=-Weffc++
-FLAGS=-pedantic-errors -Wall -Wextra -Wsign-conversion -Wno-error=unused-variable
+HARDFLAGS=-Weffc++ -Wsign-conversion
+FLAGS=-pedantic-errors -Wall -Wextra -Wno-error=unused-variable
 CFLAGS=$(FLAGS) $(INCLUDE)
-LDFLAGS=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+LDFLAGS=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
 DIRS=$(shell mkdir -p bin)
 LINUX_BINARY=bin/a.out
 
@@ -20,7 +20,7 @@ build:
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
-	$(CC) $(FLAGS) $(INCLUDE) -o $(LINUX_BINARY) $(ADDSRC) src/main.cpp $(LIBDIR) $(LDFLAGS)
+	$(CC) $(FLAGS) $(INCLUDE) -o $(LINUX_BINARY) src/main.cpp $(LIBDIR) $(LDFLAGS)
 
 build-nodebug:
 	$(DIRS)
@@ -31,7 +31,7 @@ build-nodebug:
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
-	$(CC) $(INCLUDE) -o $(LINUX_BINARY) $(ADDSRC) src/main.cpp $(LIBDIR) $(LDFLAGS)
+	$(CC) $(INCLUDE) -o $(LINUX_BINARY) src/main.cpp $(LIBDIR) $(LDFLAGS)
 
 .PHONY: clean
 
