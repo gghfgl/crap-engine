@@ -1,4 +1,22 @@
-TODO
 
-* find memory analyzer too check leak
-* use GDB or other debugger
+GENERAL
+
+- find memory analyzer too check leak
+- use GDB or other debugger
+
+EDITOR
+
+- improve skybox import assets
+- rework editor struct and debug rendering tools
+- move skybox and entities in dedicated "Data" panel
+- implement memorypool visualizer
+- improve click setting panel object after selectinID from world
+- improve coordinate system for positionning objects
+- improve skybox loading assets with hdr
+- run rendering scene from editor
+- fix / improve texture management from assimp model
+- assimp be carefull of texture path (need to update blender mtl file)
+- change to ortho projection
+- implement a console
+- beautyfull light PBR effects
+- improve scene file format (extend with skybox, etc ...)

@@ -1,15 +1,16 @@
-INCLUDE=-Idep/include
-LIBDIR=-Ldep/lib
-#ADDSRC=dep/src/glad.c
+CXX=g++ -std=c++17
+EXE=a.out
 
-CC=g++ -std=c++17
-HARDFLAGS=-Weffc++ -Wsign-conversion
-FLAGS=-pedantic-errors -Wall -Wextra -Wno-error=unused-variable
-CFLAGS=$(FLAGS) $(INCLUDE)
-LDFLAGS=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
-DIRS=$(shell mkdir -p bin)
-LINUX_BINARY=bin/a.out
+SOURCES=src/main.cpp
+SOURCES+=dep/include/IMGUI/*.cpp #TODO: make static lib?
 
+CXXFLAGS=-pedantic-errors -Wall -Wextra
+#CXXFLAGS+=-Weffc++ -Wsign-conversion
+
+CXXFLAGS+=-Idep/include
+CXXFLAGS+=-Ldep/lib
+CXXFLAGS+=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
+CXXFLAGS+=-DIMGUI_IMPL_OPENGL_LOADER_GLAD
 
 build:
 	$(DIRS)
@@ -20,20 +21,9 @@ build:
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
-	$(CC) $(FLAGS) $(INCLUDE) -o $(LINUX_BINARY) src/main.cpp $(LIBDIR) $(LDFLAGS)
-
-build-nodebug:
-	$(DIRS)
-	$(info -----------------------------------------------------)
-	$(info -----------------------------------------------------)
-	$(info -----------------------------------------------------)
-	$(info ------------------- NO WARNING ----------------------)
-	$(info -----------------------------------------------------)
-	$(info -----------------------------------------------------)
-	$(info -----------------------------------------------------)
-	$(CC) $(INCLUDE) -o $(LINUX_BINARY) src/main.cpp $(LIBDIR) $(LDFLAGS)
+	$(CXX) -o $(EXE) $(SOURCES) $(CXXFLAGS)
 
 .PHONY: clean
 
 clean:
-	rm -f bin/*
+	rm -f a.out

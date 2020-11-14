@@ -4,20 +4,20 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-#include "../../dep/src/precompile.h"
-
-#include "internal.h"
-#include "plateform.cpp"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-// TODO: move to dedicated dependency file
+// TODO: make static libs?
+#include "../../dep/src/stb_image.cpp"
+#include "../../dep/src/glad.c"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+#include "internal.h"
+#include "plateform.cpp"
 
 #include "camera.cpp"
 #include "shader.cpp"

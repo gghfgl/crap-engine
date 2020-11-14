@@ -1,8 +1,10 @@
 #pragma once
 
-/* #include "../dep/include/IMGUI/imgui.h" */
-/* #include "../dep/include/IMGUI/imgui_impl_glfw.h" */
-/* #include "../dep/include/IMGUI/imgui_impl_opengl3.h" */
+#include "IMGUI/imgui.h"
+#include "IMGUI/imgui_impl_glfw.h"
+#include "IMGUI/imgui_impl_opengl3.h"
+
+#include "FONTAWESOME/IconsFontAwesome5.h"
 
 static void window_settings_collapse_header(WindowWrapper *Window, InputState *Input);
 static void terrain_settings_collapse_header(terrain_t *Terrain, uint32 &resolution, uint32 maxResolution, bool *showSkybox);
@@ -35,7 +37,7 @@ void InitEditorGui(WindowWrapper* Window)
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
     //io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges );
-    io.Fonts->AddFontFromFileTTF( "../assets/fonts/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
+    io.Fonts->AddFontFromFileTTF( "assets/fonts/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
 
 #if 0
     // Initialize OPENFILENAME

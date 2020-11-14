@@ -1,26 +1,5 @@
 #include "editor.h"
-//#include "editor_gui.h"
-
-/* TODO: EDITOR
-   - improve skybox import assets
-   - rework editor struct and debug rendering tools
-   - move skybox and entities in dedicated "Data" panel
-   - implement memorypool visualizer
-   - improve click setting panel object after selectinID from world
-   - improve coordinate system for positionning objects
-   - improve skybox loading assets with hdr
-   - run rendering scene from editor
-   - fix / improve texture management from assimp model
-   - assimp be carefull of texture path (need to update blender mtl file)
-   - change to ortho projection
-   - implement a console
-   - beautyfull light PBR effects
-   - improve scene file format (extend with skybox, etc ...)
-*/
-
-
-static bool g_ActiveWindow = false; // TODO: !!!!! REMOVE !!!!
-
+#include "editor_gui.h"
 
 void PrepareAxisDebug(mesh_t *Mesh); // TODO: rename origin
 void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution);
@@ -95,7 +74,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	Editor->MeshRay = MeshRay;
 	Editor->Skybox = GenerateSkyboxFromFiles(faces);
 	Editor->ShowSkybox = false;
-     //InitEditorGui(Window);
+     InitEditorGui(Window);
 
     // TODO: tmp wainting editor struct
     PrepareAxisDebug(Editor->MeshAxisDebug);
@@ -285,22 +264,22 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 
         // =================== G.U.I ===================
 
-	    //  // draw GUI
-	    // NewFrameEditorGui();
-	    // ShowWindowStatsOverlay(Window, Renderer);
-	    // ShowEditorPanel(Window,
-         //                Input,
-         //                Camera,
-         //                Terrain,
-         //                g_TerrainResolution,
-         //                g_TerrainMaxResolution,
-         //                &Editor->ShowSkybox,
-         //                SCENE,
-         //                &g_SelectedEntity,
-         //                g_PickingSphereRadius,
-         //                g_ActiveWindow);
+	     // draw GUI
+	    NewFrameEditorGui();
+	    ShowWindowStatsOverlay(Window, Renderer);
+	    ShowEditorPanel(Window,
+                        Input,
+                        Camera,
+                        Terrain,
+                        g_TerrainResolution,
+                        g_TerrainMaxResolution,
+                        &Editor->ShowSkybox,
+                        SCENE,
+                        &g_SelectedEntity,
+                        g_PickingSphereRadius,
+                        g_ActiveWindow);
 
-	    // RenderEditorGui();
+	    RenderEditorGui();
 
 		// TODO:  update memory pool
 		//Renderer->MemoryArena->MaxUsed = 0;
@@ -321,7 +300,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
     Delete(Editor->Skybox);
 	delete Editor;
 
-     //DeleteEditorGui();
+     DeleteEditorGui();
     ClearShaderCache();
 
     Delete(Renderer);
