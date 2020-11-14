@@ -2,6 +2,7 @@ CXX=g++ -std=c++17
 EXE=a.out
 
 SOURCES=src/main.cpp
+SOURCES+=dep/src/glad.c          #TODO: make static lib?
 SOURCES+=dep/include/IMGUI/*.cpp #TODO: make static lib?
 
 CXXFLAGS=-pedantic-errors -Wall -Wextra
