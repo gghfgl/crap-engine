@@ -10,14 +10,14 @@ struct KeyboardEvent
 
 struct MouseEvent
 {
-    float64  posX, posY;
-    float64  lastX, lastY;
-    float32  offsetX, offsetY;
-    float64  scrollOffsetX, scrollOffsetY;
-    bool     leftButton;
-    bool     leftButtonFirstClick;  
-    bool     rightButton;
-    bool     rightButtonFirstClick;  
+    float64 posX, posY;
+    float64 lastX, lastY;
+    float32 offsetX, offsetY;
+    float64 scrollOffsetX, scrollOffsetY;
+    bool leftButton;
+    bool leftButtonFirstClick;  
+    bool rightButton;
+    bool rightButtonFirstClick;  
 };
 
 struct InputState
@@ -28,12 +28,6 @@ struct InputState
 
     KeyboardEvent *Keyboard;
     MouseEvent    *Mouse;
-};
-
-struct RenderInfoAPI {
-    const char*  vendor;
-    const char*  renderer;
-    const char*  version;
 };
 
 struct FrameTime {
@@ -71,9 +65,11 @@ struct Plateform {
     Plateform(uint32 t_width, uint32 t_height, const char *t_title);
     ~Plateform();
 
-    RenderInfoAPI RenderAPI;
     WindowWrapper *Window;
     InputState *Input;
+    const char* vendor;
+    const char* graphicAPI;
+    const char* versionAPI;
 
 private:
     void bind_input();

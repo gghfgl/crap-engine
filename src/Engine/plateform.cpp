@@ -10,35 +10,32 @@ void mouse_scroll_callback(GLFWwindow *window, float64 xoffset, float64 yoffset)
 static KeyboardEvent *g_KEYBOARD_EVENT;
 static MouseEvent *g_MOUSE_EVENT;
 
-Plateform::Plateform(uint32 t_width, uint32 t_height, const char *t_title)
+Plateform::Plateform(uint32 width, uint32 height, const char *title)
 {    
-    Window = new WindowWrapper(t_width, t_height, t_title);
-
-    RenderInfoAPI renderInfoAPI;
-    renderInfoAPI.vendor = (const char *)glGetString(GL_VENDOR);
-    renderInfoAPI.renderer = (const char *)glGetString(GL_RENDERER);
-    renderInfoAPI.version = (const char *)glGetString(GL_VERSION);
-    RenderAPI = renderInfoAPI;
+    this->Window = new WindowWrapper(width, height, title);
+    this->vendor = (const char *)glGetString(GL_VENDOR);
+    this->graphicAPI = (const char *)glGetString(GL_RENDERER);
+    this->versionAPI = (const char *)glGetString(GL_VERSION);
 
     bind_input();
 }
 
 Plateform::~Plateform()
 {
-    delete Window;
-    delete Input;
+    delete this->Window;
+    delete this->Input;
 }
 
 void Plateform::bind_input()
 {
-    int32 t_width, t_height;
+    int32 width, height;
 
-    glfwSetKeyCallback(Window->Context, keyboard_callback);
-    glfwSetMouseButtonCallback(Window->Context, mouse_button_callback);
-    glfwSetCursorPosCallback(Window->Context, cursor_position_callback);
-    glfwSetScrollCallback(Window->Context, mouse_scroll_callback);
-    glfwSetInputMode(Window->Context, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwGetWindowSize(Window->Context, &t_width, &t_height);
+    glfwSetKeyCallback(this->Window->Context, keyboard_callback);
+    glfwSetMouseButtonCallback(this->Window->Context, mouse_button_callback);
+    glfwSetCursorPosCallback(this->Window->Context, cursor_position_callback);
+    glfwSetScrollCallback(this->Window->Context, mouse_scroll_callback);
+    glfwSetInputMode(this->Window->Context, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwGetWindowSize(this->Window->Context, &width, &height);
 
     g_KEYBOARD_EVENT = new KeyboardEvent;
     g_MOUSE_EVENT = new MouseEvent;
@@ -48,92 +45,92 @@ void Plateform::bind_input()
     g_MOUSE_EVENT->offsetY = 0.0f;
     g_MOUSE_EVENT->scrollOffsetX = 0.0f;
     g_MOUSE_EVENT->scrollOffsetY = 0.0f;
-    g_MOUSE_EVENT->lastX = t_width / 2.0f;
-    g_MOUSE_EVENT->lastY = t_height / 2.0f;
+    g_MOUSE_EVENT->lastX = width / 2.0f;
+    g_MOUSE_EVENT->lastY = height / 2.0f;
     g_MOUSE_EVENT->leftButton = false;
     g_MOUSE_EVENT->leftButtonFirstClick = true;
     g_MOUSE_EVENT->rightButton = false;
     g_MOUSE_EVENT->rightButtonFirstClick = true;
 
-    Input = new InputState;
-    Input->Keyboard = g_KEYBOARD_EVENT;
-    Input->Mouse = g_MOUSE_EVENT;
+    this->Input = new InputState;
+    this->Input->Keyboard = g_KEYBOARD_EVENT;
+    this->Input->Mouse = g_MOUSE_EVENT;
 }
 
 InputState::~InputState()
 {
-    delete Keyboard;
-    delete Mouse;
+    delete this->Keyboard;
+    delete this->Mouse;
 }
 
 void InputState::updateMouseOffsets()
 {
-    if (Mouse->leftButtonFirstClick)
+    if (this->Mouse->leftButtonFirstClick)
     {
-        Mouse->lastX = Mouse->posX;
-        Mouse->lastY = Mouse->posY;
-        Mouse->leftButtonFirstClick = false;
+        this->Mouse->lastX = this->Mouse->posX;
+        this->Mouse->lastY = this->Mouse->posY;
+        this->Mouse->leftButtonFirstClick = false;
     }
 
-    Mouse->offsetX = (float32)(Mouse->posX - Mouse->lastX);
-    Mouse->offsetY = (float32)(Mouse->lastY - Mouse->posY);
+    this->Mouse->offsetX = (float32)(this->Mouse->posX - this->Mouse->lastX);
+    this->Mouse->offsetY = (float32)(this->Mouse->lastY - this->Mouse->posY);
 
-    Mouse->lastX = Mouse->posX;
-    Mouse->lastY = Mouse->posY;
+    this->Mouse->lastX = this->Mouse->posX;
+    this->Mouse->lastY = Mouse->posY;
 }
 
 float32 InputState::getMouseScrollOffsetY()
 {
     float32 rValue = (float32)Mouse->scrollOffsetY;
-    Mouse->scrollOffsetY = 0.0f;
+    this->Mouse->scrollOffsetY = 0.0f;
 
     return rValue;
 }
 
-WindowWrapper::WindowWrapper(uint32 t_width, uint32 t_height, const char *t_title)
+WindowWrapper::WindowWrapper(uint32 width, uint32 height, const char *title)
 {
     // GLFW
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwWindowHint(GLFW_SAMPLES, 4); // MSAA 4 samples
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4); // MSAA 4 samples
 
-	GLFWwindow *window = glfwCreateWindow((int)t_width, (int)t_height, t_title, nullptr, nullptr);
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSwapInterval(1);
+    GLFWwindow *window = glfwCreateWindow((int)width, (int)height, title, nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSwapInterval(1);
 
     // OpenGL
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		printf("EXITCODE:666 Failed to initialize GLAD");
-		int exitcode = 666; // TODO: meh ???
-		exit(exitcode);
-	}
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        printf("EXITCODE:666 Failed to initialize GLAD");
+        int exitcode = 666; // TODO: meh ???
+        exit(exitcode);
+    }
 
-	glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
-	glDepthFunc(GL_LESS);
-	// glEnable(GL_CULL_FACE); // face culling
-	// glCullFace(GL_FRONT); // face culling
-	glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
-	// glEnable(GL_BLEND);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glEnable(GL_STENCIL_TEST);
-	// glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	// glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glEnable(GL_DEPTH_TEST); // store z-values in depth/z-buffer
+    glDepthFunc(GL_LESS);
+    // glEnable(GL_CULL_FACE); // face culling
+    // glCullFace(GL_FRONT); // face culling
+    glEnable(GL_MULTISAMPLE); // MSAA enable TODO: on the fly setting
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glEnable(GL_STENCIL_TEST);
+    // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glEnable(GL_LINE_SMOOTH); // TODO: meh? ...
-	glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
-	// glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
+    glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
+    // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
 
-    m_width = t_width;
-    m_height = t_height;
-    m_title = t_title;
-    m_vsync = true;
-    debug = false;
-    Context = window;
+    this->m_width = width;
+    this->m_height = height;
+    this->m_title = title;
+    this->m_vsync = true;
+    this->debug = false;
+    this->Context = window;
 
     set_time();
 }
@@ -141,20 +138,20 @@ WindowWrapper::WindowWrapper(uint32 t_width, uint32 t_height, const char *t_titl
 WindowWrapper::~WindowWrapper()
 {
     terminate_window();
-    delete Time;
+    delete this->Time;
     //delete Context; // TODO: ??
 }
 
 void WindowWrapper::toggleVsync()
 {
-    m_vsync = !m_vsync;
-    glfwSwapInterval(m_vsync);
+    this->m_vsync = !this->m_vsync;
+    glfwSwapInterval(this->m_vsync);
 }
 
 void WindowWrapper::swapBuffer()
 {
-	glfwSwapBuffers(Context);
-	glFinish();
+    glfwSwapBuffers(this->Context);
+    glFinish();
 }
 
 void WindowWrapper::pollEvents()
@@ -165,67 +162,67 @@ void WindowWrapper::pollEvents()
 void WindowWrapper::updateTime()
 {
     float currentFrame = (float32)glfwGetTime();
-    Time->deltaTime = currentFrame - Time->lastFrame;
-    Time->lastFrame = currentFrame;    
+    this->Time->deltaTime = currentFrame - this->Time->lastFrame;
+    this->Time->lastFrame = currentFrame;    
 }
 
 void WindowWrapper::set_time()
 {
-    Time = new FrameTime;
-    Time->deltaTime = 0.0;
-    Time->lastFrame = 0.0;
+    this->Time = new FrameTime;
+    this->Time->deltaTime = 0.0;
+    this->Time->lastFrame = 0.0;
 }
 
 
 void WindowWrapper::terminate_window()
 {
-	glfwDestroyWindow(Context);
-	glfwTerminate();
+    glfwDestroyWindow(this->Context);
+    glfwTerminate();
 }
 
 // ========================================================
 
 void framebuffer_size_callback(GLFWwindow*, int width, int height)
 {
-	glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height);
 }
 void keyboard_callback(GLFWwindow*, int32 key, int32, int32 action, int32)
 {
-	if (key >= 0 && key < 1024)
-	{
-		if (action == GLFW_PRESS)
-		{
-		    g_KEYBOARD_EVENT->isPressed[key] = true;
-		    g_KEYBOARD_EVENT->isReleased[key] = false;
-		}
-		else if (action == GLFW_RELEASE)
-		{
-		    g_KEYBOARD_EVENT->isPressed[key] = false;
-		    g_KEYBOARD_EVENT->isReleased[key] = true;
-		}
-	}
+    if (key >= 0 && key < 1024)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_KEYBOARD_EVENT->isPressed[key] = true;
+            g_KEYBOARD_EVENT->isReleased[key] = false;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_KEYBOARD_EVENT->isPressed[key] = false;
+            g_KEYBOARD_EVENT->isReleased[key] = true;
+        }
+    }
 }
 
 //void mouse_button_callback(GLFWwindow *window, int32 button, int32 action, int32 mods)
 void mouse_button_callback(GLFWwindow*, int32 button, int32 action, int32)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	    g_MOUSE_EVENT->leftButton = true;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        g_MOUSE_EVENT->leftButton = true;
 
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-	{
-	    g_MOUSE_EVENT->leftButton = false;
-	    g_MOUSE_EVENT->leftButtonFirstClick = true;
-	}
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        g_MOUSE_EVENT->leftButton = false;
+        g_MOUSE_EVENT->leftButtonFirstClick = true;
+    }
 
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-	    g_MOUSE_EVENT->rightButton = true;
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        g_MOUSE_EVENT->rightButton = true;
 
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-	{
-	    g_MOUSE_EVENT->rightButton = false;
-	    g_MOUSE_EVENT->rightButtonFirstClick = true;
-	}
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
+    {
+        g_MOUSE_EVENT->rightButton = false;
+        g_MOUSE_EVENT->rightButtonFirstClick = true;
+    }
 }
 
 //void cursor_position_callback(GLFWwindow *window, float64 xpos, float64 ypos)
@@ -246,105 +243,105 @@ void mouse_scroll_callback(GLFWwindow*, float64 xoffset, float64 yoffset)
 // 									 GLenum severity, GLsizei length,
 // 									 const GLchar *msg, const void *data)
 void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id,
-									 GLenum severity, GLsizei,
-									 const GLchar *msg, const void*)
+                                     GLenum severity, GLsizei,
+                                     const GLchar *msg, const void*)
 {
-	if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-	{
-		const char *_source;
-		const char *_type;
-		const char *_severity;
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+    {
+        const char *_source;
+        const char *_type;
+        const char *_severity;
 
-		switch (source)
-		{
-		case GL_DEBUG_SOURCE_API:
-			_source = "API";
-			break;
+        switch (source)
+        {
+        case GL_DEBUG_SOURCE_API:
+            _source = "API";
+            break;
 
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-			_source = "WINDOW SYSTEM";
-			break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            _source = "WINDOW SYSTEM";
+            break;
 
-		case GL_DEBUG_SOURCE_SHADER_COMPILER:
-			_source = "SHADER COMPILER";
-			break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            _source = "SHADER COMPILER";
+            break;
 
-		case GL_DEBUG_SOURCE_THIRD_PARTY:
-			_source = "THIRD PARTY";
-			break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            _source = "THIRD PARTY";
+            break;
 
-		case GL_DEBUG_SOURCE_APPLICATION:
-			_source = "APPLICATION";
-			break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            _source = "APPLICATION";
+            break;
 
-		case GL_DEBUG_SOURCE_OTHER:
-			_source = "UNKNOWN";
-			break;
+        case GL_DEBUG_SOURCE_OTHER:
+            _source = "UNKNOWN";
+            break;
 
-		default:
-			_source = "UNKNOWN";
-			break;
-		}
+        default:
+            _source = "UNKNOWN";
+            break;
+        }
 
-		switch (type)
-		{
-		case GL_DEBUG_TYPE_ERROR:
-			_type = "ERROR";
-			break;
+        switch (type)
+        {
+        case GL_DEBUG_TYPE_ERROR:
+            _type = "ERROR";
+            break;
 
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-			_type = "DEPRECATED BEHAVIOR";
-			break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            _type = "DEPRECATED BEHAVIOR";
+            break;
 
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-			_type = "UDEFINED BEHAVIOR";
-			break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            _type = "UDEFINED BEHAVIOR";
+            break;
 
-		case GL_DEBUG_TYPE_PORTABILITY:
-			_type = "PORTABILITY";
-			break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            _type = "PORTABILITY";
+            break;
 
-		case GL_DEBUG_TYPE_PERFORMANCE:
-			_type = "PERFORMANCE";
-			break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            _type = "PERFORMANCE";
+            break;
 
-		case GL_DEBUG_TYPE_OTHER:
-			_type = "OTHER";
-			break;
+        case GL_DEBUG_TYPE_OTHER:
+            _type = "OTHER";
+            break;
 
-		case GL_DEBUG_TYPE_MARKER:
-			_type = "MARKER";
-			break;
+        case GL_DEBUG_TYPE_MARKER:
+            _type = "MARKER";
+            break;
 
-		default:
-			_type = "UNKNOWN";
-			break;
-		}
+        default:
+            _type = "UNKNOWN";
+            break;
+        }
 
-		switch (severity)
-		{
-		case GL_DEBUG_SEVERITY_HIGH:
-			_severity = "HIGH";
-			break;
+        switch (severity)
+        {
+        case GL_DEBUG_SEVERITY_HIGH:
+            _severity = "HIGH";
+            break;
 
-		case GL_DEBUG_SEVERITY_MEDIUM:
-			_severity = "MEDIUM";
-			break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            _severity = "MEDIUM";
+            break;
 
-		case GL_DEBUG_SEVERITY_LOW:
-			_severity = "LOW";
-			break;
+        case GL_DEBUG_SEVERITY_LOW:
+            _severity = "LOW";
+            break;
 
-		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			_severity = "NOTIFICATION";
-			break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            _severity = "NOTIFICATION";
+            break;
 
-		default:
-			_severity = "UNKNOWN";
-			break;
-		}
+        default:
+            _severity = "UNKNOWN";
+            break;
+        }
 
-		printf("%d: %s of %s severity, raised from %s: %s\n",
-			   id, _type, _severity, _source, msg);
-	}
+        printf("%d: %s of %s severity, raised from %s: %s\n",
+               id, _type, _severity, _source, msg);
+    }
 }

@@ -9,7 +9,7 @@
 static void window_settings_collapse_header(WindowWrapper *Window, InputState *Input);
 static void terrain_settings_collapse_header(terrain_t *Terrain, uint32 &resolution, uint32 maxResolution, bool *showSkybox);
 static void entities_list_collapse_header(std::map<uint32, entity_t*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
-static void camera_settings_collapse_header(camera_t *Camera);
+static void camera_settings_collapse_header(Camera *Camera);
 
 static bool g_ActiveWindow = false;
 const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f; // TODO: static
@@ -101,7 +101,7 @@ void ShowWindowStatsOverlay(WindowWrapper *Window, renderer_t *Renderer)
 // TODO: pass func signature directly? panel as a service?
 void ShowEditorPanel(WindowWrapper *Window,
                      InputState *Input,
-                     camera_t *Camera,
+                     Camera *Camera,
                      terrain_t *Terrain,
                      uint32 &terrainResolution,
                      uint32 terrainMaxResolution,
@@ -307,41 +307,41 @@ static void entities_list_collapse_header(std::map<uint32, entity_t*> *Scene,
     }
 }
 
-static void camera_settings_collapse_header(camera_t *Camera)
+static void camera_settings_collapse_header(Camera *Camera)
 {
     if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::Text("yaw: %.2f", Camera->Settings->Yaw);
-        ImGui::Text("pitch: %.2f", Camera->Settings->Pitch);
-        ImGui::Text("speed: %.2f", Camera->Settings->Speed);
-        ImGui::Text("sensitivity: %.2f", Camera->Settings->Sensitivity);
-        ImGui::Text("fov: %.2f", Camera->Settings->Fov);
+        ImGui::Text("yaw: %.2f", Camera->Settings->yaw);
+        ImGui::Text("pitch: %.2f", Camera->Settings->pitch);
+        ImGui::Text("speed: %.2f", Camera->Settings->speed);
+        ImGui::Text("sensitivity: %.2f", Camera->Settings->sensitivity);
+        ImGui::Text("fov: %.2f", Camera->Settings->fov);
         ImGui::Text("pos: %.2f, %.2f, %.2f",
-                    Camera->Position.x,
-                    Camera->Position.y,
-                    Camera->Position.z);
+                    Camera->position.x,
+                    Camera->position.y,
+                    Camera->position.z);
         ImGui::Text("worldup: %.2f, %.2f, %.2f",
-                    Camera->WorldUp.x,
-                    Camera->WorldUp.y,
-                    Camera->WorldUp.z);
+                    Camera->worldUp.x,
+                    Camera->worldUp.y,
+                    Camera->worldUp.z);
 
         ImVec2 bSize(100, 20);
         if (ImGui::Button("Reset Default", bSize))
         {
-            Camera->Position = glm::vec3(0.0f, 5.0f, 10.0f);
-            Camera->Settings->Yaw = -90.0f;
-            Camera->Settings->Pitch = 0.0f;
-            Camera->Settings->Fov = 45.0f;
-            ProcessMovementAngles(Camera, 0.0f, 0.0f);
+            Camera->position = glm::vec3(0.0f, 5.0f, 10.0f);
+            Camera->Settings->yaw = -90.0f;
+            Camera->Settings->pitch = 0.0f;
+            Camera->Settings->fov = 45.0f;
+            Camera->processMovementAngles(0.0f, 0.0f);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset Up", bSize))
         {
-            Camera->Position = glm::vec3(0.0f, 30.0f, 0.0f);
-            Camera->Settings->Yaw = -90.0f;
-            Camera->Settings->Pitch = -90.0f;
-            Camera->Settings->Fov = 45.0f;
-            ProcessMovementAngles(Camera, 0.0f, 0.0f);
+            Camera->position = glm::vec3(0.0f, 30.0f, 0.0f);
+            Camera->Settings->yaw = -90.0f;
+            Camera->Settings->pitch = -90.0f;
+            Camera->Settings->fov = 45.0f;
+            Camera->processMovementAngles(0.0f, 0.0f);
         }
         ImGui::Separator();
     }

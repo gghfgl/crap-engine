@@ -25,14 +25,15 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 {
 	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
 	// input_t *Input = AllocAndInit(Window->PlatformWindow);
-	camera_t *Camera = AllocAndInit((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
+     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
 	renderer_t *Renderer = AllocAndInit();
 
+
     // TODO: parese a list in a dedicated header file
-    CompileAndCacheShader("./shaders/default.glsl", "default", Camera->ProjectionMatrix);
-    CompileAndCacheShader("./shaders/instanced.glsl", "instanced", Camera->ProjectionMatrix);
-    CompileAndCacheShader("./shaders/color.glsl", "color", Camera->ProjectionMatrix);
-    CompileAndCacheShader("./shaders/skybox.glsl", "skybox", Camera->ProjectionMatrix);
+    CompileAndCacheShader("./shaders/default.glsl", "default", camera->projectionMatrix);
+    CompileAndCacheShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
+    CompileAndCacheShader("./shaders/color.glsl", "color", camera->projectionMatrix);
+    CompileAndCacheShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
 
 	// =================================================
 	// Grid
@@ -90,26 +91,24 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
 			Editor->Active = false;
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_W])
-		    ProcessMovementDirectional(Camera, FORWARD, Window->Time->deltaTime);
+		    camera->processMovementDirection(FORWARD, Window->Time->deltaTime);
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_S])
-		    ProcessMovementDirectional(Camera, BACKWARD, Window->Time->deltaTime);
+		    camera->processMovementDirection(BACKWARD, Window->Time->deltaTime);
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_A])
-		    ProcessMovementDirectional(Camera, LEFT, Window->Time->deltaTime);
+		    camera->processMovementDirection(LEFT, Window->Time->deltaTime);
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_D])
-		    ProcessMovementDirectional(Camera, RIGHT, Window->Time->deltaTime);
+		    camera->processMovementDirection(RIGHT, Window->Time->deltaTime);
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-		    ProcessMovementDirectional(Camera, UP, Window->Time->deltaTime);
+		    camera->processMovementDirection(UP, Window->Time->deltaTime);
 		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-		    ProcessMovementDirectional(Camera, DOWN, Window->Time->deltaTime);
+		    camera->processMovementDirection(DOWN, Window->Time->deltaTime);
 
 		if (Input->Mouse->scrollOffsetY != 0.0f)
 		{
 			if (Input->getMouseScrollOffsetY() > 0)
-			    ProcessMovementDirectional(Camera, FORWARD,
-												   Window->Time->deltaTime, 10.0f);
+			    camera->processMovementDirection(FORWARD, Window->Time->deltaTime, 10.0f);
 			else
-			    ProcessMovementDirectional(Camera, BACKWARD,
-												   Window->Time->deltaTime, 10.0f);
+			    camera->processMovementDirection(BACKWARD, Window->Time->deltaTime, 10.0f);
 		}
 
 		if (Input->Mouse->leftButton)
@@ -125,9 +124,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 			if (!g_ActiveWindow && !g_SelectedEntity)
             {
                 Input->updateMouseOffsets();
-                ProcessMovementAngles(Camera,
-                                              Input->Mouse->offsetX,
-                                              Input->Mouse->offsetY);
+                camera->processMovementAngles(Input->Mouse->offsetX, Input->Mouse->offsetY);
             }
 		}
 		else
@@ -138,8 +135,8 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
                                                     (float32)Input->Mouse->posY,
                                                     Window->getWidth(),
                                                     Window->getHeight(),
-                                                    Camera->ProjectionMatrix,
-                                                    GetViewMatrix(Camera));
+                                                    camera->projectionMatrix,
+                                                    camera->getViewMatrix());
 
           // terrain slider
           if (g_TerrainResolution != Terrain->Resolution)
@@ -157,7 +154,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 				it->second->Position.y,
 				it->second->Position.z);
 
-			if (RaySphereIntersection(Camera->Position,
+			if (RaySphereIntersection(camera->position,
 									  rayWorld,
 									  spherePos,
 									  g_PickingSphereRadius,
@@ -171,7 +168,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 		}
           
 		glm::vec3 pIntersection = glm::vec3(0.0f);
-		if (!RayPlaneIntersection(Camera->Position,
+		if (!RayPlaneIntersection(camera->position,
 								  rayWorld, glm::vec3(0.0f),
 								  glm::vec3(0.0f, 1.0f, 0.0f),
 								  &pIntersection))
@@ -180,7 +177,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 		// NOTE: RENDERING ======================================>
 	    ResetStats(Renderer);
 	    NewRenderingContext();
-		glm::mat4 viewMatrix = GetViewMatrix(Camera);
+		glm::mat4 viewMatrix = camera->getViewMatrix();
 
 		shader_t *ColorShader = GetShaderFromCache("color");
 	    UseProgram(ColorShader);
@@ -196,7 +193,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
         DrawLines(Renderer, Editor->MeshAxisDebug, 2.0f, ColorShader);
 
         // draw mouse ray
-        PushMouseRaySubData(Editor->MeshRay, Camera->Position, rayWorld);
+        PushMouseRaySubData(Editor->MeshRay, camera->position, rayWorld);
         SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
         DrawLines(Renderer, Editor->MeshRay, 1.0f, ColorShader);
 
@@ -269,7 +266,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	    ShowWindowStatsOverlay(Window, Renderer);
 	    ShowEditorPanel(Window,
                         Input,
-                        Camera,
+                        camera,
                         Terrain,
                         g_TerrainResolution,
                         g_TerrainMaxResolution,
@@ -304,7 +301,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
     ClearShaderCache();
 
     Delete(Renderer);
-    Delete(Camera);
+    //delete camera;
 }
 void PrepareAxisDebug(mesh_t *Mesh)
 {    

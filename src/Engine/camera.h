@@ -6,7 +6,7 @@ static const float32 g_DefaultSpeedSetting       =  10.0f;
 static const float32 g_DefaultSensitivitySetting =  0.1f;
 static const float32 g_DefaultFovSetting         =  45.0f;
 
-enum camera_movement
+enum CameraDirection
 {
     FORWARD,
     BACKWARD,
@@ -16,24 +16,38 @@ enum camera_movement
     DOWN
 };
 
-struct camera_settings
+struct CameraSetting
 {
-    float32 Yaw;
-    float32 Pitch;
-    float32 Speed;
-    float32 Sensitivity;
-    float32 Fov;    
+    float32 yaw;
+    float32 pitch;
+    float32 speed;
+    float32 sensitivity;
+    float32 fov;    
 };
 
-struct camera_t
-{
-    camera_settings *Settings;
+struct Camera {
+    Camera(float32 windowWidth, float32 windowHeight,
+           glm::vec3 position, glm::vec3 worldUp,
+           float32 yaw, float32 pitch, float32 speed, float32 sensitivity, float32 fov,
+           float32 nearPlane, float32 farPlane);
+    ~Camera();
+    glm::mat4 getViewMatrix();
+    void processMovementDirection(CameraDirection direction,
+                                  float32 deltaTime,
+                                  float32 acceleration);
+    void processMovementAngles(float32 xoffset,
+                               float32 yoffset,
+                               bool constrainPitch);
+    void processMovementFov(float32 yoffset);
+    
+    CameraSetting *Settings;
+    glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 up;
+    glm::vec3 right;
+    glm::vec3 worldUp;
+    glm::mat4 projectionMatrix;
 
-    glm::vec3 Position;
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::vec3 Right;
-    glm::vec3 WorldUp;
-
-    glm::mat4 ProjectionMatrix;
+private:
+    void update_camera_vectors();
 };
