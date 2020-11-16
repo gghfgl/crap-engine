@@ -1,25 +1,24 @@
 #include "renderer.h"
-#include "shader.h"
+#include "shader.h" // TODO: in header file?
 
-renderer_t *AllocAndInit()
+Renderer::Renderer()
 {
     // // TODO: think about memory pool after Model loader
     // vertex *CubeBuffer = new vertex[globalMaxVertexCount];
     // memory_arena *Arena = new memory_arena();
     // InitMemoryArena(Arena, sizeof(vertex) * globalMaxVertexCount, (int64*)CubeBuffer);
 
-    renderer_t *Renderer = new renderer_t;
-    Renderer->WireframeMode = false;
-    return Renderer;
+    this->wireframe = false;
+    this->stats.drawCalls = 0;
+    this->stats.vertexCount = 0;
 }
 
-void Delete(renderer_t *Renderer)
+Renderer::~Renderer()
 {
     // TODO: delete MemPool
-    delete Renderer;
 }
 
-void NewRenderingContext()
+void Renderer::newContext()
 {
     // ===================== platform code =====================
     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
@@ -27,30 +26,31 @@ void NewRenderingContext()
     // ========================================================
 }
 
-void ResetStats(renderer_t *Renderer)
+void Renderer::resetStats()
 {
-    Renderer->Stats.DrawCalls = 0;
-    Renderer->Stats.VertexCount = 0;
+    this->stats.drawCalls = 0;
+    this->stats.vertexCount = 0;
 }
 
 // TODO: use geometry shader to make wireframe effect on individual object
-void ToggleWireframeMode(renderer_t *Renderer)
+void Renderer::toggleWireframe()
 {
-    Renderer->WireframeMode = !Renderer->WireframeMode;
+    this->wireframe = !this->wireframe;
+
     // ===================== platform code =====================
-    glPolygonMode(GL_FRONT_AND_BACK, (Renderer->WireframeMode ? GL_FILL : GL_LINE));
+    glPolygonMode(GL_FRONT_AND_BACK, (this->wireframe ? GL_FILL : GL_LINE));
     // ========================================================
 }
 
-uint32 PrepareInstancedRendering(Model *model,
+uint32 Renderer::prepareInstance(Model *model,
                                  glm::mat4 *modelMatrices,
-                                 uint32 instanceCount)
+                                 uint32 count)
 {
     uint32 buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER,
-                 instanceCount * sizeof(glm::mat4),
+                 count * sizeof(glm::mat4),
                  &modelMatrices[0],
                  GL_STATIC_DRAW);
 
@@ -86,18 +86,17 @@ uint32 PrepareInstancedRendering(Model *model,
     return buffer;
 }
 
-//void DrawLines(renderer_t *Renderer, mesh_t *Mesh, float32 width, shader_t *Shader)
-void DrawLines(renderer_t *Renderer, Mesh *mesh, float32 width, shader_t*)
+void Renderer::drawLines(Mesh *mesh, float32 width, shader_t *shader)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
     glDrawArrays(GL_LINES, 0, (GLsizei)mesh->Vertices.size());
 
     glBindVertexArray(0);         // good practice
-    Renderer->Stats.DrawCalls++;
+    this->stats.drawCalls++;
 }
 
-void DrawMesh(renderer_t *Renderer, Mesh *mesh, shader_t *Shader)
+void Renderer::drawMesh(Mesh *mesh, shader_t *shader)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -119,7 +118,7 @@ void DrawMesh(renderer_t *Renderer, Mesh *mesh, shader_t *Shader)
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        SetUniform1i(Shader, (name + number).c_str(), i);
+        SetUniform1i(shader, (name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -128,10 +127,10 @@ void DrawMesh(renderer_t *Renderer, Mesh *mesh, shader_t *Shader)
 
     glBindVertexArray(0);         // good practice
     glActiveTexture(GL_TEXTURE0); // good practice
-    Renderer->Stats.DrawCalls++;
+    this->stats.drawCalls++;
 }
     
-void DrawMeshInstanced(renderer_t *Renderer, Mesh *mesh, shader_t *Shader, uint32 instanceCount)
+void Renderer::drawInstanceMesh(Mesh *mesh, shader_t *shader, uint32 count)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -153,7 +152,7 @@ void DrawMeshInstanced(renderer_t *Renderer, Mesh *mesh, shader_t *Shader, uint3
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        SetUniform1i(Shader, (name + number).c_str(), i);
+        SetUniform1i(shader, (name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -162,27 +161,26 @@ void DrawMeshInstanced(renderer_t *Renderer, Mesh *mesh, shader_t *Shader, uint3
                             (GLsizei)mesh->Indices.size(),
                             GL_UNSIGNED_INT,
                             0,
-                            instanceCount);
+                            count);
 
     glBindVertexArray(0);         // good practice
     glActiveTexture(GL_TEXTURE0); // good practice
-    Renderer->Stats.DrawCalls++;
+    this->stats.drawCalls++;
 }
 
-void DrawModel(renderer_t *Renderer, Model *model, shader_t *Shader)
+void Renderer::drawModel(Model *model, shader_t *shader)
 {
     for (uint32 i = 0; i < model->Meshes.size(); i++)
-        DrawMesh(Renderer, model->Meshes[i], Shader);
+        this->drawMesh(model->Meshes[i], shader);
 }
 
-void DrawModelInstanced(renderer_t *Renderer, Model *model, shader_t *Shader, uint32 instanceCount)
+void Renderer::drawInstanceModel(Model *model, shader_t *shader, uint32 count)
 {
     for (uint32 i = 0; i < model->Meshes.size(); i++)
-        DrawMeshInstanced(Renderer, model->Meshes[i], Shader, instanceCount);
+        this->drawInstanceMesh(model->Meshes[i], shader, count);
 }
     
-//void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t *Shader)
-void DrawSkybox(renderer_t *Renderer, Skybox *skybox, shader_t*)
+void Renderer::drawSkybox(Skybox *skybox, shader_t *shader)
 {
     glDepthFunc(GL_LEQUAL);
 
@@ -193,5 +191,5 @@ void DrawSkybox(renderer_t *Renderer, Skybox *skybox, shader_t*)
 
     glBindVertexArray(0);
     glDepthFunc(GL_LESS);
-    Renderer->Stats.DrawCalls++;
+    this->stats.drawCalls++;
 }

@@ -26,7 +26,7 @@ void RunEditorMode(Window *Window, InputState *Input)
 	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
 	// input_t *Input = AllocAndInit(Window->PlatformWindow);
      Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
-	renderer_t *Renderer = AllocAndInit();
+     Renderer *renderer = new Renderer();
 
 
     // TODO: parese a list in a dedicated header file
@@ -175,8 +175,8 @@ void RunEditorMode(Window *Window, InputState *Input)
 			pIntersection = glm::vec3(0.0f);
 
 		// NOTE: RENDERING ======================================>
-	    ResetStats(Renderer);
-	    NewRenderingContext();
+	    renderer->resetStats();
+	    renderer->newContext();
 		glm::mat4 viewMatrix = camera->getViewMatrix();
 
 		shader_t *ColorShader = GetShaderFromCache("color");
@@ -186,22 +186,22 @@ void RunEditorMode(Window *Window, InputState *Input)
 
 		// draw reference grid
         SetUniform4f(ColorShader, "color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-        DrawLines(Renderer, Editor->MeshGrid, 1.0f, ColorShader);
+        renderer->drawLines(Editor->MeshGrid, 1.0f, ColorShader);
 
         // draw axis debug
         SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        DrawLines(Renderer, Editor->MeshAxisDebug, 2.0f, ColorShader);
+        renderer->drawLines(Editor->MeshAxisDebug, 2.0f, ColorShader);
 
         // draw mouse ray
         PushMouseRaySubData(Editor->MeshRay, camera->position, rayWorld);
         SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
-        DrawLines(Renderer, Editor->MeshRay, 1.0f, ColorShader);
+        renderer->drawLines(Editor->MeshRay, 1.0f, ColorShader);
 
         // draw terrain
         if (!terrain->isGenerated)
         {
             terrain->updateModelMatrices(g_TerrainResolution);
-            terrain->instanceBufferID = PrepareInstancedRendering(terrain->entity->model,
+            terrain->instanceBufferID = renderer->prepareInstance(terrain->entity->model,
                                                                   terrain->modelMatrices,
                                                                   terrain->resolution * terrain->resolution);
             terrain->isGenerated = true;
@@ -210,10 +210,9 @@ void RunEditorMode(Window *Window, InputState *Input)
         UseProgram(InstancedShader);
         SetUniform4fv(InstancedShader, "view", viewMatrix);
         SetUniform4fv(InstancedShader, "model", glm::mat4(1.0f));
-        DrawModelInstanced(Renderer,
-                           terrain->entity->model,
-                           InstancedShader,
-                           terrain->resolution * terrain->resolution);
+        renderer->drawInstanceModel(terrain->entity->model,
+                                    InstancedShader,
+                                    terrain->resolution * terrain->resolution);
                   
         // draw objs
         shader_t *DefaultShader = GetShaderFromCache("default");
@@ -237,14 +236,14 @@ void RunEditorMode(Window *Window, InputState *Input)
 								glm::vec3(0.0f, 1.0f, 0.0f));
 		    SetUniform4fv(DefaultShader, "model", model);
 		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    DrawModel(Renderer, it->second->model, DefaultShader);
+		    renderer->drawModel(it->second->model, DefaultShader);
 
 			// Picking sphere
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, it->second->position);
 		    SetUniform4fv(DefaultShader, "model", model);
 		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    DrawMesh(Renderer, it->second->pickingSphere, DefaultShader);
+		    renderer->drawMesh(it->second->pickingSphere, DefaultShader);
 		}
 
         // =================== E.N.V.I.R.O.N.M.E.N.T ===================
@@ -255,14 +254,14 @@ void RunEditorMode(Window *Window, InputState *Input)
 			shader_t *SkyboxShader = GetShaderFromCache("skybox");
 		    UseProgram(SkyboxShader);
 		    SetUniform4fv(SkyboxShader, "view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-		    DrawSkybox(Renderer, Editor->skybox, SkyboxShader);
+		    renderer->drawSkybox(Editor->skybox, SkyboxShader);
 		}
 
         // =================== G.U.I ===================
 
 	     // draw GUI
 	    NewFrameEditorGui();
-	    ShowWindowStatsOverlay(Window, Renderer);
+	    ShowWindowStatsOverlay(Window, renderer);
 	    ShowEditorPanel(Window,
                         Input,
                         camera,
@@ -299,8 +298,8 @@ void RunEditorMode(Window *Window, InputState *Input)
     DeleteEditorGui();
     ClearShaderCache();
 
-    Delete(Renderer);
-    //delete camera;
+    delete renderer;
+    delete camera;
 }
 void PrepareAxisDebug(Mesh *mesh)
 {    

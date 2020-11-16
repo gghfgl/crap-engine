@@ -79,7 +79,7 @@ void RenderEditorGui()
 // ================================================================
 
 // TODO: switch to string rendering
-void ShowWindowStatsOverlay(Window *Window, renderer_t *Renderer)
+void ShowWindowStatsOverlay(Window *Window, Renderer *renderer)
 {
     ImGui::SetNextWindowPos(ImVec2((float32)(Window->getWidth() - 210), 10));
     ImGui::SetNextWindowBgAlpha(0.35f);
@@ -87,13 +87,13 @@ void ShowWindowStatsOverlay(Window *Window, renderer_t *Renderer)
     {
         // TODO: string rendering
         /* ImGui::Text(Window->RenderAPIinfo.Vendor); */
-        /* ImGui::Text(Window->RenderAPIinfo.Renderer); */
+        /* ImGui::Text(Window->RenderAPIinfo.renderer); */
         /* ImGui::Text(Window->RenderAPIinfo.Version); */
         /* ImGui::Separator(); */
         ImGui::Text("ms/f: %.3fms", Window->time->deltaTime);
         //ImGui::Text("fps: %d", Window->time->FPS);
         //ImGui::Text("mcy/f: %d", Window->time->megaCyclePerFrame);
-        ImGui::Text("drawCalls: %d", Renderer->Stats.DrawCalls);
+        ImGui::Text("drawCalls: %d", renderer->stats.drawCalls);
         ImGui::End();
     }
 }

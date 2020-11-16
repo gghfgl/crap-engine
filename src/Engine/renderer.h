@@ -1,14 +1,26 @@
 #pragma once
 
-struct renderer_stats
+struct RendererStat
 {
-    uint32 DrawCalls = 0;
-    int64 VertexCount = 0; // TODO: unit instead ?
+    uint32 drawCalls;
+    int64 vertexCount;
 };
 
-struct renderer_t
+struct Renderer
 {
-    bool WireframeMode;
-
-    renderer_stats Stats;
+    Renderer();
+    ~Renderer();
+    void newContext();
+    void resetStats();
+    void toggleWireframe();
+    uint32 prepareInstance(Model *model, glm::mat4 *modelMatrices, uint32 count);
+    void drawLines(Mesh *mesh, float32 width, shader_t *shader);
+    void drawMesh(Mesh *mesh, shader_t *shader);
+    void drawInstanceMesh(Mesh *mesh, shader_t *shader, uint32 count);
+    void drawModel(Model *model, shader_t *shader);
+    void drawInstanceModel(Model *model, shader_t *shader, uint32 count);
+    void drawSkybox(Skybox *skybox, shader_t *shader);
+    
+    bool wireframe;
+    RendererStat stats;
 };
