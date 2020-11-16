@@ -26,8 +26,8 @@ struct InputState
     void updateMouseOffsets();
     float32 getMouseScrollOffsetY();
 
-    KeyboardEvent *Keyboard;
-    MouseEvent    *Mouse;
+    KeyboardEvent *keyboard;
+    MouseEvent    *mouse;
 };
 
 struct FrameTime {
@@ -37,9 +37,9 @@ struct FrameTime {
     int32   fps;
 };
 
-struct WindowWrapper {
-    WindowWrapper(uint32 t_width, uint32 t_height, const char *t_title);
-    ~WindowWrapper();
+struct Window {
+    Window(uint32 width, uint32 height, const char *title);
+    ~Window();
     uint32 getWidth() { return m_width; };
     uint32 getHeight() { return m_height; };
     bool getVsync() { return m_vsync; };
@@ -49,8 +49,8 @@ struct WindowWrapper {
     void toggleVsync();
     
     bool debug;
-    GLFWwindow *Context;
-    FrameTime *Time;
+    GLFWwindow *context;
+    FrameTime *time;
 
 private:
     void terminate_window();
@@ -62,11 +62,11 @@ private:
 };
 
 struct Plateform {
-    Plateform(uint32 t_width, uint32 t_height, const char *t_title);
+    Plateform(uint32 width, uint32 height, const char *title);
     ~Plateform();
 
-    WindowWrapper *Window;
-    InputState *Input;
+    Window *window;
+    InputState *input;
     const char* vendor;
     const char* graphicAPI;
     const char* versionAPI;

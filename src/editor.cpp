@@ -1,9 +1,9 @@
 #include "editor.h"
 #include "editor_gui.h"
 
-void PrepareAxisDebug(mesh_t *Mesh); // TODO: rename origin
-void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution);
-void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction);
+void PrepareAxisDebug(Mesh *Mesh); // TODO: rename origin
+void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
+void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 // const uint32 g_Width = 1280;
 // const uint32 g_Height = 960;
@@ -21,7 +21,7 @@ const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray inte
 
 const uint32 g_ReferenceGridResolution = 50;
 
-void RunEditorMode(WindowWrapper *Window, InputState *Input)
+void RunEditorMode(Window *Window, InputState *Input)
 {
 	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
 	// input_t *Input = AllocAndInit(Window->PlatformWindow);
@@ -38,24 +38,24 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	// =================================================
 	// Grid
 	std::vector<uint32> uEmpty;
-	std::vector<texture_t> tEmpty;
-	std::vector<vertex_t> vGrid(g_ReferenceGridResolution * 4 + 4, vertex_t());
-	mesh_t *MeshGrid = AllocAndInit(vGrid, uEmpty, tEmpty);
+	std::vector<Texture> tEmpty;
+	std::vector<Vertex> vGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
+     Mesh *MeshGrid = new Mesh(vGrid, uEmpty, tEmpty);
 
-    // Axis Debug
-	std::vector<vertex_t> vAxisDebug(6, vertex_t());
-	mesh_t *MeshAxisDebug = AllocAndInit(vAxisDebug, uEmpty, tEmpty);
+     // Axis Debug
+	std::vector<Vertex> vAxisDebug(6, Vertex());
+     Mesh *MeshAxisDebug = new Mesh(vAxisDebug, uEmpty, tEmpty);
 
 	// Ray
-	std::vector<vertex_t> vRay(2, vertex_t());
-	mesh_t *MeshRay = AllocAndInit(vRay, uEmpty, tEmpty);
+	std::vector<Vertex> vRay(2, Vertex());
+     Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Generate terrain
-    terrain_t *Terrain = AllocAndInit(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
-    Terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
+    Terrain *terrain = new Terrain(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
+    // terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
 
     // Entitys array
-	std::map<uint32, entity_t *> *SCENE = new std::map<uint32, entity_t *>;
+	std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;
 
 	// Skybox
 	std::vector<std::string> faces{
@@ -73,7 +73,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	Editor->MeshGrid = MeshGrid;
 	Editor->MeshAxisDebug = MeshAxisDebug;
 	Editor->MeshRay = MeshRay;
-	Editor->Skybox = GenerateSkyboxFromFiles(faces);
+	Editor->skybox = new Skybox(faces);
 	Editor->ShowSkybox = false;
      InitEditorGui(Window);
 
@@ -88,30 +88,30 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 
 		// NOTE: INPUTS ======================================>
 	    Window->pollEvents();
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
 			Editor->Active = false;
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_W])
-		    camera->processMovementDirection(FORWARD, Window->Time->deltaTime);
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_S])
-		    camera->processMovementDirection(BACKWARD, Window->Time->deltaTime);
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_A])
-		    camera->processMovementDirection(LEFT, Window->Time->deltaTime);
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_D])
-		    camera->processMovementDirection(RIGHT, Window->Time->deltaTime);
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-		    camera->processMovementDirection(UP, Window->Time->deltaTime);
-		if (Input->Keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-		    camera->processMovementDirection(DOWN, Window->Time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
+		    camera->processMovementDirection(FORWARD, Window->time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
+		    camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
+		    camera->processMovementDirection(LEFT, Window->time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
+		    camera->processMovementDirection(RIGHT, Window->time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
+		    camera->processMovementDirection(UP, Window->time->deltaTime);
+		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
+		    camera->processMovementDirection(DOWN, Window->time->deltaTime);
 
-		if (Input->Mouse->scrollOffsetY != 0.0f)
+		if (Input->mouse->scrollOffsetY != 0.0f)
 		{
 			if (Input->getMouseScrollOffsetY() > 0)
-			    camera->processMovementDirection(FORWARD, Window->Time->deltaTime, 10.0f);
+			    camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
 			else
-			    camera->processMovementDirection(BACKWARD, Window->Time->deltaTime, 10.0f);
+			    camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
 		}
 
-		if (Input->Mouse->leftButton)
+		if (Input->mouse->leftButton)
 		{
 			if (g_HoveredEntity != 0)
 				g_SelectedEntity = g_HoveredEntity;
@@ -124,25 +124,25 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 			if (!g_ActiveWindow && !g_SelectedEntity)
             {
                 Input->updateMouseOffsets();
-                camera->processMovementAngles(Input->Mouse->offsetX, Input->Mouse->offsetY);
+                camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
             }
 		}
 		else
             g_DragEntity = 0;
 
 		// NOTE: SIMULATE  ======================================>
-		glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->Mouse->posX,
-                                                    (float32)Input->Mouse->posY,
+		glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
+                                                    (float32)Input->mouse->posY,
                                                     Window->getWidth(),
                                                     Window->getHeight(),
                                                     camera->projectionMatrix,
                                                     camera->getViewMatrix());
 
           // terrain slider
-          if (g_TerrainResolution != Terrain->Resolution)
+          if (g_TerrainResolution != terrain->resolution)
           {
-              Terrain->IsGenerated = false;
-              Terrain->Resolution = g_TerrainResolution;
+              terrain->isGenerated = false;
+              //terrain->resolution = g_TerrainResolution;
           }
         
         // mouse ray intersection sphere selector objects
@@ -150,9 +150,9 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 		{
 			float32 rayIntersection = 0.0f;
 			glm::vec3 spherePos = glm::vec3(
-				it->second->Position.x,
-				it->second->Position.y,
-				it->second->Position.z);
+				it->second->position.x,
+				it->second->position.y,
+				it->second->position.z);
 
 			if (RaySphereIntersection(camera->position,
 									  rayWorld,
@@ -198,23 +198,22 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
         DrawLines(Renderer, Editor->MeshRay, 1.0f, ColorShader);
 
         // draw terrain
-        if (!Terrain->IsGenerated)
+        if (!terrain->isGenerated)
         {
-            CleanInstance(Terrain); // Needed to clear previous matrices pointer and glBuffer
-            Terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
-            Terrain->InstanceBufferID = PrepareInstancedRendering(Terrain->Entity->Model,
-                                                                  Terrain->ModelMatrices,
-                                                                  Terrain->Resolution * Terrain->Resolution);
-            Terrain->IsGenerated = true;
+            terrain->updateModelMatrices(g_TerrainResolution);
+            terrain->instanceBufferID = PrepareInstancedRendering(terrain->entity->model,
+                                                                  terrain->modelMatrices,
+                                                                  terrain->resolution * terrain->resolution);
+            terrain->isGenerated = true;
         }
         shader_t *InstancedShader = GetShaderFromCache("instanced");
         UseProgram(InstancedShader);
         SetUniform4fv(InstancedShader, "view", viewMatrix);
         SetUniform4fv(InstancedShader, "model", glm::mat4(1.0f));
         DrawModelInstanced(Renderer,
-                           Terrain->Entity->Model,
+                           terrain->entity->model,
                            InstancedShader,
-                           Terrain->Resolution * Terrain->Resolution);
+                           terrain->resolution * terrain->resolution);
                   
         // draw objs
         shader_t *DefaultShader = GetShaderFromCache("default");
@@ -228,35 +227,35 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
                 isSelected = true;
 
 			if (g_DragEntity == it->first)
-				it->second->Position = pIntersection;
+				it->second->position = pIntersection;
 
 			// Model
 			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, it->second->Position);
-			model = glm::scale(model, glm::vec3(it->second->Scale));
-			model = glm::rotate(model, glm::radians(it->second->Rotate),
+			model = glm::translate(model, it->second->position);
+			model = glm::scale(model, glm::vec3(it->second->scale));
+			model = glm::rotate(model, glm::radians(it->second->rotate),
 								glm::vec3(0.0f, 1.0f, 0.0f));
 		    SetUniform4fv(DefaultShader, "model", model);
 		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    DrawModel(Renderer, it->second->Model, DefaultShader);
+		    DrawModel(Renderer, it->second->model, DefaultShader);
 
 			// Picking sphere
 			model = glm::mat4(1.0f);
-			model = glm::translate(model, it->second->Position);
+			model = glm::translate(model, it->second->position);
 		    SetUniform4fv(DefaultShader, "model", model);
 		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    DrawMesh(Renderer, it->second->PickingSphere, DefaultShader);
+		    DrawMesh(Renderer, it->second->pickingSphere, DefaultShader);
 		}
 
         // =================== E.N.V.I.R.O.N.M.E.N.T ===================
 
 		// Skybox
-		if (Editor->Skybox != NULL && Editor->ShowSkybox)
+		if (Editor->skybox != NULL && Editor->ShowSkybox)
 		{
 			shader_t *SkyboxShader = GetShaderFromCache("skybox");
 		    UseProgram(SkyboxShader);
 		    SetUniform4fv(SkyboxShader, "view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-		    DrawSkybox(Renderer, Editor->Skybox, SkyboxShader);
+		    DrawSkybox(Renderer, Editor->skybox, SkyboxShader);
 		}
 
         // =================== G.U.I ===================
@@ -267,7 +266,7 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	    ShowEditorPanel(Window,
                         Input,
                         camera,
-                        Terrain,
+                        terrain,
                         g_TerrainResolution,
                         g_TerrainMaxResolution,
                         &Editor->ShowSkybox,
@@ -285,57 +284,57 @@ void RunEditorMode(WindowWrapper *Window, InputState *Input)
 	}
 
 	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
-	    Delete(it->second);
+	    delete it->second;
 	delete SCENE;
 
-     Delete(Terrain);
+     delete terrain;
     
-    // TODO: implement complete full delete Editor method
-    Delete(Editor->MeshGrid);
-    Delete(Editor->MeshAxisDebug);
-    Delete(Editor->MeshRay);
-    Delete(Editor->Skybox);
+     // TODO: implement complete full delete Editor method
+     delete Editor->MeshGrid;
+     delete Editor->MeshAxisDebug;
+     delete Editor->MeshRay;
+     delete Editor->skybox;
 	delete Editor;
 
-     DeleteEditorGui();
+    DeleteEditorGui();
     ClearShaderCache();
 
     Delete(Renderer);
     //delete camera;
 }
-void PrepareAxisDebug(mesh_t *Mesh)
+void PrepareAxisDebug(Mesh *mesh)
 {    
-    Mesh->Vertices.clear();
+    mesh->Vertices.clear();
 
-    vertex_t vXa;
-    vXa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vXa);
-    vertex_t vXb;
-    vXb.Position = glm::vec3(2.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vXb);
+    Vertex vXa;
+    vXa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vXa);
+    Vertex vXb;
+    vXb.position = glm::vec3(2.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vXb);
 
-    vertex_t vYa;
-    vYa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vYa);
-    vertex_t vYb;
-    vYb.Position = glm::vec3(0.0f, 2.0f, 0.0f);
-    Mesh->Vertices.push_back(vYb);
+    Vertex vYa;
+    vYa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vYa);
+    Vertex vYb;
+    vYb.position = glm::vec3(0.0f, 2.0f, 0.0f);
+    mesh->Vertices.push_back(vYb);
 
-    vertex_t vZa;
-    vZa.Position = glm::vec3(0.0f, 0.1f, 0.0f);
-    Mesh->Vertices.push_back(vZa);
-    vertex_t vZb;
-    vZb.Position = glm::vec3(0.0f, 0.1f, -2.0f);
-    Mesh->Vertices.push_back(vZb);
+    Vertex vZa;
+    vZa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vZa);
+    Vertex vZb;
+    vZb.position = glm::vec3(0.0f, 0.1f, -2.0f);
+    mesh->Vertices.push_back(vZb);
     
-    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    Mesh->Vertices.size() * sizeof(vertex_t),
-                    &Mesh->Vertices[0]);
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
 }
 
-void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution)
+void PushReferenceGridSubData(Mesh *mesh, uint32 resolution)
 {
     uint32 vCount = resolution * 4 + 4;			   // 44
     float32 b = (float32)resolution / 2.0f + 1.0f; // 6
@@ -343,63 +342,63 @@ void PushReferenceGridSubData(mesh_t *Mesh, uint32 resolution)
     float32 xPos = -((float32)resolution / 2.0f);  // -5
     float32 zPos = xPos;						   // -5
 
-    Mesh->Vertices.clear();
+    mesh->Vertices.clear();
     uint32 i = 0;
     while (i < vCount / 2) // z axis ->
     {
-        vertex_t v;
+        Vertex v;
         if (i % 2 == 0)
         {
-            v.Position = glm::vec3(a, 0.0f, zPos);
+            v.position = glm::vec3(a, 0.0f, zPos);
         }
         else
         {
-            v.Position = glm::vec3(b, 0.0f, zPos);
+            v.position = glm::vec3(b, 0.0f, zPos);
             zPos += 1.0f;
         }
 
-        Mesh->Vertices.push_back(v);
+        mesh->Vertices.push_back(v);
         i++;
     }
 
     while (i < vCount) // x axis ->
     {
-        vertex_t v;
+        Vertex v;
         if (i % 2 == 0)
         {
-            v.Position = glm::vec3(xPos, 0.0f, a);
+            v.position = glm::vec3(xPos, 0.0f, a);
         }
         else
         {
-            v.Position = glm::vec3(xPos, 0.0f, b);
+            v.position = glm::vec3(xPos, 0.0f, b);
             xPos += 1.0f;
         }
 
-        Mesh->Vertices.push_back(v);
+        mesh->Vertices.push_back(v);
         i++;
     }
         
-    glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    Mesh->Vertices.size() * sizeof(vertex_t),
-                    &Mesh->Vertices[0]);
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
 }
 
-void PushMouseRaySubData(mesh_t *Mesh, glm::vec3 origin, glm::vec3 direction)
+void PushMouseRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
 	glm::vec3 target = origin + (direction * 1.0f);
 
-	Mesh->Vertices.clear();
-	vertex_t v;
-	v.Position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
-	Mesh->Vertices.push_back(v);
-	v.Position = target;
-	Mesh->Vertices.push_back(v);
+     mesh->Vertices.clear();
+     Vertex v;
+	v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
+     mesh->Vertices.push_back(v);
+	v.position = target;
+     mesh->Vertices.push_back(v);
 
-	glBindBuffer(GL_ARRAY_BUFFER, Mesh->VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
 	glBufferSubData(GL_ARRAY_BUFFER,
-					0,
-					Mesh->Vertices.size() * sizeof(vertex_t),
-					&Mesh->Vertices[0]);
+                     0,
+                     mesh->Vertices.size() * sizeof(Vertex),
+                     &mesh->Vertices[0]);
 }

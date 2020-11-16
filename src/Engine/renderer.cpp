@@ -42,7 +42,7 @@ void ToggleWireframeMode(renderer_t *Renderer)
     // ========================================================
 }
 
-uint32 PrepareInstancedRendering(model_t *Model,
+uint32 PrepareInstancedRendering(Model *model,
                                  glm::mat4 *modelMatrices,
                                  uint32 instanceCount)
 {
@@ -54,9 +54,9 @@ uint32 PrepareInstancedRendering(model_t *Model,
                  &modelMatrices[0],
                  GL_STATIC_DRAW);
 
-    for (uint32 i = 0; i < Model->Meshes.size(); i++)
+    for (uint32 i = 0; i < model->Meshes.size(); i++)
     {
-        glBindVertexArray(Model->Meshes[i]->VAO);
+        glBindVertexArray(model->Meshes[i]->VAO);
 
         glEnableVertexAttribArray(5);
         glVertexAttribPointer(5, 4,
@@ -87,17 +87,17 @@ uint32 PrepareInstancedRendering(model_t *Model,
 }
 
 //void DrawLines(renderer_t *Renderer, mesh_t *Mesh, float32 width, shader_t *Shader)
-void DrawLines(renderer_t *Renderer, mesh_t *Mesh, float32 width, shader_t*)
+void DrawLines(renderer_t *Renderer, Mesh *mesh, float32 width, shader_t*)
 {
     glLineWidth(width);
-    glBindVertexArray(Mesh->VAO);
-    glDrawArrays(GL_LINES, 0, (GLsizei)Mesh->Vertices.size());
+    glBindVertexArray(mesh->VAO);
+    glDrawArrays(GL_LINES, 0, (GLsizei)mesh->Vertices.size());
 
     glBindVertexArray(0);         // good practice
     Renderer->Stats.DrawCalls++;
 }
 
-void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
+void DrawMesh(renderer_t *Renderer, Mesh *mesh, shader_t *Shader)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -105,11 +105,11 @@ void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
     uint32 heightNr = 1;
 
     // TODO: improve texture management
-    for (uint32 i = 0; i < Mesh->Textures.size(); i++)
+    for (uint32 i = 0; i < mesh->Textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
         std::string number;
-        std::string name = Mesh->Textures[i].Type;
+        std::string name = mesh->Textures[i].type;
         if (name == "texture_diffuse")
             number = std::to_string(diffuseNr++);
         else if (name == "texture_specular")
@@ -120,18 +120,18 @@ void DrawMesh(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader)
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
         SetUniform1i(Shader, (name + number).c_str(), i);
-        glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].Id);
+        glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
-    glBindVertexArray(Mesh->VAO);
-    glDrawElements(GL_TRIANGLES, (GLsizei)Mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
+    glBindVertexArray(mesh->VAO);
+    glDrawElements(GL_TRIANGLES, (GLsizei)mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
 
     glBindVertexArray(0);         // good practice
     glActiveTexture(GL_TEXTURE0); // good practice
     Renderer->Stats.DrawCalls++;
 }
     
-void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uint32 instanceCount)
+void DrawMeshInstanced(renderer_t *Renderer, Mesh *mesh, shader_t *Shader, uint32 instanceCount)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -139,11 +139,11 @@ void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uin
     uint32 heightNr = 1;
 
     // TODO: improve texture management
-    for (uint32 i = 0; i < Mesh->Textures.size(); i++)
+    for (uint32 i = 0; i < mesh->Textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
         std::string number;
-        std::string name = Mesh->Textures[i].Type;
+        std::string name = mesh->Textures[i].type;
         if (name == "texture_diffuse")
             number = std::to_string(diffuseNr++);
         else if (name == "texture_specular")
@@ -154,12 +154,12 @@ void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uin
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
         SetUniform1i(Shader, (name + number).c_str(), i);
-        glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].Id);
+        glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
-    glBindVertexArray(Mesh->VAO);
+    glBindVertexArray(mesh->VAO);
     glDrawElementsInstanced(GL_TRIANGLES,
-                            (GLsizei)Mesh->Indices.size(),
+                            (GLsizei)mesh->Indices.size(),
                             GL_UNSIGNED_INT,
                             0,
                             instanceCount);
@@ -169,26 +169,26 @@ void DrawMeshInstanced(renderer_t *Renderer, mesh_t *Mesh, shader_t *Shader, uin
     Renderer->Stats.DrawCalls++;
 }
 
-void DrawModel(renderer_t *Renderer, model_t *Model, shader_t *Shader)
+void DrawModel(renderer_t *Renderer, Model *model, shader_t *Shader)
 {
-    for (uint32 i = 0; i < Model->Meshes.size(); i++)
-        DrawMesh(Renderer, Model->Meshes[i], Shader);
+    for (uint32 i = 0; i < model->Meshes.size(); i++)
+        DrawMesh(Renderer, model->Meshes[i], Shader);
 }
 
-void DrawModelInstanced(renderer_t *Renderer, model_t *Model, shader_t *Shader, uint32 instanceCount)
+void DrawModelInstanced(renderer_t *Renderer, Model *model, shader_t *Shader, uint32 instanceCount)
 {
-    for (uint32 i = 0; i < Model->Meshes.size(); i++)
-        DrawMeshInstanced(Renderer, Model->Meshes[i], Shader, instanceCount);
+    for (uint32 i = 0; i < model->Meshes.size(); i++)
+        DrawMeshInstanced(Renderer, model->Meshes[i], Shader, instanceCount);
 }
     
 //void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t *Shader)
-void DrawSkybox(renderer_t *Renderer, skybox_t *Skybox, shader_t*)
+void DrawSkybox(renderer_t *Renderer, Skybox *skybox, shader_t*)
 {
     glDepthFunc(GL_LEQUAL);
 
-    glBindVertexArray(Skybox->VAO);
+    glBindVertexArray(skybox->VAO);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, Skybox->TextureId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->textureID);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(0);

@@ -24,18 +24,18 @@ Camera::Camera(float32 windowWidth, float32 windowHeight,
 			
     // TODO: glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 
-    this->Settings = settings;
+    this->settings = settings;
     this->position = position;
     this->front = glm::vec3(0.0f, 0.0f, -1.0f);
     this->worldUp = worldUp;
     this->projectionMatrix = projection;
 
-    update_camera_vectors();
+    this->update_camera_vectors();
 }
 
 Camera::~Camera()
 {
-    delete this->Settings;
+    delete this->settings;
 }
 
 glm::mat4 Camera::getViewMatrix()
@@ -47,7 +47,7 @@ void Camera::processMovementDirection(CameraDirection direction,
                                       float32 deltaTime,
                                       float32 acceleration = 1.0f)
 {
-    float32 velocity = this->Settings->speed * acceleration * deltaTime;
+    float32 velocity = this->settings->speed * acceleration * deltaTime;
     if (direction == FORWARD)
         this->position += this->front * velocity;
     if (direction == BACKWARD)
@@ -66,17 +66,17 @@ void Camera::processMovementAngles(float32 xoffset,
                                    float32 yoffset,
                                    bool constrainPitch = true)
 {
-    xoffset *= this->Settings->sensitivity;
-    yoffset *= this->Settings->sensitivity;
-    this->Settings->yaw += xoffset;
-    this->Settings->pitch += yoffset;
+    xoffset *= this->settings->sensitivity;
+    yoffset *= this->settings->sensitivity;
+    this->settings->yaw += xoffset;
+    this->settings->pitch += yoffset;
 
     if (constrainPitch)
     {
-        if (this->Settings->pitch > 89.0f)
-            this->Settings->pitch = 89.0f;
-        if (this->Settings->pitch < -89.0f)
-            this->Settings->pitch = -89.0f;
+        if (this->settings->pitch > 89.0f)
+            this->settings->pitch = 89.0f;
+        if (this->settings->pitch < -89.0f)
+            this->settings->pitch = -89.0f;
     }
 
     update_camera_vectors();
@@ -84,21 +84,21 @@ void Camera::processMovementAngles(float32 xoffset,
 
 void Camera::processMovementFov(float32 yoffset)
 {
-    if (this->Settings->fov >= 1.0f && this->Settings->fov <= 45.0f)
-        this->Settings->fov -= yoffset;
-    if (this->Settings->fov <= 1.0f)
-        this->Settings->fov = 1.0f;
-    if (this->Settings->fov >= 45.0f)
-        this->Settings->fov = 45.0f;
+    if (this->settings->fov >= 1.0f && this->settings->fov <= 45.0f)
+        this->settings->fov -= yoffset;
+    if (this->settings->fov <= 1.0f)
+        this->settings->fov = 1.0f;
+    if (this->settings->fov >= 45.0f)
+        this->settings->fov = 45.0f;
 }
 
 void Camera::update_camera_vectors()
 {
     // Calculates the front vector from the Camera's (updated) Euler Angles
     glm::vec3 front;
-    front.x = cos(glm::radians(this->Settings->yaw)) * cos(glm::radians(this->Settings->pitch));
-    front.y = sin(glm::radians(this->Settings->pitch));
-    front.z = sin(glm::radians(this->Settings->yaw)) * cos(glm::radians(this->Settings->pitch));
+    front.x = cos(glm::radians(this->settings->yaw)) * cos(glm::radians(this->settings->pitch));
+    front.y = sin(glm::radians(this->settings->pitch));
+    front.z = sin(glm::radians(this->settings->yaw)) * cos(glm::radians(this->settings->pitch));
     this->front = glm::normalize(front);
     // Also re-calculate the Right and Up vector
     this->right = glm::normalize(glm::cross(this->front, this->worldUp)); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.

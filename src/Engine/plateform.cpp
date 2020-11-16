@@ -12,30 +12,30 @@ static MouseEvent *g_MOUSE_EVENT;
 
 Plateform::Plateform(uint32 width, uint32 height, const char *title)
 {    
-    this->Window = new WindowWrapper(width, height, title);
+    this->window = new Window(width, height, title);
     this->vendor = (const char *)glGetString(GL_VENDOR);
     this->graphicAPI = (const char *)glGetString(GL_RENDERER);
     this->versionAPI = (const char *)glGetString(GL_VERSION);
 
-    bind_input();
+    this->bind_input();
 }
 
 Plateform::~Plateform()
 {
-    delete this->Window;
-    delete this->Input;
+    delete this->window;
+    delete this->input;
 }
 
 void Plateform::bind_input()
 {
     int32 width, height;
 
-    glfwSetKeyCallback(this->Window->Context, keyboard_callback);
-    glfwSetMouseButtonCallback(this->Window->Context, mouse_button_callback);
-    glfwSetCursorPosCallback(this->Window->Context, cursor_position_callback);
-    glfwSetScrollCallback(this->Window->Context, mouse_scroll_callback);
-    glfwSetInputMode(this->Window->Context, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwGetWindowSize(this->Window->Context, &width, &height);
+    glfwSetKeyCallback(this->window->context, keyboard_callback);
+    glfwSetMouseButtonCallback(this->window->context, mouse_button_callback);
+    glfwSetCursorPosCallback(this->window->context, cursor_position_callback);
+    glfwSetScrollCallback(this->window->context, mouse_scroll_callback);
+    glfwSetInputMode(this->window->context, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwGetWindowSize(this->window->context, &width, &height);
 
     g_KEYBOARD_EVENT = new KeyboardEvent;
     g_MOUSE_EVENT = new MouseEvent;
@@ -52,42 +52,42 @@ void Plateform::bind_input()
     g_MOUSE_EVENT->rightButton = false;
     g_MOUSE_EVENT->rightButtonFirstClick = true;
 
-    this->Input = new InputState;
-    this->Input->Keyboard = g_KEYBOARD_EVENT;
-    this->Input->Mouse = g_MOUSE_EVENT;
+    this->input = new InputState;
+    this->input->keyboard = g_KEYBOARD_EVENT;
+    this->input->mouse = g_MOUSE_EVENT;
 }
 
 InputState::~InputState()
 {
-    delete this->Keyboard;
-    delete this->Mouse;
+    delete this->keyboard;
+    delete this->mouse;
 }
 
 void InputState::updateMouseOffsets()
 {
-    if (this->Mouse->leftButtonFirstClick)
+    if (this->mouse->leftButtonFirstClick)
     {
-        this->Mouse->lastX = this->Mouse->posX;
-        this->Mouse->lastY = this->Mouse->posY;
-        this->Mouse->leftButtonFirstClick = false;
+        this->mouse->lastX = this->mouse->posX;
+        this->mouse->lastY = this->mouse->posY;
+        this->mouse->leftButtonFirstClick = false;
     }
 
-    this->Mouse->offsetX = (float32)(this->Mouse->posX - this->Mouse->lastX);
-    this->Mouse->offsetY = (float32)(this->Mouse->lastY - this->Mouse->posY);
+    this->mouse->offsetX = (float32)(this->mouse->posX - this->mouse->lastX);
+    this->mouse->offsetY = (float32)(this->mouse->lastY - this->mouse->posY);
 
-    this->Mouse->lastX = this->Mouse->posX;
-    this->Mouse->lastY = Mouse->posY;
+    this->mouse->lastX = this->mouse->posX;
+    this->mouse->lastY = this->mouse->posY;
 }
 
 float32 InputState::getMouseScrollOffsetY()
 {
-    float32 rValue = (float32)Mouse->scrollOffsetY;
-    this->Mouse->scrollOffsetY = 0.0f;
+    float32 rValue = (float32)this->mouse->scrollOffsetY;
+    this->mouse->scrollOffsetY = 0.0f;
 
     return rValue;
 }
 
-WindowWrapper::WindowWrapper(uint32 width, uint32 height, const char *title)
+Window::Window(uint32 width, uint32 height, const char *title)
 {
     // GLFW
     glfwInit();
@@ -130,53 +130,53 @@ WindowWrapper::WindowWrapper(uint32 width, uint32 height, const char *title)
     this->m_title = title;
     this->m_vsync = true;
     this->debug = false;
-    this->Context = window;
+    this->context = window;
 
-    set_time();
+    this->set_time();
 }
 
-WindowWrapper::~WindowWrapper()
+Window::~Window()
 {
     terminate_window();
-    delete this->Time;
+    delete this->time;
     //delete Context; // TODO: ??
 }
 
-void WindowWrapper::toggleVsync()
+void Window::toggleVsync()
 {
     this->m_vsync = !this->m_vsync;
     glfwSwapInterval(this->m_vsync);
 }
 
-void WindowWrapper::swapBuffer()
+void Window::swapBuffer()
 {
-    glfwSwapBuffers(this->Context);
+    glfwSwapBuffers(this->context);
     glFinish();
 }
 
-void WindowWrapper::pollEvents()
+void Window::pollEvents()
 {
     glfwPollEvents();
 }
 
-void WindowWrapper::updateTime()
+void Window::updateTime()
 {
     float currentFrame = (float32)glfwGetTime();
-    this->Time->deltaTime = currentFrame - this->Time->lastFrame;
-    this->Time->lastFrame = currentFrame;    
+    this->time->deltaTime = currentFrame - this->time->lastFrame;
+    this->time->lastFrame = currentFrame;    
 }
 
-void WindowWrapper::set_time()
+void Window::set_time()
 {
-    this->Time = new FrameTime;
-    this->Time->deltaTime = 0.0;
-    this->Time->lastFrame = 0.0;
+    this->time = new FrameTime;
+    this->time->deltaTime = 0.0;
+    this->time->lastFrame = 0.0;
 }
 
 
-void WindowWrapper::terminate_window()
+void Window::terminate_window()
 {
-    glfwDestroyWindow(this->Context);
+    glfwDestroyWindow(this->context);
     glfwTerminate();
 }
 

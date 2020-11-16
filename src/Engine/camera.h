@@ -40,7 +40,7 @@ struct Camera {
                                bool constrainPitch);
     void processMovementFov(float32 yoffset);
     
-    CameraSetting *Settings;
+    CameraSetting *settings;
     glm::vec3 position;
     glm::vec3 front;
     glm::vec3 up;

@@ -9,7 +9,7 @@ int main(int, char**)
 {
     Plateform *plateform = new Plateform(c_Width, c_Height, "crapengine_editor");
 
-    RunEditorMode(plateform->Window, plateform->Input);    
+    RunEditorMode(plateform->window, plateform->input);    
 
     delete plateform;
     

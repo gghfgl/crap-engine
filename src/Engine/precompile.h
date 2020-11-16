@@ -21,7 +21,7 @@
 #include "camera.cpp"
 #include "shader.cpp"
 // #include "texture.cpp"
-#include "mesh.cpp"
+//#include "mesh.cpp"
 #include "entity.cpp"
 #include "ray.cpp"
 #include "renderer.cpp"

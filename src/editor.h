@@ -3,10 +3,10 @@
 struct editor_t
 {
 	bool Active;
-	mesh_t *MeshGrid; // TODO: reference grid
-	mesh_t *MeshAxisDebug;
-	mesh_t *MeshRay;
+     Mesh *MeshGrid; // TODO: reference grid
+     Mesh *MeshAxisDebug;
+     Mesh *MeshRay;
 	uint32 GridResolution;
-	skybox_t *Skybox; // TODO: add skybox load from file in panel with min
+     Skybox *skybox; // TODO: add skybox load from file in panel with min
 	bool ShowSkybox;
 };
