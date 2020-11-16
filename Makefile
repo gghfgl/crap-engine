@@ -26,5 +26,8 @@ build:
 
 .PHONY: clean
 
+valgrind:
+	valgrind --leak-check=full --track-origins=yes ./a.out
+
 clean:
 	rm -f a.out
