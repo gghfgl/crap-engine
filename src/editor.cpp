@@ -23,246 +23,248 @@ const uint32 g_ReferenceGridResolution = 50;
 
 void RunEditorMode(Window *Window, InputState *Input)
 {
-	// window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
-	// input_t *Input = AllocAndInit(Window->PlatformWindow);
-     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
-     Renderer *renderer = new Renderer();
+    // window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
+    // input_t *Input = AllocAndInit(Window->PlatformWindow);
+    Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
+    Renderer *renderer = new Renderer();
 
 
-    // TODO: parese a list in a dedicated header file
-    CompileAndCacheShader("./shaders/default.glsl", "default", camera->projectionMatrix);
-    CompileAndCacheShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
-    CompileAndCacheShader("./shaders/color.glsl", "color", camera->projectionMatrix);
-    CompileAndCacheShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
+    // TODO: parse a list in a dedicated header file
+    ShaderCache *sCache = new ShaderCache();
+    sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
+    sCache->compileAndAddShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
+    sCache->compileAndAddShader("./shaders/color.glsl", "color", camera->projectionMatrix);
+    sCache->compileAndAddShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
 
-	// =================================================
-	// Grid
-	std::vector<uint32> uEmpty;
-	std::vector<Texture> tEmpty;
-	std::vector<Vertex> vGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
-     Mesh *MeshGrid = new Mesh(vGrid, uEmpty, tEmpty);
+    // =================================================
+    // Grid
+    std::vector<uint32> uEmpty;
+    std::vector<Texture> tEmpty;
+    std::vector<Vertex> vGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
+    Mesh *MeshGrid = new Mesh(vGrid, uEmpty, tEmpty);
 
-     // Axis Debug
-	std::vector<Vertex> vAxisDebug(6, Vertex());
-     Mesh *MeshAxisDebug = new Mesh(vAxisDebug, uEmpty, tEmpty);
+    // Axis Debug
+    std::vector<Vertex> vAxisDebug(6, Vertex());
+    Mesh *MeshAxisDebug = new Mesh(vAxisDebug, uEmpty, tEmpty);
 
-	// Ray
-	std::vector<Vertex> vRay(2, Vertex());
-     Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
+    // Ray
+    std::vector<Vertex> vRay(2, Vertex());
+    Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Generate terrain
     Terrain *terrain = new Terrain(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
     // terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
 
     // Entitys array
-	std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;
+    std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;
 
-	// Skybox
-	std::vector<std::string> faces{
-		"./assets/skybox/test/right.jpg",
-		"./assets/skybox/test/left.jpg",
-		"./assets/skybox/test/top.jpg",
-		"./assets/skybox/test/bottom.jpg",
-		"./assets/skybox/test/front.jpg",
-		"./assets/skybox/test/back.jpg"};
-	// =================================================
+    // Skybox
+    std::vector<std::string> faces{
+        "./assets/skybox/test/right.jpg",
+        "./assets/skybox/test/left.jpg",
+        "./assets/skybox/test/top.jpg",
+        "./assets/skybox/test/bottom.jpg",
+        "./assets/skybox/test/front.jpg",
+        "./assets/skybox/test/back.jpg"};
+    // =================================================
     
-	editor_t *Editor = new editor_t;
-	Editor->Active = true;
-	Editor->GridResolution = 0; //TODO: remove?
-	Editor->MeshGrid = MeshGrid;
-	Editor->MeshAxisDebug = MeshAxisDebug;
-	Editor->MeshRay = MeshRay;
-	Editor->skybox = new Skybox(faces);
-	Editor->ShowSkybox = false;
-     InitEditorGui(Window);
+    editor_t *Editor = new editor_t;
+    Editor->Active = true;
+    Editor->GridResolution = 0; //TODO: remove?
+    Editor->MeshGrid = MeshGrid;
+    Editor->MeshAxisDebug = MeshAxisDebug;
+    Editor->MeshRay = MeshRay;
+    Editor->skybox = new Skybox(faces);
+    Editor->ShowSkybox = false;
+    InitEditorGui(Window);
 
     // TODO: tmp wainting editor struct
     PrepareAxisDebug(Editor->MeshAxisDebug);
     PushReferenceGridSubData(Editor->MeshGrid, g_ReferenceGridResolution);
-	// =============================
+    // =============================
 
-	while (Editor->Active)
-	{
-	    Window->updateTime();
+    while (Editor->Active)
+    {
+        Window->updateTime();
 
-		// NOTE: INPUTS ======================================>
-	    Window->pollEvents();
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-			Editor->Active = false;
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
-		    camera->processMovementDirection(FORWARD, Window->time->deltaTime);
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
-		    camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
-		    camera->processMovementDirection(LEFT, Window->time->deltaTime);
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
-		    camera->processMovementDirection(RIGHT, Window->time->deltaTime);
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-		    camera->processMovementDirection(UP, Window->time->deltaTime);
-		if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-		    camera->processMovementDirection(DOWN, Window->time->deltaTime);
+        // NOTE: INPUTS ======================================>
+        Window->pollEvents();
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
+            Editor->Active = false;
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
+            camera->processMovementDirection(FORWARD, Window->time->deltaTime);
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
+            camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
+            camera->processMovementDirection(LEFT, Window->time->deltaTime);
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
+            camera->processMovementDirection(RIGHT, Window->time->deltaTime);
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
+            camera->processMovementDirection(UP, Window->time->deltaTime);
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
+            camera->processMovementDirection(DOWN, Window->time->deltaTime);
 
-		if (Input->mouse->scrollOffsetY != 0.0f)
-		{
-			if (Input->getMouseScrollOffsetY() > 0)
-			    camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
-			else
-			    camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
-		}
+        if (Input->mouse->scrollOffsetY != 0.0f)
+        {
+            if (Input->getMouseScrollOffsetY() > 0)
+                camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
+            else
+                camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
+        }
 
-		if (Input->mouse->leftButton)
-		{
-			if (g_HoveredEntity != 0)
-				g_SelectedEntity = g_HoveredEntity;
-			else if (g_DragEntity == 0 && !g_ActiveWindow)
-				g_SelectedEntity = 0;
+        if (Input->mouse->leftButton)
+        {
+            if (g_HoveredEntity != 0)
+                g_SelectedEntity = g_HoveredEntity;
+            else if (g_DragEntity == 0 && !g_ActiveWindow)
+                g_SelectedEntity = 0;
 
-			if (g_SelectedEntity != 0 && !g_ActiveWindow)
-				g_DragEntity = g_SelectedEntity;
+            if (g_SelectedEntity != 0 && !g_ActiveWindow)
+                g_DragEntity = g_SelectedEntity;
 
-			if (!g_ActiveWindow && !g_SelectedEntity)
+            if (!g_ActiveWindow && !g_SelectedEntity)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
             }
-		}
-		else
+        }
+        else
             g_DragEntity = 0;
 
-		// NOTE: SIMULATE  ======================================>
-		glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
+        // NOTE: SIMULATE  ======================================>
+        glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
                                                     (float32)Input->mouse->posY,
                                                     Window->getWidth(),
                                                     Window->getHeight(),
                                                     camera->projectionMatrix,
                                                     camera->getViewMatrix());
 
-          // terrain slider
-          if (g_TerrainResolution != terrain->resolution)
-          {
-              terrain->isGenerated = false;
-              //terrain->resolution = g_TerrainResolution;
-          }
+        // terrain slider
+        if (g_TerrainResolution != terrain->resolution)
+        {
+            terrain->isGenerated = false;
+            //terrain->resolution = g_TerrainResolution;
+        }
         
         // mouse ray intersection sphere selector objects
-		for (auto it = SCENE->begin(); it != SCENE->end(); it++)
-		{
-			float32 rayIntersection = 0.0f;
-			glm::vec3 spherePos = glm::vec3(
-				it->second->position.x,
-				it->second->position.y,
-				it->second->position.z);
+        for (auto it = SCENE->begin(); it != SCENE->end(); it++)
+        {
+            float32 rayIntersection = 0.0f;
+            glm::vec3 spherePos = glm::vec3(
+                it->second->position.x,
+                it->second->position.y,
+                it->second->position.z);
 
-			if (RaySphereIntersection(camera->position,
-									  rayWorld,
-									  spherePos,
-									  g_PickingSphereRadius,
-									  &rayIntersection))
-			{
-				g_HoveredEntity = it->first;
-				break;
-			}
-			else
-				g_HoveredEntity = 0;
-		}
+            if (RaySphereIntersection(camera->position,
+                                      rayWorld,
+                                      spherePos,
+                                      g_PickingSphereRadius,
+                                      &rayIntersection))
+            {
+                g_HoveredEntity = it->first;
+                break;
+            }
+            else
+                g_HoveredEntity = 0;
+        }
           
-		glm::vec3 pIntersection = glm::vec3(0.0f);
-		if (!RayPlaneIntersection(camera->position,
-								  rayWorld, glm::vec3(0.0f),
-								  glm::vec3(0.0f, 1.0f, 0.0f),
-								  &pIntersection))
-			pIntersection = glm::vec3(0.0f);
+        glm::vec3 pIntersection = glm::vec3(0.0f);
+        if (!RayPlaneIntersection(camera->position,
+                                  rayWorld, glm::vec3(0.0f),
+                                  glm::vec3(0.0f, 1.0f, 0.0f),
+                                  &pIntersection))
+            pIntersection = glm::vec3(0.0f);
 
-		// NOTE: RENDERING ======================================>
-	    renderer->resetStats();
-	    renderer->newContext();
-		glm::mat4 viewMatrix = camera->getViewMatrix();
+        // NOTE: RENDERING ======================================>
+        renderer->resetStats();
+        renderer->newContext();
+        glm::mat4 viewMatrix = camera->getViewMatrix();
 
-		shader_t *ColorShader = GetShaderFromCache("color");
-	    UseProgram(ColorShader);
-		SetUniform4fv(ColorShader, "view", viewMatrix);
-	    SetUniform4fv(ColorShader, "model", glm::mat4(1.0f));
+        Shader *colorShader = sCache->getShader("color");
+        colorShader->useProgram();
+        colorShader->setUniform4fv("view", viewMatrix);
+        colorShader->setUniform4fv("model", glm::mat4(1.0f));
 
-		// draw reference grid
-        SetUniform4f(ColorShader, "color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-        renderer->drawLines(Editor->MeshGrid, 1.0f, ColorShader);
+        // draw reference grid
+        colorShader->setUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
+        renderer->drawLines(Editor->MeshGrid, 1.0f, colorShader);
 
         // draw axis debug
-        SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        renderer->drawLines(Editor->MeshAxisDebug, 2.0f, ColorShader);
+        colorShader->setUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        renderer->drawLines(Editor->MeshAxisDebug, 2.0f, colorShader);
 
         // draw mouse ray
         PushMouseRaySubData(Editor->MeshRay, camera->position, rayWorld);
-        SetUniform4f(ColorShader, "color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
-        renderer->drawLines(Editor->MeshRay, 1.0f, ColorShader);
+        colorShader->setUniform4f("color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
+        renderer->drawLines(Editor->MeshRay, 1.0f, colorShader);
 
         // draw terrain
         if (!terrain->isGenerated)
         {
+            terrain->clearInstance();
             terrain->updateModelMatrices(g_TerrainResolution);
             terrain->instanceBufferID = renderer->prepareInstance(terrain->entity->model,
                                                                   terrain->modelMatrices,
                                                                   terrain->resolution * terrain->resolution);
             terrain->isGenerated = true;
         }
-        shader_t *InstancedShader = GetShaderFromCache("instanced");
-        UseProgram(InstancedShader);
-        SetUniform4fv(InstancedShader, "view", viewMatrix);
-        SetUniform4fv(InstancedShader, "model", glm::mat4(1.0f));
+        Shader *instancedShader = sCache->getShader("instanced");
+        instancedShader->useProgram();
+        instancedShader->setUniform4fv("view", viewMatrix);
+        instancedShader->setUniform4fv("model", glm::mat4(1.0f));
         renderer->drawInstanceModel(terrain->entity->model,
-                                    InstancedShader,
+                                    instancedShader,
                                     terrain->resolution * terrain->resolution);
                   
         // draw objs
-        shader_t *DefaultShader = GetShaderFromCache("default");
-        UseProgram(DefaultShader);
-        SetUniform4fv(DefaultShader, "view", viewMatrix);
-        SetUniform4fv(DefaultShader, "model", glm::mat4(1.0f));
+        Shader *defaultShader = sCache->getShader("default");
+        defaultShader->useProgram();
+        defaultShader->setUniform4fv("view", viewMatrix);
+        defaultShader->setUniform4fv("model", glm::mat4(1.0f));
         for (auto it = SCENE->begin(); it != SCENE->end(); it++)
         {
             bool isSelected = false;
             if (g_HoveredEntity == it->first || g_SelectedEntity == it->first)
                 isSelected = true;
 
-			if (g_DragEntity == it->first)
-				it->second->position = pIntersection;
+            if (g_DragEntity == it->first)
+                it->second->position = pIntersection;
 
-			// Model
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, it->second->position);
-			model = glm::scale(model, glm::vec3(it->second->scale));
-			model = glm::rotate(model, glm::radians(it->second->rotate),
-								glm::vec3(0.0f, 1.0f, 0.0f));
-		    SetUniform4fv(DefaultShader, "model", model);
-		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    renderer->drawModel(it->second->model, DefaultShader);
+            // Model
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, it->second->position);
+            model = glm::scale(model, glm::vec3(it->second->scale));
+            model = glm::rotate(model, glm::radians(it->second->rotate),
+                                glm::vec3(0.0f, 1.0f, 0.0f));
+            defaultShader->setUniform4fv("model", model);
+            defaultShader->setUniform1ui("flip_color", isSelected);
+            renderer->drawModel(it->second->model, defaultShader);
 
-			// Picking sphere
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, it->second->position);
-		    SetUniform4fv(DefaultShader, "model", model);
-		    SetUniform1ui(DefaultShader, "flip_color", isSelected);
-		    renderer->drawMesh(it->second->pickingSphere, DefaultShader);
-		}
+            // Picking sphere
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, it->second->position);
+            defaultShader->setUniform4fv("model", model);
+            defaultShader->setUniform1ui("flip_color", isSelected);
+            renderer->drawMesh(it->second->pickingSphere, defaultShader);
+        }
 
         // =================== E.N.V.I.R.O.N.M.E.N.T ===================
 
-		// Skybox
-		if (Editor->skybox != NULL && Editor->ShowSkybox)
-		{
-			shader_t *SkyboxShader = GetShaderFromCache("skybox");
-		    UseProgram(SkyboxShader);
-		    SetUniform4fv(SkyboxShader, "view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-		    renderer->drawSkybox(Editor->skybox, SkyboxShader);
-		}
+        // Skybox
+        if (Editor->skybox != NULL && Editor->ShowSkybox)
+        {
+            Shader *skyboxShader = sCache->getShader("skybox");
+            skyboxShader->useProgram();
+            skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
+            renderer->drawSkybox(Editor->skybox, skyboxShader);
+        }
 
         // =================== G.U.I ===================
 
-	     // draw GUI
-	    NewFrameEditorGui();
-	    ShowWindowStatsOverlay(Window, renderer);
-	    ShowEditorPanel(Window,
+        // draw GUI
+        NewFrameEditorGui();
+        ShowWindowStatsOverlay(Window, renderer);
+        ShowEditorPanel(Window,
                         Input,
                         camera,
                         terrain,
@@ -274,29 +276,30 @@ void RunEditorMode(Window *Window, InputState *Input)
                         g_PickingSphereRadius,
                         g_ActiveWindow);
 
-	    RenderEditorGui();
+        RenderEditorGui();
 
-		// TODO:  update memory pool
-		//Renderer->MemoryArena->MaxUsed = 0;
+        // TODO:  update memory pool
+        //Renderer->MemoryArena->MaxUsed = 0;
 
-	    Window->swapBuffer();
-	}
+        Window->swapBuffer();
+    }
 
-	for (auto it = SCENE->begin(); it != SCENE->end(); it++)
-	    delete it->second;
-	delete SCENE;
+    for (auto it = SCENE->begin(); it != SCENE->end(); it++)
+        delete it->second;
+    delete SCENE;
 
-     delete terrain;
+    delete terrain;
     
-     // TODO: implement complete full delete Editor method
-     delete Editor->MeshGrid;
-     delete Editor->MeshAxisDebug;
-     delete Editor->MeshRay;
-     delete Editor->skybox;
-	delete Editor;
+    // TODO: implement complete full delete Editor method
+    delete Editor->MeshGrid;
+    delete Editor->MeshAxisDebug;
+    delete Editor->MeshRay;
+    delete Editor->skybox;
+    delete Editor;
+
+    delete sCache;
 
     DeleteEditorGui();
-    ClearShaderCache();
 
     delete renderer;
     delete camera;
@@ -386,18 +389,18 @@ void PushReferenceGridSubData(Mesh *mesh, uint32 resolution)
 
 void PushMouseRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
-	glm::vec3 target = origin + (direction * 1.0f);
+    glm::vec3 target = origin + (direction * 1.0f);
 
-     mesh->Vertices.clear();
-     Vertex v;
-	v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
-     mesh->Vertices.push_back(v);
-	v.position = target;
-     mesh->Vertices.push_back(v);
+    mesh->Vertices.clear();
+    Vertex v;
+    v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
+    mesh->Vertices.push_back(v);
+    v.position = target;
+    mesh->Vertices.push_back(v);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,
-                     0,
-                     mesh->Vertices.size() * sizeof(Vertex),
-                     &mesh->Vertices[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
 }

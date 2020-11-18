@@ -86,7 +86,7 @@ uint32 Renderer::prepareInstance(Model *model,
     return buffer;
 }
 
-void Renderer::drawLines(Mesh *mesh, float32 width, shader_t *shader)
+void Renderer::drawLines(Mesh *mesh, float32 width, Shader *shader)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
@@ -96,7 +96,7 @@ void Renderer::drawLines(Mesh *mesh, float32 width, shader_t *shader)
     this->stats.drawCalls++;
 }
 
-void Renderer::drawMesh(Mesh *mesh, shader_t *shader)
+void Renderer::drawMesh(Mesh *mesh, Shader *shader)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -118,7 +118,7 @@ void Renderer::drawMesh(Mesh *mesh, shader_t *shader)
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        SetUniform1i(shader, (name + number).c_str(), i);
+        shader->setUniform1i((name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -130,7 +130,7 @@ void Renderer::drawMesh(Mesh *mesh, shader_t *shader)
     this->stats.drawCalls++;
 }
     
-void Renderer::drawInstanceMesh(Mesh *mesh, shader_t *shader, uint32 count)
+void Renderer::drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -152,7 +152,7 @@ void Renderer::drawInstanceMesh(Mesh *mesh, shader_t *shader, uint32 count)
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        SetUniform1i(shader, (name + number).c_str(), i);
+        shader->setUniform1i((name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -168,19 +168,19 @@ void Renderer::drawInstanceMesh(Mesh *mesh, shader_t *shader, uint32 count)
     this->stats.drawCalls++;
 }
 
-void Renderer::drawModel(Model *model, shader_t *shader)
+void Renderer::drawModel(Model *model, Shader *shader)
 {
     for (uint32 i = 0; i < model->Meshes.size(); i++)
         this->drawMesh(model->Meshes[i], shader);
 }
 
-void Renderer::drawInstanceModel(Model *model, shader_t *shader, uint32 count)
+void Renderer::drawInstanceModel(Model *model, Shader *shader, uint32 count)
 {
     for (uint32 i = 0; i < model->Meshes.size(); i++)
         this->drawInstanceMesh(model->Meshes[i], shader, count);
 }
     
-void Renderer::drawSkybox(Skybox *skybox, shader_t *shader)
+void Renderer::drawSkybox(Skybox *skybox, Shader *shader)
 {
     glDepthFunc(GL_LEQUAL);
 

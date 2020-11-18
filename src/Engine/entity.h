@@ -74,6 +74,7 @@ struct Terrain
     Terrain(uint32 resolution, glm::vec3 unitSize, std::string const &modelFilePath);
     ~Terrain();
     void updateModelMatrices(uint32 sideLenght);
+    void clearInstance();
     
     Entity *entity; // TODO: why pointer?
     uint32 resolution; // default size
@@ -81,9 +82,6 @@ struct Terrain
     uint32 instanceBufferID;
     bool isGenerated = false;
     glm::mat4 *modelMatrices;
-
-private:
-    void clear_instance();
 };
 
 struct Skybox

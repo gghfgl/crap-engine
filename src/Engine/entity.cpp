@@ -354,6 +354,26 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
     return textureID;
 }
 
+// static uint32 LoadTextureFromFile(const std::string& path)
+// {
+//     int w, h, bits;
+//     stbi_set_flip_vertically_on_load(1);
+//     unsigned char *data = stbi_load(path.c_str(), &w, &h, &bits, STBI_rgb);
+
+//     uint32 textureID;
+//     glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
+//     glBindTexture(GL_TEXTURE_2D, textureID);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // TODO REPEAT ?
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // TODO REPEAT ?
+//     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+//     stbi_image_free(data);
+
+//     return textureID;
+// }
+
 // ======================================
 
 Entity::~Entity()
@@ -379,13 +399,11 @@ Terrain::Terrain(uint32 resolution, glm::vec3 unitSize, std::string const &model
 Terrain::~Terrain()
 {
     delete this->entity;
-    this->clear_instance();
+    this->clearInstance();
 }
 
 void Terrain::updateModelMatrices(uint32 sideLenght)
 {
-    this->clear_instance();
-
     this->resolution = sideLenght;
     this->modelMatrices = new glm::mat4[sideLenght * sideLenght];    
 
@@ -411,7 +429,7 @@ void Terrain::updateModelMatrices(uint32 sideLenght)
     }
 }
 
-void Terrain::clear_instance()
+void Terrain::clearInstance()
 {
     delete[] this->modelMatrices;
     glDeleteBuffers(1, &this->instanceBufferID);

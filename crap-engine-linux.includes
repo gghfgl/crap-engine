@@ -1,0 +1,12 @@
+dep/include/assimp
+dep/include/assimp/Compiler
+dep/include/assimp/port/AndroidJNI
+dep/include/FONTAWESOME
+dep/include/glad
+dep/include/GLFW
+dep/include/glm/simd
+dep/include/IMGUI
+dep/include/KHR
+dep/src
+src
+src/Engine
