@@ -11,11 +11,12 @@ static KeyboardEvent *g_KEYBOARD_EVENT;
 static MouseEvent *g_MOUSE_EVENT;
 
 Plateform::Plateform(uint32 width, uint32 height, const char *title)
-{    
+{
     this->window = new Window(width, height, title);
-    this->vendor = (const char *)glGetString(GL_VENDOR);
-    this->graphicAPI = (const char *)glGetString(GL_RENDERER);
-    this->versionAPI = (const char *)glGetString(GL_VERSION);
+    this->info = new PlateformInfo();
+    this->info->vendor = (const char *)glGetString(GL_VENDOR);
+    this->info->graphicAPI = (const char *)glGetString(GL_RENDERER);
+    this->info->versionAPI = (const char *)glGetString(GL_VERSION);
 
     this->bind_input();
 }

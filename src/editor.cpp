@@ -21,7 +21,7 @@ const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray inte
 
 const uint32 g_ReferenceGridResolution = 50;
 
-void RunEditorMode(Window *Window, InputState *Input)
+void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 {
     // window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
     // input_t *Input = AllocAndInit(Window->PlatformWindow);
@@ -29,7 +29,7 @@ void RunEditorMode(Window *Window, InputState *Input)
     Renderer *renderer = new Renderer();
 
 
-    // TODO: parse a list in a dedicated header file
+    // TODO: parse a list in a dedicated header file // sure about pointer?
     ShaderCache *sCache = new ShaderCache();
     sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
     sCache->compileAndAddShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
@@ -76,7 +76,8 @@ void RunEditorMode(Window *Window, InputState *Input)
     Editor->MeshRay = MeshRay;
     Editor->skybox = new Skybox(faces);
     Editor->ShowSkybox = false;
-    InitEditorGui(Window);
+
+    EditorGui gui = EditorGui(Window);
 
     // TODO: tmp wainting editor struct
     PrepareAxisDebug(Editor->MeshAxisDebug);
@@ -116,13 +117,13 @@ void RunEditorMode(Window *Window, InputState *Input)
         {
             if (g_HoveredEntity != 0)
                 g_SelectedEntity = g_HoveredEntity;
-            else if (g_DragEntity == 0 && !g_ActiveWindow)
+            else if (g_DragEntity == 0 && !gui.activeWindow)
                 g_SelectedEntity = 0;
 
-            if (g_SelectedEntity != 0 && !g_ActiveWindow)
+            if (g_SelectedEntity != 0 && !gui.activeWindow)
                 g_DragEntity = g_SelectedEntity;
 
-            if (!g_ActiveWindow && !g_SelectedEntity)
+            if (!gui.activeWindow && !g_SelectedEntity)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
@@ -262,21 +263,21 @@ void RunEditorMode(Window *Window, InputState *Input)
         // =================== G.U.I ===================
 
         // draw GUI
-        NewFrameEditorGui();
-        ShowWindowStatsOverlay(Window, renderer);
-        ShowEditorPanel(Window,
-                        Input,
-                        camera,
-                        terrain,
-                        g_TerrainResolution,
-                        g_TerrainMaxResolution,
-                        &Editor->ShowSkybox,
-                        SCENE,
-                        &g_SelectedEntity,
-                        g_PickingSphereRadius,
-                        g_ActiveWindow);
+        gui.newFrame();
+        gui.performanceInfoOverlay(Window, renderer, Info);
+        gui.bigAndDirtyPanel(Window,
+                             Input,
+                             camera,
+                             terrain,
+                             g_TerrainResolution,
+                             g_TerrainMaxResolution,
+                             &Editor->ShowSkybox,
+                             SCENE,
+                             &g_SelectedEntity,
+                             g_PickingSphereRadius,
+                             gui.activeWindow);
 
-        RenderEditorGui();
+        gui.draw();
 
         // TODO:  update memory pool
         //Renderer->MemoryArena->MaxUsed = 0;
@@ -299,8 +300,8 @@ void RunEditorMode(Window *Window, InputState *Input)
 
     delete sCache;
 
-    DeleteEditorGui();
-
+    // TODO: delete gui?
+    
     delete renderer;
     delete camera;
 }

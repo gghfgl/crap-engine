@@ -61,15 +61,20 @@ private:
     const char* m_title;
 };
 
+struct PlateformInfo
+{
+    const char* vendor;
+    const char* graphicAPI;
+    const char* versionAPI;
+};
+
 struct Plateform {
     Plateform(uint32 width, uint32 height, const char *title);
     ~Plateform();
 
     Window *window;
     InputState *input;
-    const char* vendor;
-    const char* graphicAPI;
-    const char* versionAPI;
+    PlateformInfo *info;
 
 private:
     void bind_input();

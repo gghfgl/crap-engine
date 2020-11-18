@@ -6,21 +6,49 @@
 
 #include "FONTAWESOME/IconsFontAwesome5.h"
 
-static void window_settings_collapse_header(Window *Window, InputState *Input);
-static void terrain_settings_collapse_header(Terrain *terrain, uint32 &resolution, uint32 maxResolution, bool *showSkybox);
-static void entities_list_collapse_header(std::map<uint32, Entity*> *entities, uint32 *selectedEntity, float32 pickingSphereRadius);
-static void camera_settings_collapse_header(Camera *Camera);
 
-static bool g_ActiveWindow = false;
-const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f; // TODO: static
+struct EditorGui
+{
+    EditorGui(Window *window);
+    ~EditorGui();
+    void newFrame();
+    void draw();
+
+    void performanceInfoOverlay(Window *window, Renderer *renderer, PlateformInfo *info);
+    void camera_settings_collapse_header(Camera *camera);
+    void window_settings_collapse_header(Window *window, InputState *input);
+    void terrain_settings_collapse_header(Terrain *terrain,
+                                          uint32 &resolution,
+                                          uint32 maxResolution,
+                                          bool *showSkybox);
+    void entities_list_collapse_header(std::map<uint32, Entity*> *Scene,
+                                                  uint32 *selectedEntity,
+                                                  float32 pickingSphereRadius);
+    void bigAndDirtyPanel(Window *window,
+                          InputState *input,
+                          Camera *camera,
+                          Terrain *terrain,
+                          uint32 &terrainResolution,
+                          uint32 terrainMaxResolution,
+                          bool *showSkybox,
+                          std::map<uint32, Entity*> *entities,
+                          uint32 *selectedEntity,
+                          float32 pickingSphereRadius,
+                          bool &focus);
+
+    
+    bool activeWindow;
+    const float32 f32_zero = 0.1f, f32_two = 2.0f, f32_ten = 10.0f, f32_360 = 360.0f;
 
 #if 0
-OPENFILENAME g_Ofn;
-char g_szFile[260];
-HWND g_hwnd;
+    OPENFILENAME g_Ofn;
+    char g_szFile[260];
+    HWND g_hwnd;
 #endif
 
-void InitEditorGui(Window* Window)
+};
+
+EditorGui::EditorGui(Window* window)
 {
     const char* glsl_version = "#version 450";
     IMGUI_CHECKVERSION();
@@ -28,7 +56,7 @@ void InitEditorGui(Window* Window)
     //ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(Window->context, true);
+    ImGui_ImplGlfw_InitForOpenGL(window->context, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Fonts
@@ -36,8 +64,9 @@ void InitEditorGui(Window* Window)
     io.Fonts->AddFontDefault();
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-    //io.Fonts->AddFontFromFileTTF( "../assets/fonts/Font-Awesome-master/Font-Awesome-master/webfonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges );
     io.Fonts->AddFontFromFileTTF( "assets/fonts/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
+
+    this->activeWindow = false;
 
 #if 0
     // Initialize OPENFILENAME
@@ -56,21 +85,21 @@ void InitEditorGui(Window* Window)
 #endif
 }
 
-void DeleteEditorGui()
+EditorGui::~EditorGui()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void NewFrameEditorGui()
+void EditorGui::newFrame()
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void RenderEditorGui()
+void EditorGui::draw()
 {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -78,19 +107,20 @@ void RenderEditorGui()
 
 // ================================================================
 
-// TODO: switch to string rendering
-void ShowWindowStatsOverlay(Window *Window, Renderer *renderer)
+// TODO: switch to string rendering with param window->time + renderer->stats + plateform->info
+void EditorGui::performanceInfoOverlay(Window *window,
+                                       Renderer *renderer,
+                                       PlateformInfo *info)
 {
-    ImGui::SetNextWindowPos(ImVec2((float32)(Window->getWidth() - 210), 10));
+    ImGui::SetNextWindowPos(ImVec2((float32)(window->getWidth() - 210), 10));
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
     {
-        // TODO: string rendering
-        /* ImGui::Text(Window->RenderAPIinfo.Vendor); */
-        /* ImGui::Text(Window->RenderAPIinfo.renderer); */
-        /* ImGui::Text(Window->RenderAPIinfo.Version); */
-        /* ImGui::Separator(); */
-        ImGui::Text("ms/f: %.3fms", Window->time->deltaTime);
+        ImGui::Text(info->vendor);
+        ImGui::Text(info->graphicAPI);
+        ImGui::Text(info->versionAPI);
+        ImGui::Separator();
+        ImGui::Text("ms/f: %.3fms", window->time->deltaTime);
         //ImGui::Text("fps: %d", Window->time->FPS);
         //ImGui::Text("mcy/f: %d", Window->time->megaCyclePerFrame);
         ImGui::Text("drawCalls: %d", renderer->stats.drawCalls);
@@ -98,10 +128,10 @@ void ShowWindowStatsOverlay(Window *Window, Renderer *renderer)
     }
 }
 
-// TODO: pass func signature directly? panel as a service?
-void ShowEditorPanel(Window *Window,
-                     InputState *Input,
-                     Camera *Camera,
+// TODO: split in dedicated widget
+void EditorGui::bigAndDirtyPanel(Window *window,
+                     InputState *input,
+                     Camera *camera,
                      Terrain *terrain,
                      uint32 &terrainResolution,
                      uint32 terrainMaxResolution,
@@ -112,13 +142,13 @@ void ShowEditorPanel(Window *Window,
                      bool &focus)
 {
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(410, (float32)(Window->getHeight() - 20)));
+    ImGui::SetNextWindowSize(ImVec2(410, (float32)(window->getHeight() - 20)));
     ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 
-    window_settings_collapse_header(Window, Input);
-    camera_settings_collapse_header(Camera);
-    terrain_settings_collapse_header(terrain, terrainResolution, terrainMaxResolution, showSkybox);
-    entities_list_collapse_header(entities, selectedEntity, pickingSphereRadius);
+    this->window_settings_collapse_header(window, input);
+    this->camera_settings_collapse_header(camera);
+    this->terrain_settings_collapse_header(terrain, terrainResolution, terrainMaxResolution, showSkybox);
+    this->entities_list_collapse_header(entities, selectedEntity, pickingSphereRadius);
     
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
         focus = true;
@@ -127,38 +157,37 @@ void ShowEditorPanel(Window *Window,
     ImGui::End();
 }
 
-static void window_settings_collapse_header(Window *Window, InputState *Input)
+void EditorGui::window_settings_collapse_header(Window *window, InputState *input)
 {
     if (ImGui::CollapsingHeader("Window settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImVec2 bSize(40, 20);
-        ImGui::Text("SCREEN: %d x %d", Window->getWidth(), Window->getHeight());
+        ImGui::Text("SCREEN: %d x %d", window->getWidth(), window->getHeight());
         ImGui::Text("MousePos: %d x %d",
-                    (uint32)Input->mouse->posX,
-                    (uint32)Input->mouse->posY);
+                    (uint32)input->mouse->posX,
+                    (uint32)input->mouse->posY);
         ImGui::Separator();
 
         ImGui::PushID(1);
-        if (ImGui::Button(Window->getVsync() ? "on" : "off", bSize))
-            Window->toggleVsync();
+        if (ImGui::Button(window->getVsync() ? "on" : "off", bSize))
+            window->toggleVsync();
         ImGui::SameLine();
         ImGui::Text("VSYNC: ");
         ImGui::PopID();
 
         ImGui::PushID(2);
-        if (ImGui::Button(Window->debug ? "on" : "off", bSize))
-            Window->debug = !Window->debug;
+        if (ImGui::Button(window->debug ? "on" : "off", bSize))
+            window->debug = !window->debug;
         ImGui::SameLine();
         ImGui::Text("DEBUG: ");
         ImGui::PopID();
     }
 }
 
-// TODO: 
-static void terrain_settings_collapse_header(Terrain *terrain,
-                                             uint32 &resolution,
-                                             uint32 maxResolution,
-                                             bool *showSkybox)
+void EditorGui::terrain_settings_collapse_header(Terrain *terrain,
+                                                 uint32 &resolution,
+                                                 uint32 maxResolution,
+                                                 bool *showSkybox)
 {
     if (ImGui::CollapsingHeader("terrain", ImGuiTreeNodeFlags_DefaultOpen))
     {
@@ -195,9 +224,9 @@ static void terrain_settings_collapse_header(Terrain *terrain,
     }
 }
 
-static void entities_list_collapse_header(std::map<uint32, Entity*> *Scene,
-                                          uint32 *selectedEntity,
-                                          float32 pickingSphereRadius)
+void EditorGui::entities_list_collapse_header(std::map<uint32, Entity*> *Scene,
+                                              uint32 *selectedEntity,
+                                              float32 pickingSphereRadius)
 {
     if (ImGui::CollapsingHeader("Entity list", ImGuiTreeNodeFlags_DefaultOpen))
     {
@@ -307,41 +336,41 @@ static void entities_list_collapse_header(std::map<uint32, Entity*> *Scene,
     }
 }
 
-static void camera_settings_collapse_header(Camera *Camera)
+void EditorGui::camera_settings_collapse_header(Camera *camera)
 {
-    if (ImGui::CollapsingHeader("Camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("camera settings", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::Text("yaw: %.2f", Camera->settings->yaw);
-        ImGui::Text("pitch: %.2f", Camera->settings->pitch);
-        ImGui::Text("speed: %.2f", Camera->settings->speed);
-        ImGui::Text("sensitivity: %.2f", Camera->settings->sensitivity);
-        ImGui::Text("fov: %.2f", Camera->settings->fov);
+        ImGui::Text("yaw: %.2f", camera->settings->yaw);
+        ImGui::Text("pitch: %.2f", camera->settings->pitch);
+        ImGui::Text("speed: %.2f", camera->settings->speed);
+        ImGui::Text("sensitivity: %.2f", camera->settings->sensitivity);
+        ImGui::Text("fov: %.2f", camera->settings->fov);
         ImGui::Text("pos: %.2f, %.2f, %.2f",
-                    Camera->position.x,
-                    Camera->position.y,
-                    Camera->position.z);
+                    camera->position.x,
+                    camera->position.y,
+                    camera->position.z);
         ImGui::Text("worldup: %.2f, %.2f, %.2f",
-                    Camera->worldUp.x,
-                    Camera->worldUp.y,
-                    Camera->worldUp.z);
+                    camera->worldUp.x,
+                    camera->worldUp.y,
+                    camera->worldUp.z);
 
         ImVec2 bSize(100, 20);
         if (ImGui::Button("Reset Default", bSize))
         {
-            Camera->position = glm::vec3(0.0f, 5.0f, 10.0f);
-            Camera->settings->yaw = -90.0f;
-            Camera->settings->pitch = 0.0f;
-            Camera->settings->fov = 45.0f;
-            Camera->processMovementAngles(0.0f, 0.0f);
+            camera->position = glm::vec3(0.0f, 5.0f, 10.0f);
+            camera->settings->yaw = -90.0f;
+            camera->settings->pitch = 0.0f;
+            camera->settings->fov = 45.0f;
+            camera->processMovementAngles(0.0f, 0.0f);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset Up", bSize))
         {
-            Camera->position = glm::vec3(0.0f, 30.0f, 0.0f);
-            Camera->settings->yaw = -90.0f;
-            Camera->settings->pitch = -90.0f;
-            Camera->settings->fov = 45.0f;
-            Camera->processMovementAngles(0.0f, 0.0f);
+            camera->position = glm::vec3(0.0f, 30.0f, 0.0f);
+            camera->settings->yaw = -90.0f;
+            camera->settings->pitch = -90.0f;
+            camera->settings->fov = 45.0f;
+            camera->processMovementAngles(0.0f, 0.0f);
         }
         ImGui::Separator();
     }

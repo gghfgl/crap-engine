@@ -1,9 +1,9 @@
 
 GENERAL
 
-- rework existing code in a c++ OOP way
-- fix gui as it was before
-- find memory analyzer too check leak
+- rework and clean gui struct with splited panels
+- fix memory and clean
+- make TODOs and improve structs
 - use GDB or other debugger
 - read and comple shaders from a directory with debug output at runtime?
 
