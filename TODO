@@ -21,6 +21,7 @@ GENERAL
 - implement a console
 - beautyfull light PBR effects
 - improve scene file format (extend with skybox, etc ...)
+- build engine in microservice? Engine lib?
 
 EDITOR
 

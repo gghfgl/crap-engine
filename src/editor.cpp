@@ -32,9 +32,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // TODO: parse a list in a dedicated header file // sure about pointer?
     ShaderCache *sCache = new ShaderCache();
     sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
+    printf("shader compile: 'default'\n");
     sCache->compileAndAddShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
+    printf("shader compile: 'instanced'\n");
     sCache->compileAndAddShader("./shaders/color.glsl", "color", camera->projectionMatrix);
+    printf("shader compile: 'color'\n");
     sCache->compileAndAddShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
+    printf("shader compile: 'skybox'\n");
 
     // =================================================
     // Grid
@@ -264,19 +268,16 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // draw GUI
         gui.newFrame();
-        gui.performanceInfoOverlay(Window, renderer, Info);
-        gui.bigAndDirtyPanel(Window,
-                             Input,
-                             camera,
-                             terrain,
-                             g_TerrainResolution,
-                             g_TerrainMaxResolution,
-                             &Editor->ShowSkybox,
-                             SCENE,
-                             &g_SelectedEntity,
-                             g_PickingSphereRadius,
-                             gui.activeWindow);
-
+        gui.performanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
+        gui.makePanel(10.f, 10.f);
+        gui.windowAndInputSettings(Input);
+        gui.cameraSettings(camera);
+        gui.environmentSettings(terrain,
+                                g_TerrainResolution,
+                                g_TerrainMaxResolution,
+                                &Editor->ShowSkybox);
+        gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
+        gui.endPanel();
         gui.draw();
 
         // TODO:  update memory pool

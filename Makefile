@@ -4,6 +4,7 @@ EXE=a.out
 SOURCES=src/main.cpp
 SOURCES+=dep/src/glad.c #TODO: make static lib?
 SOURCES+=dep/include/IMGUI/*.cpp #TODO: make static lib?
+SOURCES+=dep/include/igfd/*.cpp #TODO: make static lib?
 
 CXXFLAGS=-pedantic-errors -Wall -Wextra -g
 #CXXFLAGS+=-Weffc++ -Wsign-conversion
