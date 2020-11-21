@@ -240,19 +240,24 @@ void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
     if (ImGui::CollapsingHeader("Entity list", ImGuiTreeNodeFlags_DefaultOpen))
     {
         if (ImGui::Button("add"))
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectEntityModel", "Choose File", ".obj", ".");
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SelectEntityModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
-#if 0
-            if (GetOpenFileName(&g_Ofn)==TRUE)
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
+
                 uint32 id = (uint32)Scene->size() + 1;
-                model_t *loadedModel = LoadModelFromFile(g_szFile);
                 Entity *entity = new Entity;
-                entity->model = loadedModel;
-                entity->PickingSphere =  CreatePrimitiveSphereMesh(0.0f, pickingSphereRadius, 15, 15);
+                entity->model = new Model(filePathName);;
+                entity->pickingSphere = new Mesh(0.0f, pickingSphereRadius, 15, 15);
 
                 Scene->insert({id, entity});
             }
-#endif
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectEntityModel");
         }
         ImGui::Separator();
 
