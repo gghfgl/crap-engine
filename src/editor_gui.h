@@ -90,13 +90,13 @@ void EditorGui::performanceInfoOverlay(Renderer *renderer,
 {
     ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 10));
     ImGui::SetNextWindowBgAlpha(0.35f);
-    if (ImGui::Begin("window_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+    if (ImGui::Begin("perf_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
     {
         ImGui::Text(info->vendor);
         ImGui::Text(info->graphicAPI);
         ImGui::Text(info->versionAPI);
         ImGui::Separator();
-        ImGui::Text("ms/f: %.3fms", this->window->time->deltaTime);
+        ImGui::Text("ms/f: %.3fms", this->window->time->deltaTime * 1000);
         //ImGui::Text("fps: %d", Window->time->FPS);
         //ImGui::Text("mcy/f: %d", Window->time->megaCyclePerFrame);
         ImGui::Text("drawCalls: %d", renderer->stats.drawCalls);

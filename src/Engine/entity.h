@@ -41,7 +41,7 @@ struct Model
     Model(std::string const &path);
     ~Model();
 
-    std::vector<Mesh*> Meshes; // TODO: vector of pointers? Meh ....
+    std::vector<Mesh*> Meshes;
     std::vector<Texture> TexturesLoadedCache;
     std::string objFilename;
     std::string directory;
@@ -60,8 +60,8 @@ struct Entity
 {
     ~Entity();
     
-    Model *model; // TODO: why pointer?
-    Mesh *pickingSphere;  // TODO: why pointer?
+    Model *model;
+    Mesh *pickingSphere;
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     float32 scale = 1.0f;
     float32 rotate = 0.0f; // degres
@@ -76,7 +76,7 @@ struct Terrain
     void updateModelMatrices(uint32 sideLenght);
     void clearInstance();
     
-    Entity *entity; // TODO: why pointer?
+    Entity *entity;
     uint32 resolution; // default size
     glm::vec3 unitSize;
     uint32 instanceBufferID;

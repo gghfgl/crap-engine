@@ -23,8 +23,6 @@ const uint32 g_ReferenceGridResolution = 50;
 
 void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 {
-    // window_t *Window = AllocAndInit(g_Width, g_Height, "CrapEngine");
-    // input_t *Input = AllocAndInit(Window->PlatformWindow);
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
     Renderer *renderer = new Renderer();
 
@@ -57,7 +55,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
     // Generate terrain
     Terrain *terrain = new Terrain(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
-    // terrain->ModelMatrices = GenerateTerrainModelMatrices(Terrain->Resolution);
 
     // Entitys array
     std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;

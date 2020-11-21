@@ -11,7 +11,7 @@ Mesh::Mesh(std::vector<Vertex> vertices,
     this->allocate_mesh();
 }
 
-// primtive sphere
+// primtive sphere cosntructor
 Mesh::Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
 {
     uint32 nbVerticesPerSphere = 0;
@@ -127,11 +127,6 @@ void Mesh::allocate_mesh()
 Model::Model(std::string const &path)
 {
     Assimp::Importer importer;
-    // const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate
-    // 				       | aiProcess_FlipUVs
-    // 				       | aiProcess_CalcTangentSpace
-    // 				       | aiProcess_JoinIdenticalVertices);
-
     const aiScene *scene = importer.ReadFile(path, aiProcess_FlipWindingOrder
                                              // | aiProcess_MakeLeftHanded
                                              | aiProcess_Triangulate
@@ -213,7 +208,8 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene)
 
         vertex.normal = vector; 
 
-        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+        // does the mesh contain texture coordinates?
+        if(mesh->mTextureCoords[0])
         {
             glm::vec2 vec;
             vec.x = mesh->mTextureCoords[0][i].x; 
@@ -335,7 +331,7 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
         else if (nrComponents == 4)
             format = GL_RGBA;
         else
-            format = GL_RGBA; // TODO: ??
+            format = GL_RGBA;
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);

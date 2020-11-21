@@ -1,15 +1,22 @@
 
 GENERAL
 
-- rework and clean gui struct with splited panels
-- fix memory and clean
-- make TODOs and improve structs
-- use GDB or other debugger
-- read and comple shaders from a directory with debug output at runtime?
+- @all: fix memory and clean
+- @all: use GDB or other debugger
+
+- @editor: merge terrain and skybox into environment struct
+- @editor: add vector of environments + gui panel (new / delete / save) + open new list
+
+- @editor: gui switch perf to string rendering
+
+- @editor: modules list (new / delete / save) + open new list in tab?
+
+- @editor: read and compile all shaders from a directory with debug output at runtime?
+
+
 
 - improve skybox import assets
 - rework editor struct and debug rendering tools
-- move skybox and entities in dedicated "Data" panel
 - implement memorypool visualizer
 - improve click setting panel object after selectinID from world
 - improve coordinate system for positionning objects
@@ -22,21 +29,3 @@ GENERAL
 - beautyfull light PBR effects
 - improve scene file format (extend with skybox, etc ...)
 - build engine in microservice? Engine lib?
-
-EDITOR
-
-- implement create/udpate/save module
-- implement create/update/save environment (gird + skybox + ground + powersupply position)
-
-GAME
-
-- load environment
-- skills access panel
-- working modules access panel (with a add button -> available modules access panel)
-- avaialble modules access panel (list of available modules)
-- HUD power / effectivness / container + (money $)
-- effectiveness score algo
-- power consumption algo
-- space container calculation algo
-- schema AREA to save working modules template
-- blueprint AREA to save items combination recipe

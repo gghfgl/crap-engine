@@ -1,10 +1,10 @@
 #pragma once
 
-static const float32 g_DefaultYawSetting         = -90.0f;
-static const float32 g_DefaultPitchSetting       =  0.0f;
-static const float32 g_DefaultSpeedSetting       =  10.0f;
-static const float32 g_DefaultSensitivitySetting =  0.1f;
-static const float32 g_DefaultFovSetting         =  45.0f;
+inline const float32 g_DefaultYawSetting         = -90.0f;
+inline const float32 g_DefaultPitchSetting       =  0.0f;
+inline const float32 g_DefaultSpeedSetting       =  10.0f;
+inline const float32 g_DefaultSensitivitySetting =  0.1f;
+inline const float32 g_DefaultFovSetting         =  45.0f;
 
 enum CameraDirection
 {

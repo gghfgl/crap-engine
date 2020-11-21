@@ -22,8 +22,6 @@ Camera::Camera(float32 windowWidth, float32 windowHeight,
         windowWidth / windowHeight,
         nearPlane, farPlane);
 			
-    // TODO: glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
-
     this->settings = settings;
     this->position = position;
     this->front = glm::vec3(0.0f, 0.0f, -1.0f);
