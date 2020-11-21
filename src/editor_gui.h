@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ctime>
+
 #include "IMGUI/imgui.h"
 #include "IMGUI/imgui_impl_glfw.h"
 #include "IMGUI/imgui_impl_opengl3.h"
@@ -22,7 +24,7 @@ struct EditorGui
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
     void environmentSettings(Terrain *terrain,
-                             uint32 &resolution,
+                             int32 &resolution,
                              uint32 maxResolution,
                              bool *showSkybox);
     void entitiesSettings(std::map<uint32, Entity*> *Scene,
@@ -190,7 +192,7 @@ void EditorGui::cameraSettings(Camera *camera)
 }
 
 void EditorGui::environmentSettings(Terrain *terrain,
-                                    uint32 &resolution,
+                                    int32 &resolution,
                                     uint32 maxResolution,
                                     bool *showSkybox)
 {
@@ -224,7 +226,7 @@ void EditorGui::environmentSettings(Terrain *terrain,
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectEnvModel");
         }
 
-        //ImGui::SliderInt("res", &(int)resolution, 0, maxResolution);
+        ImGui::SliderInt("res", &resolution, 0, maxResolution);
         ImGui::SameLine();
         ImGui::Text("max: %dx%d", maxResolution, maxResolution);
         ImGui::Separator();
@@ -324,28 +326,40 @@ void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
         ImGui::Separator();
 
         if (ImGui::Button("open"))
-        {
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenEntityListFromFileTextFormat", "Choose File", ".list", ".");
 
-#if 0
-            if (GetOpenFileName(&g_Ofn)==TRUE)
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenEntityListFromFileTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
-                OpenSceneFromTextFormat(g_szFile, Scene);
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
+                OpenEntityListFromFileTextFormat(filePathName.c_str(), Scene);
             }
-#endif
-            
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenEntityListFromFileTextFormat");
         }
         ImGui::SameLine();
 
         if (ImGui::Button("save"))
         {
-
-#if 0
-            if (GetSaveFileName(&g_Ofn)==TRUE)
-            {
-                SaveSceneInTextFormat(g_szFile, Scene);
-            }
-#endif
+            
+            std::time_t timestamp = std::time(nullptr);
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveEntityListInTextFormat", "Choose File", ".list", ".", "crap"+std::to_string(timestamp));
         }
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveEntityListInTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
+                SaveEntityListInTextFormat(filePathName.c_str(), Scene);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveEntityListInTextFormat");
+        }
+
         ImGui::Separator();
     }
 }

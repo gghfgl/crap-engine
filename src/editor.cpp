@@ -8,7 +8,7 @@ void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 // const uint32 g_Width = 1280;
 // const uint32 g_Height = 960;
 
-static uint32 g_TerrainResolution = 10;
+static int32 g_TerrainResolution = 10;
 static const uint32 g_TerrainMaxResolution = 50;
 glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
 const char* g_TerrainDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
