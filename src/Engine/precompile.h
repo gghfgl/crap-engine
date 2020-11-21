@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // TODO: kind of meh ...
+#include "../../dep/src/glad.c"
 #include "../../dep/src/stb_image.cpp"
 
 #include <assimp/Importer.hpp>

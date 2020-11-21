@@ -2,9 +2,9 @@ CXX=g++ -std=c++17
 EXE=a.out
 
 SOURCES=src/main.cpp
-SOURCES+=dep/src/glad.c #TODO: make static lib?
-SOURCES+=dep/include/IMGUI/*.cpp #TODO: make static lib?
-SOURCES+=dep/include/igfd/*.cpp #TODO: make static lib?
+#SOURCES+=dep/src/glad.c
+#SOURCES+=dep/include/IMGUI/*.cpp #TODO: make static lib?
+#SOURCES+=dep/include/igfd/*.cpp #TODO: make static lib?
 
 CXXFLAGS=-pedantic-errors -Wall -Wextra -g
 #CXXFLAGS+=-Weffc++ -Wsign-conversion
@@ -23,7 +23,7 @@ build:
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
 	$(info -----------------------------------------------------)
-	$(CXX) -o $(EXE) $(SOURCES) $(CXXFLAGS)
+	time -f "\n\nexecution time: %E\n\n" $(CXX) -o $(EXE) $(SOURCES) $(CXXFLAGS)
 
 .PHONY: clean
 
