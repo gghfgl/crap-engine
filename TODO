@@ -1,9 +1,6 @@
 
 GENERAL
 
-- @all: fix memory and clean
-- @all: use GDB or other debugger
-
 - @editor: merge terrain and skybox into environment struct
 - @editor: add vector of environments + gui panel (new / delete / save) + open new list
 

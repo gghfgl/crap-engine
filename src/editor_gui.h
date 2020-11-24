@@ -21,7 +21,9 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
-    void environmentSettings(Terrain *terrain,
+
+    // TODO: rework with environment list like entities
+    void environmentSettings(Ground *ground,
                              int32 &resolution,
                              uint32 maxResolution,
                              bool *showSkybox);
@@ -189,7 +191,7 @@ void EditorGui::cameraSettings(Camera *camera)
     }
 }
 
-void EditorGui::environmentSettings(Terrain *terrain,
+void EditorGui::environmentSettings(Ground *ground,
                                     int32 &resolution,
                                     uint32 maxResolution,
                                     bool *showSkybox)
@@ -199,8 +201,8 @@ void EditorGui::environmentSettings(Terrain *terrain,
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
         ImGui::Text( ICON_FA_CUBE );
         ImGui::SameLine();
-        ImGui::Text("%s", terrain->entity->model->objFilename.c_str());
-        ImGui::Text("path: %s", terrain->entity->model->directory.c_str());
+        ImGui::Text("%s", ground->entity->model->objFilename.c_str());
+        ImGui::Text("path: %s", ground->entity->model->directory.c_str());
 
         if (ImGui::Button("change"))
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectEnvModel", "Choose File", ".obj", ".");
@@ -215,9 +217,9 @@ void EditorGui::environmentSettings(Terrain *terrain,
                 Model *loadedModel = new Model(filePathName);
                 if (loadedModel != nullptr)
                 {
-                    delete terrain->entity->model;
-                    terrain->entity->model = loadedModel;
-                    terrain->isGenerated = false;
+                    delete ground->entity->model;
+                    ground->entity->model = loadedModel;
+                    ground->isGenerated = false;
                 }
             }
 
@@ -261,7 +263,6 @@ void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
         }
         ImGui::Separator();
 
-        static uint32 selected = 0;
         ImGui::BeginChild("left pane", ImVec2(120, 150));
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
         for (auto it = Scene->begin(); it != Scene->end(); it++)	 

@@ -54,7 +54,7 @@ struct Window {
 
 private:
     void terminate_window();
-    void set_time();
+    void reset_time();
 
     uint32 m_width, m_height;
     bool m_vsync;

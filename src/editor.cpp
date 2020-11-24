@@ -5,13 +5,9 @@ void PrepareAxisDebug(Mesh *Mesh); // TODO: rename origin
 void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
 void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
-// const uint32 g_Width = 1280;
-// const uint32 g_Height = 960;
-
-static int32 g_TerrainResolution = 10;
-static const uint32 g_TerrainMaxResolution = 50;
-glm::vec3 g_TerrainUnitSize = glm::vec3(0.0f, 0.0f, 0.0f);
-const char* g_TerrainDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
+static int32 g_GroundResolution = 10;
+static const uint32 g_GroundMaxResolution = 50;
+const char* g_GroundDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -29,13 +25,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // TODO: parse a list in a dedicated header file // sure about pointer?
     ShaderCache *sCache = new ShaderCache();
     sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
-    printf("crap-engine: compile shader='default'\n");
+    printf("compile shader='default'\n");
     sCache->compileAndAddShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
-    printf("crap-engine: compile shader='instanced'\n");
+    printf("compile shader='instanced'\n");
     sCache->compileAndAddShader("./shaders/color.glsl", "color", camera->projectionMatrix);
-    printf("crap-engine: compile shader='color'\n");
+    printf("compile shader='color'\n");
     sCache->compileAndAddShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
-    printf("crap-engine: compile shader='skybox'\n");
+    printf("compile shader='skybox'\n");
 
     // =================================================
     // Grid
@@ -52,8 +48,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     std::vector<Vertex> vRay(2, Vertex());
     Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
 
-    // Generate terrain
-    Terrain *terrain = new Terrain(g_TerrainResolution, g_TerrainUnitSize, g_TerrainDefaultModelFile);
+    // Generate ground
+    Ground *ground = new Ground(g_GroundResolution, g_GroundDefaultModelFile);
 
     // Entitys array
     std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;
@@ -140,11 +136,11 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                     camera->projectionMatrix,
                                                     camera->getViewMatrix());
 
-        // terrain slider
-        if (g_TerrainResolution != terrain->resolution)
+        // ground slider
+        if (g_GroundResolution != (int)ground->resolution)
         {
-            terrain->isGenerated = false;
-            //terrain->resolution = g_TerrainResolution;
+            ground->isGenerated = false;
+            //ground->resolution = g_GroundResolution;
         }
         
         // mouse ray intersection sphere selector objects
@@ -188,34 +184,34 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // draw reference grid
         colorShader->setUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-        renderer->drawLines(Editor->MeshGrid, 1.0f, colorShader);
+        renderer->drawLines(Editor->MeshGrid, 1.0f);
 
         // draw axis debug
         colorShader->setUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        renderer->drawLines(Editor->MeshAxisDebug, 2.0f, colorShader);
+        renderer->drawLines(Editor->MeshAxisDebug, 2.0f);
 
         // draw mouse ray
         PushMouseRaySubData(Editor->MeshRay, camera->position, rayWorld);
         colorShader->setUniform4f("color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
-        renderer->drawLines(Editor->MeshRay, 1.0f, colorShader);
+        renderer->drawLines(Editor->MeshRay, 1.0f);
 
-        // draw terrain
-        if (!terrain->isGenerated)
+        // draw ground
+        if (!ground->isGenerated)
         {
-            terrain->clearInstance();
-            terrain->updateModelMatrices(g_TerrainResolution);
-            terrain->instanceBufferID = renderer->prepareInstance(terrain->entity->model,
-                                                                  terrain->modelMatrices,
-                                                                  terrain->resolution * terrain->resolution);
-            terrain->isGenerated = true;
+            ground->clearInstance();
+            ground->updateModelMatrices(g_GroundResolution);
+            ground->instanceBufferID = renderer->prepareInstance(ground->entity->model,
+                                                                  ground->modelMatrices,
+                                                                  ground->resolution * ground->resolution);
+            ground->isGenerated = true;
         }
         Shader *instancedShader = sCache->getShader("instanced");
         instancedShader->useProgram();
         instancedShader->setUniform4fv("view", viewMatrix);
         instancedShader->setUniform4fv("model", glm::mat4(1.0f));
-        renderer->drawInstanceModel(terrain->entity->model,
+        renderer->drawInstanceModel(ground->entity->model,
                                     instancedShader,
-                                    terrain->resolution * terrain->resolution);
+                                    ground->resolution * ground->resolution);
                   
         // draw objs
         Shader *defaultShader = sCache->getShader("default");
@@ -257,7 +253,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             Shader *skyboxShader = sCache->getShader("skybox");
             skyboxShader->useProgram();
             skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-            renderer->drawSkybox(Editor->skybox, skyboxShader);
+            renderer->drawSkybox(Editor->skybox);
         }
 
         // =================== G.U.I ===================
@@ -268,9 +264,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.environmentSettings(terrain,
-                                g_TerrainResolution,
-                                g_TerrainMaxResolution,
+        gui.environmentSettings(ground,
+                                g_GroundResolution,
+                                g_GroundMaxResolution,
                                 &Editor->ShowSkybox);
         gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
         gui.endPanel();
@@ -286,7 +282,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         delete it->second;
     delete SCENE;
 
-    delete terrain;
+    delete ground;
     
     // TODO: implement complete full delete Editor method
     delete Editor->MeshGrid;

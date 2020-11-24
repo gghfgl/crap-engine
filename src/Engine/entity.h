@@ -69,16 +69,15 @@ struct Entity
 
 // ======================================
 
-struct Terrain
+struct Ground
 {
-    Terrain(uint32 resolution, glm::vec3 unitSize, std::string const &modelFilePath);
-    ~Terrain();
-    void updateModelMatrices(uint32 sideLenght);
+    Ground(uint32 resolution, std::string const &modelFilePath);
+    ~Ground();
+    void updateModelMatrices(uint32 resolution);
     void clearInstance();
     
     Entity *entity;
     uint32 resolution; // default size
-    glm::vec3 unitSize;
     uint32 instanceBufferID;
     bool isGenerated = false;
     glm::mat4 *modelMatrices;

@@ -133,15 +133,15 @@ Window::Window(uint32 width, uint32 height, const char *title)
     this->m_vsync = true;
     this->debug = false;
     this->context = window;
-
-    this->set_time();
+    this->time = new FrameTime;
+    this->time->deltaTime = 0.0;
+    this->time->lastFrame = 0.0;
 }
 
 Window::~Window()
 {
     terminate_window();
     delete this->time;
-    //delete Context; // TODO: ??
 }
 
 void Window::toggleVsync()
@@ -168,9 +168,8 @@ void Window::updateTime()
     this->time->lastFrame = currentFrame;    
 }
 
-void Window::set_time()
+void Window::reset_time()
 {
-    this->time = new FrameTime;
     this->time->deltaTime = 0.0;
     this->time->lastFrame = 0.0;
 }

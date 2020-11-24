@@ -11,7 +11,7 @@ Mesh::Mesh(std::vector<Vertex> vertices,
     this->allocate_mesh();
 }
 
-// primtive sphere cosntructor
+// primtive sphere constructor
 Mesh::Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
 {
     uint32 nbVerticesPerSphere = 0;
@@ -143,7 +143,7 @@ Model::Model(std::string const &path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        printf("crap-engine: ASSIMP::Error '%s'\n", importer.GetErrorString());
+        printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
     }
 
     this->directory = path.substr(0, path.find_last_of('/'));
@@ -151,8 +151,8 @@ Model::Model(std::string const &path)
 
     // DEBUG:
     printf("==============================\n");
-    printf("crap-engine: load model from directory: %s\n", this->directory.c_str());
-    printf("crap-engine: load model from file: %s\n", this->objFilename.c_str());
+    printf("load model from directory: %s\n", this->directory.c_str());
+    printf("load model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
 }
@@ -311,7 +311,7 @@ std::vector<Texture> Model::load_material_textures(aiMaterial *mat,
 uint32 Model::load_texture_from_file(const char *path, const std::string &directory)
 {
     // DEBUG
-    printf("crap-engine: texture=%s\n", path);
+    printf("texture=%s\n", path);
     
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
@@ -350,26 +350,6 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
     return textureID;
 }
 
-// static uint32 LoadTextureFromFile(const std::string& path)
-// {
-//     int w, h, bits;
-//     stbi_set_flip_vertically_on_load(1);
-//     unsigned char *data = stbi_load(path.c_str(), &w, &h, &bits, STBI_rgb);
-
-//     uint32 textureID;
-//     glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
-//     glBindTexture(GL_TEXTURE_2D, textureID);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // TODO REPEAT ?
-//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // TODO REPEAT ?
-//     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-
-//     stbi_image_free(data);
-
-//     return textureID;
-// }
-
 // ======================================
 
 Entity::~Entity()
@@ -381,39 +361,38 @@ Entity::~Entity()
 
 // ======================================
 
-Terrain::Terrain(uint32 resolution, glm::vec3 unitSize, std::string const &modelFilePath)
+Ground::Ground(uint32 resolution, std::string const &modelFilePath)
 {
     this->entity = new Entity;
     this->entity->pickingSphere = nullptr;
     this->entity->model = new Model(modelFilePath);
 
     this->resolution = resolution;
-    this->unitSize = unitSize;
     this->instanceBufferID = 0;
     this->isGenerated = false;
 
     this->updateModelMatrices(resolution);
 }
 
-Terrain::~Terrain()
+Ground::~Ground()
 {
     delete this->entity;
     this->clearInstance();
 }
 
-void Terrain::updateModelMatrices(uint32 sideLenght)
+void Ground::updateModelMatrices(uint32 resolution)
 {
-    this->resolution = sideLenght;
-    this->modelMatrices = new glm::mat4[sideLenght * sideLenght];    
+    this->resolution = resolution;
+    this->modelMatrices = new glm::mat4[resolution * resolution];    
 
     glm::vec3 size = { 1.0f, 1.0f, 1.0f };
-    float32 posX = -((float32)sideLenght / 2.0f - 0.5f);
+    float32 posX = -((float32)resolution / 2.0f - 0.5f);
 
     uint32 index = 0;
-    for (uint32 i = 0; i < sideLenght; i++)
+    for (uint32 i = 0; i < resolution; i++)
     {
-        float32 posZ = ((float32)sideLenght / 2.0f - 0.5f);
-        for (uint32 y = 0; y < sideLenght; y++)
+        float32 posZ = ((float32)resolution / 2.0f - 0.5f);
+        for (uint32 y = 0; y < resolution; y++)
         {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, { posX, 0.0f, posZ });
@@ -428,7 +407,7 @@ void Terrain::updateModelMatrices(uint32 sideLenght)
     }
 }
 
-void Terrain::clearInstance()
+void Ground::clearInstance()
 {
     delete[] this->modelMatrices;
     glDeleteBuffers(1, &this->instanceBufferID);

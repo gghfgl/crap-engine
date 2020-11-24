@@ -86,7 +86,7 @@ uint32 Renderer::prepareInstance(Model *model,
     return buffer;
 }
 
-void Renderer::drawLines(Mesh *mesh, float32 width, Shader *shader)
+void Renderer::drawLines(Mesh *mesh, float32 width)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
@@ -180,7 +180,7 @@ void Renderer::drawInstanceModel(Model *model, Shader *shader, uint32 count)
         this->drawInstanceMesh(model->Meshes[i], shader, count);
 }
     
-void Renderer::drawSkybox(Skybox *skybox, Shader *shader)
+void Renderer::drawSkybox(Skybox *skybox)
 {
     glDepthFunc(GL_LEQUAL);
 
