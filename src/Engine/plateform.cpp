@@ -25,6 +25,7 @@ Plateform::~Plateform()
 {
     delete this->window;
     delete this->input;
+    delete this->info;
 }
 
 void Plateform::bind_input()

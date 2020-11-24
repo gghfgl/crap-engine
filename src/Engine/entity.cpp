@@ -383,11 +383,14 @@ Entity::~Entity()
 
 Terrain::Terrain(uint32 resolution, glm::vec3 unitSize, std::string const &modelFilePath)
 {
-    this->resolution = resolution;
-    this->unitSize = unitSize;
     this->entity = new Entity;
     this->entity->pickingSphere = nullptr;
     this->entity->model = new Model(modelFilePath);
+
+    this->resolution = resolution;
+    this->unitSize = unitSize;
+    this->instanceBufferID = 0;
+    this->isGenerated = false;
 
     this->updateModelMatrices(resolution);
 }

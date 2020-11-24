@@ -26,7 +26,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
     Renderer *renderer = new Renderer();
 
-
     // TODO: parse a list in a dedicated header file // sure about pointer?
     ShaderCache *sCache = new ShaderCache();
     sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
