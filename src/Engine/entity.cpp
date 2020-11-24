@@ -143,7 +143,7 @@ Model::Model(std::string const &path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
+        printf("crap-engine: ASSIMP::Error '%s'\n", importer.GetErrorString());
     }
 
     this->directory = path.substr(0, path.find_last_of('/'));
@@ -151,8 +151,8 @@ Model::Model(std::string const &path)
 
     // DEBUG:
     printf("==============================\n");
-    printf("load model from directory: %s\n", this->directory.c_str());
-    printf("load model from file: %s\n", this->objFilename.c_str());
+    printf("crap-engine: load model from directory: %s\n", this->directory.c_str());
+    printf("crap-engine: load model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
 }
@@ -311,7 +311,7 @@ std::vector<Texture> Model::load_material_textures(aiMaterial *mat,
 uint32 Model::load_texture_from_file(const char *path, const std::string &directory)
 {
     // DEBUG
-    printf("texture=%s\n", path);
+    printf("crap-engine: texture=%s\n", path);
     
     std::string filename = std::string(path);
     filename = directory + '/' + filename;

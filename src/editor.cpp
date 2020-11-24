@@ -29,13 +29,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // TODO: parse a list in a dedicated header file // sure about pointer?
     ShaderCache *sCache = new ShaderCache();
     sCache->compileAndAddShader("./shaders/default.glsl", "default", camera->projectionMatrix);
-    printf("shader compile: 'default'\n");
+    printf("crap-engine: compile shader='default'\n");
     sCache->compileAndAddShader("./shaders/instanced.glsl", "instanced", camera->projectionMatrix);
-    printf("shader compile: 'instanced'\n");
+    printf("crap-engine: compile shader='instanced'\n");
     sCache->compileAndAddShader("./shaders/color.glsl", "color", camera->projectionMatrix);
-    printf("shader compile: 'color'\n");
+    printf("crap-engine: compile shader='color'\n");
     sCache->compileAndAddShader("./shaders/skybox.glsl", "skybox", camera->projectionMatrix);
-    printf("shader compile: 'skybox'\n");
+    printf("crap-engine: compile shader='skybox'\n");
 
     // =================================================
     // Grid
