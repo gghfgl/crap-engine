@@ -49,10 +49,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Generate ground
-    Ground *ground = new Ground(g_GroundResolution, g_GroundDefaultModelFile);
+    Ground *ground = new Ground("default", g_GroundResolution, g_GroundDefaultModelFile);
 
     // Entitys array
-    std::map<uint32, Entity *> *SCENE = new std::map<uint32, Entity *>;
+    std::map<uint32, Entity*> *SCENE = new std::map<uint32, Entity*>;
 
     // Skybox
     std::vector<std::string> faces{
@@ -62,15 +62,24 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         "./assets/skybox/test/bottom.jpg",
         "./assets/skybox/test/front.jpg",
         "./assets/skybox/test/back.jpg"};
+    Skybox *skybox = new Skybox(faces);
+
+    // TODO: WIP
+    // Ground map
+    Ground *groundTestA = new Ground("default TEST A", g_GroundResolution, g_GroundDefaultModelFile);
+    Ground *groundTestB = new Ground("default TEST B", g_GroundResolution, g_GroundDefaultModelFile);
+    std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
+    Grounds->insert({1, groundTestA});
+    Grounds->insert({2, groundTestB});
+
     // =================================================
-    
     editor_t *Editor = new editor_t;
     Editor->Active = true;
-    Editor->GridResolution = 0; //TODO: remove?
+    Editor->GridResolution = 0;
     Editor->MeshGrid = MeshGrid;
     Editor->MeshAxisDebug = MeshAxisDebug;
     Editor->MeshRay = MeshRay;
-    Editor->skybox = new Skybox(faces);
+    Editor->skybox = skybox;
     Editor->ShowSkybox = false;
 
     EditorGui gui = EditorGui(Window);
@@ -264,11 +273,14 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.environmentSettings(ground,
-                                g_GroundResolution,
-                                g_GroundMaxResolution,
-                                &Editor->ShowSkybox);
-        gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
+        gui.groundSettings(g_GroundResolution,
+                           g_GroundMaxResolution,
+                           Grounds);
+        // gui.environmentSettings(ground,
+        //                         g_GroundResolution,
+        //                         g_GroundMaxResolution,
+        //                         &Editor->ShowSkybox);
+        //gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
         gui.endPanel();
         gui.draw();
 

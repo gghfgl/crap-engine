@@ -10,3 +10,11 @@ struct editor_t
      Skybox *skybox; // TODO: add skybox load from file in panel with min
 	bool ShowSkybox;
 };
+
+struct Environment
+{
+    std::string name;
+    Ground *ground;
+    int32 *sliderResolution;
+    Skybox *skybox;
+};

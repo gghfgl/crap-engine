@@ -71,7 +71,7 @@ struct Entity
 
 struct Ground
 {
-    Ground(uint32 resolution, std::string const &modelFilePath);
+    Ground(const char* name, uint32 resolution, std::string const &modelFilePath);
     ~Ground();
     void updateModelMatrices(uint32 resolution);
     void clearInstance();
@@ -81,6 +81,7 @@ struct Ground
     uint32 instanceBufferID;
     bool isGenerated = false;
     glm::mat4 *modelMatrices;
+    const char* name;
 };
 
 struct Skybox

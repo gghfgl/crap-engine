@@ -361,7 +361,7 @@ Entity::~Entity()
 
 // ======================================
 
-Ground::Ground(uint32 resolution, std::string const &modelFilePath)
+Ground::Ground(const char* name, uint32 resolution, std::string const &modelFilePath)
 {
     this->entity = new Entity;
     this->entity->pickingSphere = nullptr;
@@ -370,6 +370,7 @@ Ground::Ground(uint32 resolution, std::string const &modelFilePath)
     this->resolution = resolution;
     this->instanceBufferID = 0;
     this->isGenerated = false;
+    this->name = name;
 
     this->updateModelMatrices(resolution);
 }

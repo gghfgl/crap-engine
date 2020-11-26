@@ -22,7 +22,11 @@ struct EditorGui
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
 
-    // TODO: rework with environment list like entities
+    // TODO: WIP
+    void groundSettings(int32 &resolution,
+                        uint32 maxResolution,
+                        std::map<uint32, Ground*> *Grounds);
+
     void environmentSettings(Ground *ground,
                              int32 &resolution,
                              uint32 maxResolution,
@@ -126,7 +130,7 @@ void EditorGui::endPanel()
 
 void EditorGui::windowAndInputSettings(InputState *input)
 {
-    if (ImGui::CollapsingHeader("Window settings", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Window & Input", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImVec2 bSize(40, 20);
         ImGui::Text("SCREEN: %d x %d", this->window->getWidth(), this->window->getHeight());
@@ -139,21 +143,22 @@ void EditorGui::windowAndInputSettings(InputState *input)
         if (ImGui::Button(this->window->getVsync() ? "on" : "off", bSize))
             this->window->toggleVsync();
         ImGui::SameLine();
-        ImGui::Text("VSYNC: ");
+        ImGui::Text("VSYNC ");
         ImGui::PopID();
 
         ImGui::PushID(2);
         if (ImGui::Button(this->window->debug ? "on" : "off", bSize))
             this->window->debug = !this->window->debug;
         ImGui::SameLine();
-        ImGui::Text("DEBUG: ");
+        ImGui::Text("DEBUG ");
         ImGui::PopID();
     }
+    ImGui::Separator();
 }
 
 void EditorGui::cameraSettings(Camera *camera)
 {
-    if (ImGui::CollapsingHeader("camera settings", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Text("yaw: %.2f", camera->settings->yaw);
         ImGui::Text("pitch: %.2f", camera->settings->pitch);
@@ -188,6 +193,94 @@ void EditorGui::cameraSettings(Camera *camera)
             camera->processMovementAngles(0.0f, 0.0f);
         }
         ImGui::Separator();
+    }
+}
+
+// TODO: WIP
+void EditorGui::groundSettings(int32 &resolution,
+                               uint32 maxResolution,
+                               std::map<uint32, Ground*> *Grounds)
+{
+    if (ImGui::CollapsingHeader("ground", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+        ImGui::Text("resolution (max %dx%d):", maxResolution, maxResolution);
+        ImGui::SliderInt("", &resolution, 0, maxResolution);
+        ImGui::Separator();
+
+        static uint32 currentDraw = 0;
+        static uint32 selectedID = 0;
+        
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+        for (auto it = Grounds->begin(); it != Grounds->end(); it++)	 
+        {
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentDraw == it->first) ? "[selected]" : ""))
+            {
+                ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+                ImGui::Text( ICON_FA_CUBE );
+                ImGui::SameLine();
+                ImGui::Text("%s", it->second->entity->model->objFilename.c_str());
+                ImGui::Text("path: %s", it->second->entity->model->directory.c_str());
+
+                ImGui::SameLine();
+                if (ImGui::SmallButton("load")){
+                    selectedID = it->first;
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectGroundModel", "Choose File", ".obj", ".");
+                }
+
+                ImGui::SameLine();
+                if (ImGui::SmallButton("select"))
+                    currentDraw = it->first;
+                
+                if (ImGui::SmallButton("delete")){
+                    selectedID = it->first;
+                    ImGui::OpenPopup("DeleteGround");                    
+                }
+
+                if (ImGui::BeginPopupModal("DeleteGround"))
+                {
+                    ImGui::Text("selected ground will be deleted.\nThis operation cannot be undone!\n\n");
+                    ImGui::Separator();
+
+                    if (ImGui::Button("OK", ImVec2(120, 0))) {
+                        delete it->second;
+                        Grounds->erase(it->first);
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    selectedID = 0;
+                    ImGui::SetItemDefaultFocus();
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                        ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                }
+
+                ImGui::TreePop();
+            }
+        }
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SelectGroundModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
+
+                Model *loadedModel = new Model(filePathName);
+                if (loadedModel != nullptr)
+                {
+                    delete (*Grounds)[selectedID]->entity->model;
+                    (*Grounds)[selectedID]->entity->model = loadedModel;
+                    (*Grounds)[selectedID]->isGenerated = false;
+                }
+            }
+
+            selectedID = 0;
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectGroundModel");
+        }
+
     }
 }
 
