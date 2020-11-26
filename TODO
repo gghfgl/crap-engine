@@ -1,8 +1,8 @@
 
 GENERAL
 
-- @editor: merge terrain and skybox into environment struct
-- @editor: add vector of environments + gui panel (new / delete / save) + open new list
+- @editor: add map of ground + gui panel (add / select / load / delete / save to list) + open from list
+- @editor: add map of skyboc + gui panel (add / select / load / delete / save to list) + open from list
 
 - @editor: gui switch perf to string rendering
 

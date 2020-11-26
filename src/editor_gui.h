@@ -21,8 +21,6 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
-
-    // TODO: WIP
     void groundSettings(int32 &resolution,
                         uint32 maxResolution,
                         std::map<uint32, Ground*> *Grounds);
@@ -218,13 +216,13 @@ void EditorGui::groundSettings(int32 &resolution,
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentDraw == it->first) ? "[selected]" : ""))
             {
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));	
-                ImGui::Text( ICON_FA_CUBE );
+                ImGui::Text( ICON_FA_CUBE ); // TODO: change icon?
                 ImGui::SameLine();
                 ImGui::Text("%s", it->second->entity->model->objFilename.c_str());
                 ImGui::Text("path: %s", it->second->entity->model->directory.c_str());
 
                 ImGui::SameLine();
-                if (ImGui::SmallButton("load")){
+                if (ImGui::SmallButton("load")){ // TODO: save relative path
                     selectedID = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectGroundModel", "Choose File", ".obj", ".");
                 }
