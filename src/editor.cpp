@@ -5,6 +5,7 @@ void PrepareAxisDebug(Mesh *Mesh); // TODO: rename origin
 void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
 void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
+static uint32 g_CurrentGroundIndex = 0;
 static int32 g_GroundResolution = 10;
 static const uint32 g_GroundMaxResolution = 50;
 const char* g_GroundDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
@@ -48,9 +49,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     std::vector<Vertex> vRay(2, Vertex());
     Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
 
-    // Generate ground
-    Ground *ground = new Ground("default", g_GroundResolution, g_GroundDefaultModelFile);
-
     // Entitys array
     std::map<uint32, Entity*> *SCENE = new std::map<uint32, Entity*>;
 
@@ -64,13 +62,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         "./assets/skybox/test/back.jpg"};
     Skybox *skybox = new Skybox(faces);
 
-    // TODO: WIP
     // Ground map
-    Ground *groundTestA = new Ground("default TEST A", g_GroundResolution, g_GroundDefaultModelFile);
-    Ground *groundTestB = new Ground("default TEST B", g_GroundResolution, g_GroundDefaultModelFile);
+    Ground *defaultGround = new Ground("default", g_GroundResolution, g_GroundDefaultModelFile);
     std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
-    Grounds->insert({1, groundTestA});
-    Grounds->insert({2, groundTestB});
+    Grounds->insert({1, defaultGround});
 
     // =================================================
     editor_t *Editor = new editor_t;
@@ -146,9 +141,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                     camera->getViewMatrix());
 
         // ground slider
-        if (g_GroundResolution != (int)ground->resolution)
+        if (g_CurrentGroundIndex != 0 && g_GroundResolution != (int)Grounds->find(g_CurrentGroundIndex)->second->resolution)
         {
-            ground->isGenerated = false;
+            Grounds->find(g_CurrentGroundIndex)->second->isGenerated = false;
             //ground->resolution = g_GroundResolution;
         }
         
@@ -205,22 +200,28 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(Editor->MeshRay, 1.0f);
 
         // draw ground
-        if (!ground->isGenerated)
-        {
-            ground->clearInstance();
-            ground->updateModelMatrices(g_GroundResolution);
-            ground->instanceBufferID = renderer->prepareInstance(ground->entity->model,
-                                                                  ground->modelMatrices,
-                                                                  ground->resolution * ground->resolution);
-            ground->isGenerated = true;
+        if (g_CurrentGroundIndex != 0){
+            if (Grounds->find(g_CurrentGroundIndex)->second->entity->model != nullptr)
+            {
+                if (!Grounds->find(g_CurrentGroundIndex)->second->isGenerated)
+                {
+                    Grounds->find(g_CurrentGroundIndex)->second->clearInstance();
+                    Grounds->find(g_CurrentGroundIndex)->second->updateModelMatrices(g_GroundResolution);
+                    Grounds->find(g_CurrentGroundIndex)->second->instanceBufferID = renderer->prepareInstance(Grounds->find(g_CurrentGroundIndex)->second->entity->model,
+                                                                                                              Grounds->find(g_CurrentGroundIndex)->second->modelMatrices,
+                                                                                                              Grounds->find(g_CurrentGroundIndex)->second->resolution * Grounds->find(g_CurrentGroundIndex)->second->resolution);
+                    Grounds->find(g_CurrentGroundIndex)->second->isGenerated = true;
+                }
+
+                Shader *instancedShader = sCache->getShader("instanced");
+                instancedShader->useProgram();
+                instancedShader->setUniform4fv("view", viewMatrix);
+                instancedShader->setUniform4fv("model", glm::mat4(1.0f));
+                renderer->drawInstanceModel(Grounds->find(g_CurrentGroundIndex)->second->entity->model,
+                                            instancedShader,
+                                            Grounds->find(g_CurrentGroundIndex)->second->resolution * Grounds->find(g_CurrentGroundIndex)->second->resolution);
+            }
         }
-        Shader *instancedShader = sCache->getShader("instanced");
-        instancedShader->useProgram();
-        instancedShader->setUniform4fv("view", viewMatrix);
-        instancedShader->setUniform4fv("model", glm::mat4(1.0f));
-        renderer->drawInstanceModel(ground->entity->model,
-                                    instancedShader,
-                                    ground->resolution * ground->resolution);
                   
         // draw objs
         Shader *defaultShader = sCache->getShader("default");
@@ -275,6 +276,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.cameraSettings(camera);
         gui.groundSettings(g_GroundResolution,
                            g_GroundMaxResolution,
+                           g_CurrentGroundIndex,
                            Grounds);
         // gui.environmentSettings(ground,
         //                         g_GroundResolution,
@@ -294,8 +296,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         delete it->second;
     delete SCENE;
 
-    delete ground;
-    
+    for (auto it = Grounds->begin(); it != Grounds->end(); it++)
+        delete it->second;
+    delete Grounds;
+
     // TODO: implement complete full delete Editor method
     delete Editor->MeshGrid;
     delete Editor->MeshAxisDebug;

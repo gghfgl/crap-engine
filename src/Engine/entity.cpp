@@ -365,7 +365,10 @@ Ground::Ground(const char* name, uint32 resolution, std::string const &modelFile
 {
     this->entity = new Entity;
     this->entity->pickingSphere = nullptr;
-    this->entity->model = new Model(modelFilePath);
+
+    this->entity->model = nullptr;
+    if (modelFilePath.length() > 0)
+        this->entity->model = new Model(modelFilePath);
 
     this->resolution = resolution;
     this->instanceBufferID = 0;

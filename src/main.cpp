@@ -3,8 +3,8 @@
 
 #include "editor.cpp"
 
-const uint32 c_Width = 1680;
-const uint32 c_Height = 1050;
+const uint32 c_Width = 1440;
+const uint32 c_Height = 900;
 
 int main(int, char**)
 {

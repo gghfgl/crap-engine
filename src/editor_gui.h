@@ -23,6 +23,7 @@ struct EditorGui
     void cameraSettings(Camera *camera);
     void groundSettings(int32 &resolution,
                         uint32 maxResolution,
+                        uint32 &currentGroundIndex,
                         std::map<uint32, Ground*> *Grounds);
 
     void environmentSettings(Ground *ground,
@@ -58,7 +59,7 @@ EditorGui::EditorGui(Window* window)
     io.Fonts->AddFontDefault();
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-    io.Fonts->AddFontFromFileTTF( "assets/fonts/webfonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges );
+    io.Fonts->AddFontFromFileTTF( "assets/fonts/webfonts/fa-solid-900.ttf", 13.0f, &icons_config, icons_ranges );
 
     this->activeWindow = false;
     this->window = window;
@@ -130,27 +131,41 @@ void EditorGui::windowAndInputSettings(InputState *input)
 {
     if (ImGui::CollapsingHeader("Window & Input", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImVec2 bSize(40, 20);
+        // Window and input data
         ImGui::Text("SCREEN: %d x %d", this->window->getWidth(), this->window->getHeight());
         ImGui::Text("MousePos: %d x %d",
                     (uint32)input->mouse->posX,
                     (uint32)input->mouse->posY);
+
         ImGui::Separator();
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
-        ImGui::PushID(1);
-        if (ImGui::Button(this->window->getVsync() ? "on" : "off", bSize))
+        // Vsync toggle
+        bool vsync = this->window->getVsync();
+
+        ImGui::PushStyleColor(ImGuiCol_Button,
+                              vsync
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.6f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                              vsync
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                              vsync
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+
+        
+        ImVec2 bSize(100, 20);
+        if (ImGui::Button(vsync ? "on" : "off", bSize))
             this->window->toggleVsync();
-        ImGui::SameLine();
-        ImGui::Text("VSYNC ");
-        ImGui::PopID();
+        ImGui::PopStyleColor(3);
 
-        ImGui::PushID(2);
-        if (ImGui::Button(this->window->debug ? "on" : "off", bSize))
-            this->window->debug = !this->window->debug;
         ImGui::SameLine();
-        ImGui::Text("DEBUG ");
-        ImGui::PopID();
+        ImGui::Text("VSYNC");
     }
+
     ImGui::Separator();
 }
 
@@ -158,6 +173,7 @@ void EditorGui::cameraSettings(Camera *camera)
 {
     if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        // Camera data
         ImGui::Text("yaw: %.2f", camera->settings->yaw);
         ImGui::Text("pitch: %.2f", camera->settings->pitch);
         ImGui::Text("speed: %.2f", camera->settings->speed);
@@ -172,6 +188,7 @@ void EditorGui::cameraSettings(Camera *camera)
                     camera->worldUp.y,
                     camera->worldUp.z);
 
+        // Reset bouton
         ImVec2 bSize(100, 20);
         if (ImGui::Button("Reset Default", bSize))
         {
@@ -181,6 +198,8 @@ void EditorGui::cameraSettings(Camera *camera)
             camera->settings->fov = 45.0f;
             camera->processMovementAngles(0.0f, 0.0f);
         }
+
+        // Reset button
         ImGui::SameLine();
         if (ImGui::Button("Reset Up", bSize))
         {
@@ -190,52 +209,108 @@ void EditorGui::cameraSettings(Camera *camera)
             camera->settings->fov = 45.0f;
             camera->processMovementAngles(0.0f, 0.0f);
         }
+
         ImGui::Separator();
     }
 }
 
-// TODO: WIP
 void EditorGui::groundSettings(int32 &resolution,
                                uint32 maxResolution,
+                               uint32 &currentGroundIndex,
                                std::map<uint32, Ground*> *Grounds)
 {
     if (ImGui::CollapsingHeader("ground", ImGuiTreeNodeFlags_DefaultOpen))
     {
-
-        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+        // Resolution slider
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
+        ImGui::PushItemWidth(-FLT_MIN);
         ImGui::Text("resolution (max %dx%d):", maxResolution, maxResolution);
         ImGui::SliderInt("", &resolution, 0, maxResolution);
         ImGui::Separator();
 
-        static uint32 currentDraw = 0;
-        static uint32 selectedID = 0;
+        // Add ground button
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+        if (ImGui::Button("add"))
+            ImGui::OpenPopup("AddGround");                    
+
+        // Add ground modal
+        if (ImGui::BeginPopupModal("AddGround"))
+        {
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+            ImGui::Text("add a new ground to the list:");
+            char str0[128] = "give me a name"; // TODO: no static to reset every frame
+            ImGui::PushItemWidth(-FLT_MIN);
+            ImGui::InputText("", str0, IM_ARRAYSIZE(str0));
+            ImGui::Separator();
+
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));
+            if (ImGui::Button("Add", ImVec2(120, 0))) {
+
+
+                //memcpy(name, str0, strlen(str0)+1 );
+                //strcpy(name, str0);
+
+                // DEBUG
+                printf("str0=%s\n",str0);
+                printf("str0=%p\n",str0);
+
+                // TODO: string management
+                Ground *ground = new Ground(str0, resolution, "");
+                Grounds->insert({Grounds->size()+1, ground});
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Close", ImVec2(120, 0)))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
+        }
         
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+
+        // Ground list
+        static uint32 selectedIndex = 0;
         for (auto it = Grounds->begin(); it != Grounds->end(); it++)	 
         {
-            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentDraw == it->first) ? "[selected]" : ""))
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[selected]" : ""))
             {
+                // Ground data
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));	
                 ImGui::Text( ICON_FA_CUBE ); // TODO: change icon?
                 ImGui::SameLine();
-                ImGui::Text("%s", it->second->entity->model->objFilename.c_str());
-                ImGui::Text("path: %s", it->second->entity->model->directory.c_str());
+                if (it->second->entity->model == nullptr)
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
+                else
+                    ImGui::Text("%s", it->second->entity->model->objFilename.c_str());
 
+                ImGui::Text( ICON_FA_FOLDER ); // TODO: change icon?
                 ImGui::SameLine();
+                if (it->second->entity->model == nullptr)
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
+                else
+                    ImGui::Text("%s", it->second->entity->model->directory.c_str());
+
+                // Load ground model button
                 if (ImGui::SmallButton("load")){ // TODO: save relative path
-                    selectedID = it->first;
+                    selectedIndex = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectGroundModel", "Choose File", ".obj", ".");
                 }
 
+                // Select ground button
                 ImGui::SameLine();
                 if (ImGui::SmallButton("select"))
-                    currentDraw = it->first;
-                
+                    currentGroundIndex = it->first;
+
+                // Delete button
+                ImGui::SameLine();
                 if (ImGui::SmallButton("delete")){
-                    selectedID = it->first;
+                    selectedIndex = it->first;
                     ImGui::OpenPopup("DeleteGround");                    
                 }
 
+                // Delete ground modal
                 if (ImGui::BeginPopupModal("DeleteGround"))
                 {
                     ImGui::Text("selected ground will be deleted.\nThis operation cannot be undone!\n\n");
@@ -244,10 +319,14 @@ void EditorGui::groundSettings(int32 &resolution,
                     if (ImGui::Button("OK", ImVec2(120, 0))) {
                         delete it->second;
                         Grounds->erase(it->first);
+
+                        if (it->first == currentGroundIndex)
+                            currentGroundIndex = 0;
+
                         ImGui::CloseCurrentPopup();
                     }
 
-                    selectedID = 0;
+                    selectedIndex = 0;
                     ImGui::SetItemDefaultFocus();
                     ImGui::SameLine();
                     if (ImGui::Button("Cancel", ImVec2(120, 0)))
@@ -259,23 +338,23 @@ void EditorGui::groundSettings(int32 &resolution,
             }
         }
 
+        // Open dialog load ground model file
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("SelectGroundModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
 
                 Model *loadedModel = new Model(filePathName);
                 if (loadedModel != nullptr)
                 {
-                    delete (*Grounds)[selectedID]->entity->model;
-                    (*Grounds)[selectedID]->entity->model = loadedModel;
-                    (*Grounds)[selectedID]->isGenerated = false;
+                    delete (*Grounds)[selectedIndex]->entity->model;
+                    (*Grounds)[selectedIndex]->entity->model = loadedModel;
+                    (*Grounds)[selectedIndex]->isGenerated = false;
                 }
             }
 
-            selectedID = 0;
+            selectedIndex = 0;
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectGroundModel");
         }
 
