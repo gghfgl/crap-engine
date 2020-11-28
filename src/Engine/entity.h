@@ -125,7 +125,6 @@ inline int32 SaveEntityListInTextFormat(const char *filepath, std::map<uint32, E
 
 inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, Ground*> *List)
 {
-    // TODO: add header
     std::ofstream file;
     file.open(filepath);
     file << "HEADER_GROUND_LIST\n";
@@ -135,15 +134,15 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
         std::string dir = "";
         if (it->second->entity->model != nullptr)
         {
-            objf = it->second->entity->model->directory.c_str();
-            dir = it->second->entity->model->objFilename.c_str();
+            dir = it->second->entity->model->directory.c_str();
+            objf = it->second->entity->model->objFilename.c_str();
         }
 
         file << "###\n";
         file << "id=" << it->first << "\n";
         file << "name=" << it->second->name << "\n";
-        file << "objfile=" << objf << "\n";
         file << "directory=" << dir << "\n";
+        file << "objfile=" << objf << "\n";
         file << "resolution=" << it->second->resolution << "\n";
     }
 
@@ -153,7 +152,6 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
     printf("saved: %s\n", filepath);
     return 0;
 }
-
 
 inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
                                               std::map<uint32,Entity*> *List)
@@ -265,5 +263,113 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
 
     // DEBUG:
     printf("opened: %s", filepath);
+    return 0;
+}
+
+inline int32 OpenGroundListFromFile(const char *filepath,
+                                    std::map<uint32,Ground*> *List)
+{
+    printf("==============================\n");
+    printf("opening ground list ...\n");
+
+    std::ifstream file(filepath);
+    if (!file.is_open())
+    {
+        printf("open file error!\n");
+        return -1;
+    }
+
+    // Clear map
+    for (auto it = List->begin(); it != List->end(); it++)
+        delete it->second;
+    List->clear();
+
+
+    uint32 id = 1;
+    std::string name = "unknown";
+    std::string fullpath = "";
+    uint32 resolution = 0;
+
+    uint32 fetch = 0;
+    uint32 nbFields = 5;
+    std::string line;
+
+    std::getline(file, line);
+    if (line != "HEADER_GROUND_LIST")
+    {
+        // DEBUG:
+        printf("faile to read %s: header is missing", filepath);
+        return -1;
+    }
+
+    while (std::getline(file, line))
+    {
+        line.erase(std::remove_if(line.begin(), line.end(), isspace),
+                   line.end());
+
+        {
+            if(line[0] == '#' || line.empty())
+                continue;
+
+            auto delimiterPos = line.find("=");
+            auto key = line.substr(0, delimiterPos);
+            auto value = line.substr(delimiterPos + 1);
+
+            if (key.compare("id") == 0)
+            {
+                id = std::stoi(value);
+                fetch++;
+            }
+
+            if (key.compare("name") == 0)
+            {
+                name = value;
+                fetch++;
+            }
+
+            if (key.compare("directory") == 0)
+            {
+                fullpath = value ;
+                fetch++;
+            }
+
+            if (key.compare("objfile") == 0)
+            {
+                    fullpath += "/" + value;
+                    fetch++;
+            }
+
+            if (key.compare("resolution") == 0)
+            {
+                resolution = std::stoi(value);
+                fetch++;
+            }
+
+            if (fetch == nbFields)
+            {
+                // in case of no objfile
+                if (fullpath.length() == 1)
+                    fullpath = "";
+
+                // DEBUG:
+                printf("id= %d\n", id);
+                printf("name= %s\n", name.c_str());
+                printf("fullpath= %s\n", fullpath.c_str());
+                printf("resolution= %d\n", resolution);
+
+                // TODO
+                const char *cstr = name.c_str();
+                Ground *ground = new Ground(cstr, resolution, fullpath);
+                List->insert({id, ground});
+		
+                fetch = 0;
+            }            
+        }
+    }
+
+    file.close();
+
+    // DEBUG:
+    printf("opened: %s\n", filepath);
     return 0;
 }

@@ -214,7 +214,6 @@ void EditorGui::cameraSettings(Camera *camera)
     }
 }
 
-// TODO: WIP
 void EditorGui::groundSettings(int32 &resolution,
                                uint32 maxResolution,
                                uint32 &currentGroundIndex,
@@ -247,12 +246,12 @@ void EditorGui::groundSettings(int32 &resolution,
             ImGui::Dummy(ImVec2(0.0f, 3.0f));
             if (ImGui::Button("Add", ImVec2(120, 0)))
             {
-                char *p = new char[32];
-                strncpy(p, str0, 32);
-                p[32 - 1] = '\0';
+                char *name = new char[32];
+                strncpy(name, str0, 32);
+                name[32 - 1] = '\0';
                 
+                Ground *ground = new Ground(name, resolution, "");
                 std::time_t timestamp = std::time(nullptr);
-                Ground *ground = new Ground(p, resolution, "");
                 Grounds->insert({static_cast<uint32>(timestamp), ground});
 
                 // Reset input placeholder
@@ -287,10 +286,21 @@ void EditorGui::groundSettings(int32 &resolution,
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveGroundListInTextFormat");
         }
 
-        // TODO: Open ground list fom file
+        // TODO: WIP Open ground list fom file
         ImGui::SameLine();
         if (ImGui::Button("open"))
-            ImGui::OpenPopup("OpenGroundList");
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenGroundListFromFile", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                OpenGroundListFromFile(filePathName.c_str(), Grounds);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenGroundListFromFile");
+        }
         
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
 
