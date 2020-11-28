@@ -214,6 +214,7 @@ void EditorGui::cameraSettings(Camera *camera)
     }
 }
 
+// TODO: WIP
 void EditorGui::groundSettings(int32 &resolution,
                                uint32 maxResolution,
                                uint32 &currentGroundIndex,
