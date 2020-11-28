@@ -239,26 +239,25 @@ void EditorGui::groundSettings(int32 &resolution,
         {
             ImGui::Dummy(ImVec2(0.0f, 3.0f));	
             ImGui::Text("add a new ground to the list:");
-            char str0[128] = "give me a name"; // TODO: no static to reset every frame
+            static char str0[32] = "give me a name";
             ImGui::PushItemWidth(-FLT_MIN);
             ImGui::InputText("", str0, IM_ARRAYSIZE(str0));
             ImGui::Separator();
 
             ImGui::Dummy(ImVec2(0.0f, 3.0f));
-            if (ImGui::Button("Add", ImVec2(120, 0))) {
+            if (ImGui::Button("Add", ImVec2(120, 0)))
+            {
+                char *p = new char[32];
+                strncpy(p, str0, 32);
+                p[32 - 1] = '\0';
+                
+                std::time_t timestamp = std::time(nullptr);
+                Ground *ground = new Ground(p, resolution, "");
+                Grounds->insert({static_cast<uint32>(timestamp), ground});
 
-
-                //memcpy(name, str0, strlen(str0)+1 );
-                //strcpy(name, str0);
-
-                // DEBUG
-                printf("str0=%s\n",str0);
-                printf("str0=%p\n",str0);
-
-                // TODO: string management
-                Ground *ground = new Ground(str0, resolution, "");
-                Grounds->insert({Grounds->size()+1, ground});
-
+                // Reset input placeholder
+                strncpy(str0, "give me a name", 32);
+                
                 ImGui::CloseCurrentPopup();
             }
 

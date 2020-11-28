@@ -1,6 +1,7 @@
 
 GENERAL
 
+- @git: merge linux into windows new branch
 - @editor: add map of ground + gui panel (add / select / load / delete / save to list) + open from list
 - @editor: when gui focused disable camera direcection and angles (keyboard and mouse)
 - @editor: add map of skyboc + gui panel (add / select / load / delete / save to list) + open from list
