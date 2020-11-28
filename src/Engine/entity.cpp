@@ -146,8 +146,13 @@ Model::Model(std::string const &path)
         printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
     }
 
-    this->directory = path.substr(0, path.find_last_of('/'));
-    this->objFilename = path.substr(this->directory.length() + 1, path.length());
+    // convert to relative path
+    auto p = std::filesystem::proximate(path);
+    std::string p_string{p.u8string()};
+
+    this->directory = p_string.substr(0, p_string.find_last_of('/'));
+    //this->directory = path.substr(0, path.find_last_of('/'));
+    this->objFilename = p_string.substr(this->directory.length() + 1, p_string.length());
 
     // DEBUG:
     printf("==============================\n");

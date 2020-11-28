@@ -267,6 +267,30 @@ void EditorGui::groundSettings(int32 &resolution,
 
             ImGui::EndPopup();
         }
+
+        // Save ground list into file
+        ImGui::SameLine();
+        if (ImGui::Button("save"))
+        {
+            std::time_t timestamp = std::time(nullptr);
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveGroundListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
+        }
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveGroundListInTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                SaveGroundListInTextFormat(filePathName.c_str(), Grounds);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveGroundListInTextFormat");
+        }
+
+        // TODO: Open ground list fom file
+        ImGui::SameLine();
+        if (ImGui::Button("open"))
+            ImGui::OpenPopup("OpenGroundList");
         
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
 
@@ -344,6 +368,7 @@ void EditorGui::groundSettings(int32 &resolution,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
 
                 Model *loadedModel = new Model(filePathName);
                 if (loadedModel != nullptr)

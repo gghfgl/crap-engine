@@ -123,10 +123,42 @@ inline int32 SaveEntityListInTextFormat(const char *filepath, std::map<uint32, E
     return 0;
 }
 
+inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, Ground*> *List)
+{
+    // TODO: add header
+    std::ofstream file;
+    file.open(filepath);
+    file << "HEADER_GROUND_LIST\n";
+    for (auto it = List->begin(); it != List->end(); it++)
+    {
+        std::string objf = "";
+        std::string dir = "";
+        if (it->second->entity->model != nullptr)
+        {
+            objf = it->second->entity->model->directory.c_str();
+            dir = it->second->entity->model->objFilename.c_str();
+        }
+
+        file << "###\n";
+        file << "id=" << it->first << "\n";
+        file << "name=" << it->second->name << "\n";
+        file << "objfile=" << objf << "\n";
+        file << "directory=" << dir << "\n";
+        file << "resolution=" << it->second->resolution << "\n";
+    }
+
+    file.close();
+
+    // DEBUG:
+    printf("saved: %s\n", filepath);
+    return 0;
+}
+
 
 inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
                                               std::map<uint32,Entity*> *List)
 {
+    // TODO: check header!
     std::ifstream file(filepath);
     if (!file.is_open())
     {
