@@ -319,7 +319,7 @@ void EditorGui::groundSettings(int32 &resolution,
                 // Load ground model button
                 if (ImGui::SmallButton("load")){ // TODO: save relative path
                     selectedIndex = it->first;
-                    igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectGroundModel", "Choose File", ".obj", ".");
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel", "Choose File", ".obj", ".");
                 }
 
                 // Select ground button
@@ -363,7 +363,7 @@ void EditorGui::groundSettings(int32 &resolution,
         }
 
         // Open dialog load ground model file
-        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SelectGroundModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("LoadGroundModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
@@ -380,7 +380,7 @@ void EditorGui::groundSettings(int32 &resolution,
             }
 
             selectedIndex = 0;
-            igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectGroundModel");
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadGroundModel");
         }
 
     }

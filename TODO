@@ -3,11 +3,12 @@ GENERAL
 
 
 - @editor: add map of ground + gui panel (add / select / load / delete / save+open list)
-- @editor: manage relative path when loading files from inguiDialog
 - @editor: protect wrong file load from dialog when load .obj or .list file
 - @editor: add header in list files
 - @editor: check header when loading list files
 - @editor: when gui focused disable camera direcection and angles (keyboard and mouse)
+
+- @editor: loader start app and loading model files?
 
 - @git: merge linux into windows new branch
 

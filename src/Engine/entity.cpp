@@ -126,8 +126,12 @@ void Mesh::allocate_mesh()
 
 Model::Model(std::string const &path)
 {
+    // convert to relative path
+    auto p = std::filesystem::proximate(path);
+    std::string p_string{p.u8string()};
+
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_FlipWindingOrder
+    const aiScene *scene = importer.ReadFile(p_string, aiProcess_FlipWindingOrder
                                              // | aiProcess_MakeLeftHanded
                                              | aiProcess_Triangulate
                                              | aiProcess_FlipUVs
@@ -144,14 +148,10 @@ Model::Model(std::string const &path)
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
+        return; // TODO: error management
     }
 
-    // convert to relative path
-    auto p = std::filesystem::proximate(path);
-    std::string p_string{p.u8string()};
-
     this->directory = p_string.substr(0, p_string.find_last_of('/'));
-    //this->directory = path.substr(0, path.find_last_of('/'));
     this->objFilename = p_string.substr(this->directory.length() + 1, p_string.length());
 
     // DEBUG:
