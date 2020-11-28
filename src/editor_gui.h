@@ -278,14 +278,14 @@ void EditorGui::groundSettings(int32 &resolution,
             {
                 // Ground data
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));	
-                ImGui::Text( ICON_FA_CUBE ); // TODO: change icon?
+                ImGui::Text( ICON_FA_CUBE );
                 ImGui::SameLine();
                 if (it->second->entity->model == nullptr)
                     ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
                 else
                     ImGui::Text("%s", it->second->entity->model->objFilename.c_str());
 
-                ImGui::Text( ICON_FA_FOLDER ); // TODO: change icon?
+                ImGui::Text( ICON_FA_FOLDER );
                 ImGui::SameLine();
                 if (it->second->entity->model == nullptr)
                     ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
