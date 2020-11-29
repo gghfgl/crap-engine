@@ -1,1 +1,3 @@
-build/
+bin/
+a.out
+imgui.ini

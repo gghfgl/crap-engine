@@ -1,0 +1,34 @@
+
+GENERAL
+
+- @editor: add rename ground option
+- @editor: when gui focused disable camera direcection and angles (keyboard and mouse)
+
+- @editor: loader start app and loading model files?
+
+- @git: merge linux into windows new branch
+
+- @editor: add map of skyboc + gui panel (add / select / load / delete / save to list) + open from list
+
+- @editor: gui switch perf to string rendering
+
+- @editor: modules list (new / delete / save) + open new list in tab?
+
+- @editor: read and compile all shaders from a directory with debug output at runtime?
+
+
+
+- improve skybox import assets
+- rework editor struct and debug rendering tools
+- implement memorypool visualizer
+- improve click setting panel object after selectinID from world
+- improve coordinate system for positionning objects
+- improve skybox loading assets with hdr
+- run rendering scene from editor
+- fix / improve texture management from assimp model
+- assimp be carefull of texture path (need to update blender mtl file)
+- change to ortho projection
+- implement a console
+- beautyfull light PBR effects
+- improve scene file format (extend with skybox, etc ...)
+- build engine in microservice? Engine lib?
