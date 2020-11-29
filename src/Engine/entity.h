@@ -101,6 +101,9 @@ private:
 
 inline int32 SaveEntityListInTextFormat(const char *filepath, std::map<uint32, Entity*> *List)
 {
+    // DEBUG:
+    printf("\n=== BEGIN: SaveEntityListInTextFormat\n");
+
     std::ofstream file;
     file.open(filepath);
     for (auto it = List->begin(); it != List->end(); it++)
@@ -120,11 +123,16 @@ inline int32 SaveEntityListInTextFormat(const char *filepath, std::map<uint32, E
 
     // DEBUG:
     printf("saved: %s\n", filepath);
+    printf("=== END: SaveEntityListInTextFormat\n");
+
     return 0;
 }
 
 inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, Ground*> *List)
 {
+    // DEBUG:
+    printf("\n=== BEGIN: SaveGroundListInTextFormat\n");
+
     std::ofstream file;
     file.open(filepath);
     file << "HEADER_GROUND_LIST\n";
@@ -150,6 +158,8 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
 
     // DEBUG:
     printf("saved: %s\n", filepath);
+    printf("=== END: SaveGroundListInTextFormat\n");
+
     return 0;
 }
 
@@ -269,12 +279,13 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
 inline int32 OpenGroundListFromFile(const char *filepath,
                                     std::map<uint32,Ground*> *List)
 {
-    printf("==============================\n");
-    printf("opening ground list ...\n");
+    // DEBUG:
+    printf("\n=== BEGIN: OpenGroundListFromFile\n");
 
     std::ifstream file(filepath);
     if (!file.is_open())
     {
+        // DEBUG:
         printf("open file error!\n");
         return -1;
     }
@@ -298,7 +309,8 @@ inline int32 OpenGroundListFromFile(const char *filepath,
     if (line != "HEADER_GROUND_LIST")
     {
         // DEBUG:
-        printf("faile to read %s: header is missing", filepath);
+        printf("\nfaile to read %s: header is missing", filepath);
+        printf("=== END: OpenGroundListFromFile\n");
         return -1;
     }
 
@@ -352,14 +364,18 @@ inline int32 OpenGroundListFromFile(const char *filepath,
                     fullpath = "";
 
                 // DEBUG:
-                printf("id= %d\n", id);
-                printf("name= %s\n", name.c_str());
-                printf("fullpath= %s\n", fullpath.c_str());
-                printf("resolution= %d\n", resolution);
+                printf("fetching fields [%d]/[%d]\n", fetch, nbFields);
+                /* printf("id= %d\n", id); */
+                /* printf("name= %s\n", name.c_str()); */
+                /* printf("fullpath= %s\n", fullpath.c_str()); */
+                /* printf("resolution= %d\n", resolution); */
 
                 // TODO
-                const char *cstr = name.c_str();
-                Ground *ground = new Ground(cstr, resolution, fullpath);
+                char *nameCopy = new char[32];
+                strncpy(nameCopy, name.c_str(), 32);
+                name[32 - 1] = '\0';
+
+                Ground *ground = new Ground(nameCopy, resolution, fullpath);
                 List->insert({id, ground});
 		
                 fetch = 0;
@@ -371,5 +387,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
 
     // DEBUG:
     printf("opened: %s\n", filepath);
+    printf("=== END: OpenGroundListFromFile\n");
+
     return 0;
 }

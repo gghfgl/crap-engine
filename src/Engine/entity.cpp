@@ -126,6 +126,9 @@ void Mesh::allocate_mesh()
 
 Model::Model(std::string const &path)
 {
+    // DEBUG:
+    printf("\n=== BEGIN: New Model\n");
+
     // convert to relative path
     auto p = std::filesystem::proximate(path);
     std::string p_string{p.u8string()};
@@ -147,7 +150,10 @@ Model::Model(std::string const &path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
+        // DEBUG:
         printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
+        printf("=== END: New Model\n");
+
         return; // TODO: error management
     }
 
@@ -155,11 +161,11 @@ Model::Model(std::string const &path)
     this->objFilename = p_string.substr(this->directory.length() + 1, p_string.length());
 
     // DEBUG:
-    printf("==============================\n");
     printf("load model from directory: %s\n", this->directory.c_str());
     printf("load model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
+    printf("=== END: New Model\n");
 }
 
 Model::~Model()

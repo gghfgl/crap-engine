@@ -286,7 +286,7 @@ void EditorGui::groundSettings(int32 &resolution,
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveGroundListInTextFormat");
         }
 
-        // TODO: WIP Open ground list fom file
+        // TODO @WIP: Open ground list fom file
         ImGui::SameLine();
         if (ImGui::Button("open"))
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
