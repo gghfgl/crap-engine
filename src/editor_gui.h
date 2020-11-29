@@ -286,7 +286,7 @@ void EditorGui::groundSettings(int32 &resolution,
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveGroundListInTextFormat");
         }
 
-        // TODO @WIP: Open ground list fom file
+        // Open ground list fom file
         ImGui::SameLine();
         if (ImGui::Button("open"))
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
@@ -327,9 +327,17 @@ void EditorGui::groundSettings(int32 &resolution,
                     ImGui::Text("%s", it->second->entity->model->directory.c_str());
 
                 // Load ground model button
-                if (ImGui::SmallButton("load")){
+                if (ImGui::SmallButton("load"))
+                {
                     selectedIndex = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel", "Choose File", ".obj", ".");
+                }
+
+                // Delete button
+                ImGui::SameLine();
+                if (ImGui::SmallButton("rename"))
+                {
+                    ImGui::OpenPopup("RenameGround");                    
                 }
 
                 // Select ground button
@@ -339,11 +347,41 @@ void EditorGui::groundSettings(int32 &resolution,
 
                 // Delete button
                 ImGui::SameLine();
-                if (ImGui::SmallButton("delete")){
+                if (ImGui::SmallButton("delete"))
+                {
                     selectedIndex = it->first;
                     ImGui::OpenPopup("DeleteGround");                    
                 }
 
+                // Rename ground
+                if (ImGui::BeginPopupModal("RenameGround"))
+                {
+                    ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+                    ImGui::Text("rename ground [%s]:", it->second->name);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                    static char str1[32] = "give me a name";
+                    ImGui::InputText("", str1, IM_ARRAYSIZE(str1));
+                    ImGui::Separator();
+
+                    ImGui::Dummy(ImVec2(0.0f, 3.0f));
+                    if (ImGui::Button("Ok", ImVec2(120, 0)))
+                    {
+                        char *rename = new char[32];
+                        strncpy(rename, str1, 32);
+                        rename[32 - 1] = '\0';
+
+                        delete it->second->name;
+                        it->second->name = rename;
+
+                        // Reset input placeholder
+                        strncpy(str1, "give me a name", 32);
+
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
+                }
+                
                 // Delete ground modal
                 if (ImGui::BeginPopupModal("DeleteGround"))
                 {
