@@ -1,8 +1,6 @@
 
 GENERAL
 
-- @editor: fix const char string convert read ground from file
-- @editor: color field after loading grounds empty data
 - @editor: add rename ground option
 - @editor: when gui focused disable camera direcection and angles (keyboard and mouse)
 

@@ -39,7 +39,7 @@ run:
 .PHONY: clean
 
 valgrind:
-	valgrind --leak-check=full --track-origins=yes -s ./a.out
+	make build && valgrind --leak-check=full --track-origins=yes -s ./a.out
 
 clean:
 	rm -f a.out

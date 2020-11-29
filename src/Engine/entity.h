@@ -373,7 +373,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
                 // TODO
                 char *nameCopy = new char[32];
                 strncpy(nameCopy, name.c_str(), 32);
-                name[32 - 1] = '\0';
+                nameCopy[32 - 1] = '\0';
 
                 Ground *ground = new Ground(nameCopy, resolution, fullpath);
                 List->insert({id, ground});

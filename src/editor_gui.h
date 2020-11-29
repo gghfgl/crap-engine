@@ -327,7 +327,7 @@ void EditorGui::groundSettings(int32 &resolution,
                     ImGui::Text("%s", it->second->entity->model->directory.c_str());
 
                 // Load ground model button
-                if (ImGui::SmallButton("load")){ // TODO: save relative path
+                if (ImGui::SmallButton("load")){
                     selectedIndex = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel", "Choose File", ".obj", ".");
                 }
@@ -417,7 +417,6 @@ void EditorGui::environmentSettings(Ground *ground,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                //std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
 
                 Model *loadedModel = new Model(filePathName);
                 if (loadedModel != nullptr)
