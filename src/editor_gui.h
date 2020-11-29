@@ -370,7 +370,8 @@ void EditorGui::groundSettings(int32 &resolution,
                         strncpy(rename, str1, 32);
                         rename[32 - 1] = '\0';
 
-                        delete it->second->name;
+                        // TODO: segfault with the default ground because of non pointer to const char*
+                        // delete it->second->name;
                         it->second->name = rename;
 
                         // Reset input placeholder
