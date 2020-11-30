@@ -306,8 +306,9 @@ void EditorGui::groundSettings(int32 &resolution,
 
         // Ground list
         static uint32 selectedIndex = 0;
-        for (auto it = Grounds->begin(); it != Grounds->end(); it++)	 
+        for (auto it = Grounds->cbegin(), it_next = it; it != Grounds->cend(); it = it_next)
         {
+            ++it_next;
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[selected]" : ""))
             {
                 // Ground data
@@ -371,7 +372,7 @@ void EditorGui::groundSettings(int32 &resolution,
                         rename[32 - 1] = '\0';
 
                         // TODO: segfault with the default ground because of non pointer to const char*
-                        // delete it->second->name;
+                        delete[] it->second->name;
                         it->second->name = rename;
 
                         // Reset input placeholder
@@ -390,11 +391,11 @@ void EditorGui::groundSettings(int32 &resolution,
                     ImGui::Separator();
 
                     if (ImGui::Button("OK", ImVec2(120, 0))) {
-                        delete it->second;
-                        Grounds->erase(it->first);
-
                         if (it->first == currentGroundIndex)
                             currentGroundIndex = 0;
+
+                        delete it->second;
+                        Grounds->erase(it);
 
                         ImGui::CloseCurrentPopup();
                     }
@@ -431,7 +432,6 @@ void EditorGui::groundSettings(int32 &resolution,
             selectedIndex = 0;
             igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadGroundModel");
         }
-
     }
 }
 

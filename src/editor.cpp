@@ -8,7 +8,7 @@ void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 static uint32 g_CurrentGroundIndex = 0;
 static int32 g_GroundResolution = 10;
 static const uint32 g_GroundMaxResolution = 50;
-const char* g_GroundDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
+//const char* g_GroundDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -63,9 +63,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     Skybox *skybox = new Skybox(faces);
 
     // Ground map
-    Ground *defaultGround = new Ground("default", g_GroundResolution, g_GroundDefaultModelFile);
     std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
-    Grounds->insert({1, defaultGround});
 
     // =================================================
     editor_t *Editor = new editor_t;

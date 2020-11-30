@@ -1,12 +1,9 @@
 
 GENERAL
 
-- @editor: add rename ground option
 - @editor: when gui focused disable camera direcection and angles (keyboard and mouse)
 
 - @editor: loader start app and loading model files?
-
-- @git: merge linux into windows new branch
 
 - @editor: add map of skyboc + gui panel (add / select / load / delete / save to list) + open from list
 

@@ -391,6 +391,7 @@ Ground::Ground(const char* name, uint32 resolution, std::string const &modelFile
 
 Ground::~Ground()
 {
+    delete[] this->name;
     delete this->entity;
     this->clearInstance();
 }
