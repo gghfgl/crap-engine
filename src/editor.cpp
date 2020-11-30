@@ -88,27 +88,30 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // NOTE: INPUTS ======================================>
         Window->pollEvents();
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-            Editor->Active = false;
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
-            camera->processMovementDirection(FORWARD, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
-            camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
-            camera->processMovementDirection(LEFT, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
-            camera->processMovementDirection(RIGHT, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-            camera->processMovementDirection(UP, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-            camera->processMovementDirection(DOWN, Window->time->deltaTime);
-
-        if (Input->mouse->scrollOffsetY != 0.0f)
+        if (!gui.activeWindow)
         {
-            if (Input->getMouseScrollOffsetY() > 0)
-                camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
-            else
-                camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
+                Editor->Active = false;
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
+                camera->processMovementDirection(FORWARD, Window->time->deltaTime);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
+                camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
+                camera->processMovementDirection(LEFT, Window->time->deltaTime);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
+                camera->processMovementDirection(RIGHT, Window->time->deltaTime);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
+                camera->processMovementDirection(UP, Window->time->deltaTime);
+            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
+                camera->processMovementDirection(DOWN, Window->time->deltaTime);
+
+            if (Input->mouse->scrollOffsetY != 0.0f)
+            {
+                if (Input->getMouseScrollOffsetY() > 0)
+                    camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
+                else
+                    camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
+            }
         }
 
         if (Input->mouse->leftButton)

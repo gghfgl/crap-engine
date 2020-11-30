@@ -150,6 +150,9 @@ Model::Model(std::string const &path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
+        this->directory = "";
+        this->objFilename = "";
+
         // DEBUG:
         printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
         printf("=== END: New Model\n");
@@ -379,7 +382,7 @@ Ground::Ground(const char* name, uint32 resolution, std::string const &modelFile
 
     this->entity->model = nullptr;
     if (modelFilePath.length() > 0)
-        this->entity->model = new Model(modelFilePath);
+        this->entity->model = new Model(modelFilePath); // TODO: handler error and delete model in case of failure to ensure "unknown" label from GUI.
 
     this->resolution = resolution;
     this->instanceBufferID = 0;
