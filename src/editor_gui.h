@@ -15,6 +15,7 @@ struct EditorGui
     void draw();
 
     void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info);
+    void progressPlotWidget(bool animate);
 
     void makePanel(float32 posX, float32 posY);
     void endPanel();
@@ -604,4 +605,22 @@ void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
 
         ImGui::Separator();
     }
+}
+
+// TODO @WIP:
+void EditorGui::progressPlotWidget(bool animate=true)
+{
+    static float progress = 0.0f, progress_dir = 1.0f;
+    if (animate)
+    {
+        progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
+        if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
+        if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
+    }
+
+    // Typically we would use ImVec2(-1.0f,0.0f) or ImVec2(-FLT_MIN,0.0f) to use all available width,
+    // or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+    ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
+    ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+    //ImGui::Text("Test");
 }

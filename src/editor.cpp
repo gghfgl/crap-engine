@@ -88,10 +88,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // NOTE: INPUTS ======================================>
         Window->pollEvents();
+
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
+            Editor->Active = false;
+
         if (!gui.activeWindow)
         {
-            if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-                Editor->Active = false;
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
                 camera->processMovementDirection(FORWARD, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
