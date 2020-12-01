@@ -302,7 +302,6 @@ void EditorGui::groundSettings(uint32 maxResolution,
         {
             ++it_next; // used because  we deleting entry while looping through the map
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[selected]" : ""))
-            //if (ImGui::TreeNode("Word Wrapping"))
             {
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));
 

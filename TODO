@@ -1,9 +1,7 @@
 
 GENERAL
 
-- @editor: think about resolution from ground .list
-
-- @editor: add map of skyboc + gui panel (add / select / load / delete / save to list) + open from list
+- @editor: add map of skybox + gui panel (add / select / load / delete / save to list) + open from list
 
 - @editor: gui switch perf to string rendering
 
