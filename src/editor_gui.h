@@ -22,8 +22,7 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
-    void groundSettings(int32 &resolution,
-                        uint32 maxResolution,
+    void groundSettings(uint32 maxResolution,
                         uint32 &currentGroundIndex,
                         std::map<uint32, Ground*> *Grounds);
 
@@ -215,20 +214,12 @@ void EditorGui::cameraSettings(Camera *camera)
     }
 }
 
-void EditorGui::groundSettings(int32 &resolution,
-                               uint32 maxResolution,
+void EditorGui::groundSettings(uint32 maxResolution,
                                uint32 &currentGroundIndex,
                                std::map<uint32, Ground*> *Grounds)
 {
     if (ImGui::CollapsingHeader("ground", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        // Resolution slider
-        ImGui::Dummy(ImVec2(0.0f, 3.0f));
-        ImGui::PushItemWidth(-FLT_MIN);
-        ImGui::Text("resolution (max %dx%d):", maxResolution, maxResolution);
-        ImGui::SliderInt("", &resolution, 0, maxResolution);
-        ImGui::Separator();
-
         // Add ground button
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
         if (ImGui::Button("add"))
@@ -251,7 +242,7 @@ void EditorGui::groundSettings(int32 &resolution,
                 strncpy(name, str0, 32);
                 name[32 - 1] = '\0';
                 
-                Ground *ground = new Ground(name, resolution, "");
+                Ground *ground = new Ground(name, "");
                 std::time_t timestamp = std::time(nullptr);
                 Grounds->insert({static_cast<uint32>(timestamp), ground});
 
@@ -309,11 +300,13 @@ void EditorGui::groundSettings(int32 &resolution,
         static uint32 selectedIndex = 0;
         for (auto it = Grounds->cbegin(), it_next = it; it != Grounds->cend(); it = it_next)
         {
-            ++it_next;
+            ++it_next; // used because  we deleting entry while looping through the map
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[selected]" : ""))
+            //if (ImGui::TreeNode("Word Wrapping"))
             {
+                ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
                 // Ground data
-                ImGui::Dummy(ImVec2(0.0f, 3.0f));	
                 ImGui::Text( ICON_FA_CUBE );
                 ImGui::SameLine();
                 if (it->second->entity->model == nullptr)
@@ -327,6 +320,17 @@ void EditorGui::groundSettings(int32 &resolution,
                     ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
                 else
                     ImGui::Text("%s", it->second->entity->model->directory.c_str());
+
+                // Resolution slider
+                //ImGui::PushItemWidth(-FLT_MIN);
+                ImGui::Text( ICON_FA_EXPAND );
+                ImGui::SameLine();
+                ImGui::SliderInt("##something", &it->second->resolutionBuffer, 0, maxResolution);
+                ImGui::SameLine();
+                ImGui::Text("max %dx%d", maxResolution, maxResolution);
+
+                ImGui::Text( ICON_FA_DATABASE );
+                ImGui::SameLine();
 
                 // Load ground model button
                 if (ImGui::SmallButton("load"))
@@ -372,7 +376,6 @@ void EditorGui::groundSettings(int32 &resolution,
                         strncpy(rename, str1, 32);
                         rename[32 - 1] = '\0';
 
-                        // TODO: segfault with the default ground because of non pointer to const char*
                         delete[] it->second->name;
                         it->second->name = rename;
 
@@ -409,6 +412,7 @@ void EditorGui::groundSettings(int32 &resolution,
                     ImGui::EndPopup();
                 }
 
+                ImGui::Dummy(ImVec2(0.0f, 10.0f));
                 ImGui::TreePop();
             }
         }
@@ -433,49 +437,6 @@ void EditorGui::groundSettings(int32 &resolution,
             selectedIndex = 0;
             igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadGroundModel");
         }
-    }
-}
-
-void EditorGui::environmentSettings(Ground *ground,
-                                    int32 &resolution,
-                                    uint32 maxResolution,
-                                    bool *showSkybox)
-{
-    if (ImGui::CollapsingHeader("environment", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::Dummy(ImVec2(0.0f, 3.0f));	
-        ImGui::Text( ICON_FA_CUBE );
-        ImGui::SameLine();
-        ImGui::Text("%s", ground->entity->model->objFilename.c_str());
-        ImGui::Text("path: %s", ground->entity->model->directory.c_str());
-
-        if (ImGui::Button("change"))
-            igfd::ImGuiFileDialog::Instance()->OpenDialog("SelectEnvModel", "Choose File", ".obj", ".");
-
-        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SelectEnvModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
-        {
-            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
-            {
-                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-
-                Model *loadedModel = new Model(filePathName);
-                if (loadedModel != nullptr)
-                {
-                    delete ground->entity->model;
-                    ground->entity->model = loadedModel;
-                    ground->isGenerated = false;
-                }
-            }
-
-            igfd::ImGuiFileDialog::Instance()->CloseDialog("SelectEnvModel");
-        }
-
-        ImGui::SliderInt("res", &resolution, 0, maxResolution);
-        ImGui::SameLine();
-        ImGui::Text("max: %dx%d", maxResolution, maxResolution);
-        ImGui::Separator();
-        ImGui::Checkbox("skybox", showSkybox);
-        ImGui::Separator();
     }
 }
 

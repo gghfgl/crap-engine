@@ -6,9 +6,7 @@ void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
 void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 static uint32 g_CurrentGroundIndex = 0;
-static int32 g_GroundResolution = 10;
 static const uint32 g_GroundMaxResolution = 50;
-//const char* g_GroundDefaultModelFile = "./assets/models/terrain/untitled.obj"; // TODO: read all this kind of stuff from a default config file
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -144,11 +142,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                     camera->getViewMatrix());
 
         // ground slider
-        if (g_CurrentGroundIndex != 0 && g_GroundResolution != (int)Grounds->find(g_CurrentGroundIndex)->second->resolution)
-        {
+        if (g_CurrentGroundIndex != 0 && Grounds->find(g_CurrentGroundIndex)->second->diffResolutionBuffer())
             Grounds->find(g_CurrentGroundIndex)->second->isGenerated = false;
-            //ground->resolution = g_GroundResolution;
-        }
         
         // mouse ray intersection sphere selector objects
         for (auto it = SCENE->begin(); it != SCENE->end(); it++)
@@ -209,7 +204,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                 if (!Grounds->find(g_CurrentGroundIndex)->second->isGenerated)
                 {
                     Grounds->find(g_CurrentGroundIndex)->second->clearInstance();
-                    Grounds->find(g_CurrentGroundIndex)->second->updateModelMatrices(g_GroundResolution);
+                    Grounds->find(g_CurrentGroundIndex)->second->updateModelMatrices();
                     Grounds->find(g_CurrentGroundIndex)->second->instanceBufferID = renderer->prepareInstance(Grounds->find(g_CurrentGroundIndex)->second->entity->model,
                                                                                                               Grounds->find(g_CurrentGroundIndex)->second->modelMatrices,
                                                                                                               Grounds->find(g_CurrentGroundIndex)->second->resolution * Grounds->find(g_CurrentGroundIndex)->second->resolution);
@@ -277,8 +272,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.groundSettings(g_GroundResolution,
-                           g_GroundMaxResolution,
+        gui.groundSettings(g_GroundMaxResolution,
                            g_CurrentGroundIndex,
                            Grounds);
         // gui.environmentSettings(ground,

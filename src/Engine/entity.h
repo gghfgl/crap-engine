@@ -71,13 +71,15 @@ struct Entity
 
 struct Ground
 {
-    Ground(const char* name, uint32 resolution, std::string const &modelFilePath);
+    Ground(const char* name, std::string const &modelFilePath, uint32 resolution);
     ~Ground();
-    void updateModelMatrices(uint32 resolution);
+    void updateModelMatrices();
     void clearInstance();
+    bool diffResolutionBuffer();
     
     Entity *entity;
     uint32 resolution; // default size
+    int32 resolutionBuffer;
     uint32 instanceBufferID;
     bool isGenerated = false;
     glm::mat4 *modelMatrices;
@@ -375,7 +377,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
                 strncpy(nameCopy, name.c_str(), 32);
                 nameCopy[32 - 1] = '\0';
 
-                Ground *ground = new Ground(nameCopy, resolution, fullpath);
+                Ground *ground = new Ground(nameCopy, fullpath, resolution);
                 List->insert({id, ground});
 		
                 fetch = 0;

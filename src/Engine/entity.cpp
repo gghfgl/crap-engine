@@ -375,7 +375,7 @@ Entity::~Entity()
 
 // ======================================
 
-Ground::Ground(const char* name, uint32 resolution, std::string const &modelFilePath)
+Ground::Ground(const char* name, std::string const &modelFilePath, uint32 resolution=10)
 {
     this->entity = new Entity;
     this->entity->pickingSphere = nullptr;
@@ -385,11 +385,12 @@ Ground::Ground(const char* name, uint32 resolution, std::string const &modelFile
         this->entity->model = new Model(modelFilePath); // TODO: handler error and delete model in case of failure to ensure "unknown" label from GUI.
 
     this->resolution = resolution;
+    this->resolutionBuffer = (int)resolution;
     this->instanceBufferID = 0;
     this->isGenerated = false;
     this->name = name;
 
-    this->updateModelMatrices(resolution);
+    this->updateModelMatrices();
 }
 
 Ground::~Ground()
@@ -399,8 +400,9 @@ Ground::~Ground()
     this->clearInstance();
 }
 
-void Ground::updateModelMatrices(uint32 resolution)
+void Ground::updateModelMatrices()
 {
+    uint32 resolution = (uint32)this->resolutionBuffer;
     this->resolution = resolution;
     this->modelMatrices = new glm::mat4[resolution * resolution];    
 
@@ -430,6 +432,14 @@ void Ground::clearInstance()
 {
     delete[] this->modelMatrices;
     glDeleteBuffers(1, &this->instanceBufferID);
+}
+
+bool Ground::diffResolutionBuffer()
+{
+    if ((int)this->resolution != this->resolutionBuffer)
+        return true;
+
+    return false;
 }
 
 // ======================================
