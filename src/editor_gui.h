@@ -300,7 +300,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
 
         // Ground list
-        static uint32 selectedIndex = 0;
+        static uint32 selectedGroundIndex = 0;
         for (auto it = Grounds->cbegin(), it_next = it; it != Grounds->cend(); it = it_next)
         {
             ++it_next; // used because  we deleting entry while looping through the map
@@ -337,7 +337,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
                 // Load ground model button
                 if (ImGui::SmallButton("load"))
                 {
-                    selectedIndex = it->first;
+                    selectedGroundIndex = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel", "Choose File", ".obj", ".");
                 }
 
@@ -345,20 +345,25 @@ void EditorGui::groundSettings(uint32 maxResolution,
                 ImGui::SameLine();
                 if (ImGui::SmallButton("rename"))
                 {
-                    ImGui::OpenPopup("RenameGround");                    
+                    ImGui::OpenPopup("RenameGround");
                 }
 
                 // Select ground button
                 ImGui::SameLine();
                 if (ImGui::SmallButton("select"))
-                    currentGroundIndex = it->first;
+                {
+                    if (currentGroundIndex == it->first)
+                        currentGroundIndex = 0;
+                    else
+                        currentGroundIndex = it->first;                    
+                }
 
                 // Delete button
                 ImGui::SameLine();
                 if (ImGui::SmallButton("delete"))
                 {
-                    selectedIndex = it->first;
-                    ImGui::OpenPopup("DeleteGround");                    
+                    selectedGroundIndex = it->first;
+                    ImGui::OpenPopup("DeleteGround");
                 }
 
                 // Rename ground
@@ -406,7 +411,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
                         ImGui::CloseCurrentPopup();
                     }
 
-                    selectedIndex = 0;
+                    selectedGroundIndex = 0;
                     ImGui::SetItemDefaultFocus();
                     ImGui::SameLine();
                     if (ImGui::Button("Cancel", ImVec2(120, 0)))
@@ -425,18 +430,17 @@ void EditorGui::groundSettings(uint32 maxResolution,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                std::string filePath = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
 
                 Model *loadedModel = new Model(filePathName);
                 if (loadedModel != nullptr)
                 {
-                    delete (*Grounds)[selectedIndex]->entity->model;
-                    (*Grounds)[selectedIndex]->entity->model = loadedModel;
-                    (*Grounds)[selectedIndex]->isGenerated = false;
+                    delete (*Grounds)[selectedGroundIndex]->entity->model;
+                    (*Grounds)[selectedGroundIndex]->entity->model = loadedModel;
+                    (*Grounds)[selectedGroundIndex]->isGenerated = false;
                 }
             }
 
-            selectedIndex = 0;
+            selectedGroundIndex = 0;
             igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadGroundModel");
         }
     }
@@ -474,7 +478,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                 strncpy(name, str0, 32);
                 name[32 - 1] = '\0';
 
-                // TODO: faces!
+                // TODO: faces from 1 file?
                 std::vector<std::string> faces{
                     "./assets/skybox/test/right.jpg",
                     "./assets/skybox/test/left.jpg",
@@ -504,26 +508,170 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         ImGui::SameLine();
         if (ImGui::Button("save##skybox"))
         {
+            std::time_t timestamp = std::time(nullptr);
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
+        }
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveSkyboxListInTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                // TODO: SaveSkyboxListInTextFormat(filePathName.c_str(), Grounds);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveSkyboxListInTextFormat");
         }
 
         // Open skybox list fom file
         ImGui::SameLine();
         if (ImGui::Button("open##skybox"))
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenSkyboxListFromFile", "Choose File", ".list", ".");
+
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenSkyboxListFromFile", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+                // TODO: OpenSkyboxListFromFile(filePathName.c_str(), Grounds);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenSkyboxListFromFile");
         }
 
         ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
         // Skybox list
-        static uint32 selectedIndex = 0;
+        static uint32 selectedSkyboxIndex = 0;
         for (auto it = Skyboxes->cbegin(), it_next = it; it != Skyboxes->cend(); it = it_next)
         {
             ++it_next;
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentSkyboxIndex == it->first) ? "[selected]" : ""))
             {
-                ImGui::Text("test content");
+                // Skybox data
+                ImGui::Text( ICON_FA_CUBE );
+                ImGui::SameLine();
+                if (it->second->cubeMapFilename.length() == 0)
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
+                else
+                    ImGui::Text("%s", it->second->cubeMapFilename.c_str());
+
+                ImGui::Text( ICON_FA_FOLDER );
+                ImGui::SameLine();
+                if (it->second->directory.length() == 0)
+                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
+                else
+                    ImGui::Text("%s", it->second->directory.c_str());
+
+                ImGui::Text( ICON_FA_DATABASE );
+                ImGui::SameLine();
+
+                // Load ground model button
+                if (ImGui::SmallButton("load"))
+                {
+                    selectedSkyboxIndex = it->first;
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File", ".obj", ".");
+                }
+
+                // Delete button
+                ImGui::SameLine();
+                if (ImGui::SmallButton("rename"))
+                {
+                    ImGui::OpenPopup("RenameSkybox");
+                }
+
+                // Select ground button
+                ImGui::SameLine();
+                if (ImGui::SmallButton("select"))
+                {
+                    if (currentSkyboxIndex == it->first)
+                        currentSkyboxIndex = 0;
+                    else
+                        currentSkyboxIndex = it->first;                    
+                }
+
+                // Delete button
+                ImGui::SameLine();
+                if (ImGui::SmallButton("delete"))
+                {
+                    selectedSkyboxIndex = it->first;
+                    ImGui::OpenPopup("DeleteSkybox");
+                }
+
+                // Rename skybox
+                if (ImGui::BeginPopupModal("RenameSkybox"))
+                {
+                    ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+                    ImGui::Text("rename skybox [%s]:", it->second->name);
+                    ImGui::PushItemWidth(-FLT_MIN);
+                    static char str1[32] = "give me a name";
+                    ImGui::InputText("", str1, IM_ARRAYSIZE(str1));
+                    ImGui::Separator();
+
+                    ImGui::Dummy(ImVec2(0.0f, 3.0f));
+                    if (ImGui::Button("Ok", ImVec2(120, 0)))
+                    {
+                        char *rename = new char[32];
+                        strncpy(rename, str1, 32);
+                        rename[32 - 1] = '\0';
+
+                        delete[] it->second->name;
+                        it->second->name = rename;
+
+                        // Reset input placeholder
+                        strncpy(str1, "give me a name", 32);
+
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
+                }
+                
+                // Delete skybox modal
+                if (ImGui::BeginPopupModal("DeleteSkybox"))
+                {
+                    ImGui::Text("selected skybox will be deleted.\nThis operation cannot be undone!\n\n");
+                    ImGui::Separator();
+
+                    if (ImGui::Button("OK", ImVec2(120, 0))) {
+                        if (it->first == currentSkyboxIndex)
+                            currentSkyboxIndex = 0;
+
+                        delete it->second;
+                        Skyboxes->erase(it);
+
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    selectedSkyboxIndex = 0;
+                    ImGui::SetItemDefaultFocus();
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                        ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                }
+
+                ImGui::Dummy(ImVec2(0.0f, 10.0f));
                 ImGui::TreePop();
             }
+        }
+        
+        // Open dialog load skybox faces files
+        if (igfd::ImGuiFileDialog::Instance()->FileDialog("LoadSkyboxModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+
+                Model *loadedModel = new Model(filePathName);
+                if (loadedModel != nullptr)
+                {
+                    // TODO: load faces from dir?
+                }
+            }
+
+            selectedSkyboxIndex = 0;
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadSkyboxModel");
         }
     }
     

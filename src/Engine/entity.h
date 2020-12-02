@@ -95,6 +95,8 @@ struct Skybox
     uint32 VBO;
     uint32 textureID;
     const char* name;
+    std::string cubeMapFilename;
+    std::string directory;
 
 private:
     void load_cubemap_texture_from_file(std::vector<std::string> faces);

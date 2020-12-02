@@ -502,6 +502,8 @@ Skybox::Skybox(const char* name, std::vector<std::string> faces)
     this->VAO = VAO;
     this->VBO = VBO;
     this->name = name;
+    this->cubeMapFilename = ""; // TODO: tmp
+    this->directory = ""; // TODO: tmp
     this->load_cubemap_texture_from_file(faces);
 }
 

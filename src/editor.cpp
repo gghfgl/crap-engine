@@ -6,8 +6,9 @@ void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
 void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 static uint32 g_CurrentGroundIndex = 0;
-static const uint32 g_GroundMaxResolution = 50;
 static uint32 g_CurrentSkyboxIndex = 0;
+
+static const uint32 g_GroundMaxResolution = 50;
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -58,23 +59,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // Skyboxes map
     std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
 
-    // DEBUG
-    std::vector<std::string> faces{
-        "./assets/skybox/test/right.jpg",
-        "./assets/skybox/test/left.jpg",
-        "./assets/skybox/test/top.jpg",
-        "./assets/skybox/test/bottom.jpg",
-        "./assets/skybox/test/front.jpg",
-        "./assets/skybox/test/back.jpg"};
-    char dsk[32] = "default";
-    char *name = new char[32];
-    strncpy(name, dsk, 32);
-    name[32 - 1] = '\0';
-    Skybox *skybox = new Skybox(name, faces);
-    std::time_t timestamp = std::time(nullptr);
-    Skyboxes->insert({static_cast<uint32>(timestamp), skybox});
-
-
     // =================================================
     editor_t *Editor = new editor_t;
     Editor->Active = true;
@@ -82,7 +66,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     Editor->MeshGrid = MeshGrid;
     Editor->MeshAxisDebug = MeshAxisDebug;
     Editor->MeshRay = MeshRay;
-    Editor->skybox = skybox;
     Editor->ShowSkybox = false;
 
     EditorGui gui = EditorGui(Window);
@@ -306,6 +289,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     for (auto it = Grounds->begin(); it != Grounds->end(); it++)
         delete it->second;
     delete Grounds;
+
+    for (auto it = Skyboxes->begin(); it != Skyboxes->end(); it++)
+        delete it->second;
+    delete Skyboxes;
 
     // TODO: implement complete full delete Editor method
     delete Editor->MeshGrid;
