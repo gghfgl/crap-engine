@@ -251,12 +251,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         // =================== E.N.V.I.R.O.N.M.E.N.T ===================
 
         // Skybox
-        if (Editor->skybox != NULL && Editor->ShowSkybox)
+        if (g_CurrentSkyboxIndex != 0)
         {
             Shader *skyboxShader = sCache->getShader("skybox");
             skyboxShader->useProgram();
             skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-            renderer->drawSkybox(Editor->skybox);
+            renderer->drawSkybox(Skyboxes->find(g_CurrentSkyboxIndex)->second);
         }
 
         // =================== G.U.I ===================
@@ -267,9 +267,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.groundSettings(g_GroundMaxResolution,
-                           g_CurrentGroundIndex,
-                           Grounds);
+        gui.groundSettings(g_CurrentGroundIndex,
+                           Grounds,
+                           g_GroundMaxResolution);
         gui.skyboxSettings(g_CurrentSkyboxIndex,
                            Skyboxes);
         //gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);

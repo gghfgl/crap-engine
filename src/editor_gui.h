@@ -22,13 +22,11 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
-    void groundSettings(uint32 maxResolution,
-                        uint32 &currentGroundIndex,
-                        std::map<uint32, Ground*> *Grounds);
-
+    void groundSettings(uint32 &currentGroundIndex,
+                        std::map<uint32, Ground*> *Grounds,
+                        uint32 maxResolution);
     void skyboxSettings(uint32 &currentSkyboxIndex,
-                                   std::map<uint32, Skybox*> *Skyboxes);
-
+                        std::map<uint32, Skybox*> *Skyboxes);
     void environmentSettings(Ground *ground,
                              int32 &resolution,
                              uint32 maxResolution,
@@ -217,9 +215,9 @@ void EditorGui::cameraSettings(Camera *camera)
     }
 }
 
-void EditorGui::groundSettings(uint32 maxResolution,
-                               uint32 &currentGroundIndex,
-                               std::map<uint32, Ground*> *Grounds)
+void EditorGui::groundSettings(uint32 &currentGroundIndex,
+                               std::map<uint32, Ground*> *Grounds,
+                               uint32 maxResolution)
 {
     if (ImGui::CollapsingHeader("ground", ImGuiTreeNodeFlags_DefaultOpen))
     {
