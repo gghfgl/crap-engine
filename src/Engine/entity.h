@@ -88,12 +88,13 @@ struct Ground
 
 struct Skybox
 {
-    Skybox(std::vector<std::string> faces);
+    Skybox(const char* name, std::vector<std::string> faces);
     ~Skybox();
 
     uint32 VAO;
     uint32 VBO;
     uint32 textureID;
+    const char* name;
 
 private:
     void load_cubemap_texture_from_file(std::vector<std::string> faces);

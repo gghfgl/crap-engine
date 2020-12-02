@@ -7,6 +7,7 @@ void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 static uint32 g_CurrentGroundIndex = 0;
 static const uint32 g_GroundMaxResolution = 50;
+static uint32 g_CurrentSkyboxIndex = 0;
 
 // TODO: Clean mess below
 static uint32 g_HoveredEntity = 0;
@@ -50,7 +51,14 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // Entitys array
     std::map<uint32, Entity*> *SCENE = new std::map<uint32, Entity*>;
 
-    // Skybox
+
+    // Grounds map
+    std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
+
+    // Skyboxes map
+    std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
+
+    // DEBUG
     std::vector<std::string> faces{
         "./assets/skybox/test/right.jpg",
         "./assets/skybox/test/left.jpg",
@@ -58,10 +66,14 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         "./assets/skybox/test/bottom.jpg",
         "./assets/skybox/test/front.jpg",
         "./assets/skybox/test/back.jpg"};
-    Skybox *skybox = new Skybox(faces);
+    char dsk[32] = "default";
+    char *name = new char[32];
+    strncpy(name, dsk, 32);
+    name[32 - 1] = '\0';
+    Skybox *skybox = new Skybox(name, faces);
+    std::time_t timestamp = std::time(nullptr);
+    Skyboxes->insert({static_cast<uint32>(timestamp), skybox});
 
-    // Ground map
-    std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
 
     // =================================================
     editor_t *Editor = new editor_t;
@@ -275,10 +287,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.groundSettings(g_GroundMaxResolution,
                            g_CurrentGroundIndex,
                            Grounds);
-        // gui.environmentSettings(ground,
-        //                         g_GroundResolution,
-        //                         g_GroundMaxResolution,
-        //                         &Editor->ShowSkybox);
+        gui.skyboxSettings(g_CurrentSkyboxIndex,
+                           Skyboxes);
         //gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
         gui.endPanel();
         gui.draw();

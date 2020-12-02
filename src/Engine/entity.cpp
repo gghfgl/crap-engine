@@ -444,7 +444,7 @@ bool Ground::diffResolutionBuffer()
 
 // ======================================
 
-Skybox::Skybox(std::vector<std::string> faces)
+Skybox::Skybox(const char* name, std::vector<std::string> faces)
 {
     float skyboxVertices[] = {
         -1.0f,  1.0f, -1.0f,
@@ -501,11 +501,13 @@ Skybox::Skybox(std::vector<std::string> faces)
 
     this->VAO = VAO;
     this->VBO = VBO;
+    this->name = name;
     this->load_cubemap_texture_from_file(faces);
 }
 
 Skybox::~Skybox()
 {
+    delete[] this->name;
     glDeleteVertexArrays(1, &this->VAO);
     glDeleteBuffers(1, &this->VBO);
     glDeleteTextures(1, &this->textureID);

@@ -26,6 +26,9 @@ struct EditorGui
                         uint32 &currentGroundIndex,
                         std::map<uint32, Ground*> *Grounds);
 
+    void skyboxSettings(uint32 &currentSkyboxIndex,
+                                   std::map<uint32, Skybox*> *Skyboxes);
+
     void environmentSettings(Ground *ground,
                              int32 &resolution,
                              uint32 maxResolution,
@@ -222,7 +225,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
     {
         // Add ground button
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
-        if (ImGui::Button("add"))
+        if (ImGui::Button("add##ground"))
             ImGui::OpenPopup("AddGround");                    
 
         // Add ground modal
@@ -236,7 +239,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
             ImGui::Separator();
 
             ImGui::Dummy(ImVec2(0.0f, 3.0f));
-            if (ImGui::Button("Add", ImVec2(120, 0)))
+            if (ImGui::Button("Add##ground", ImVec2(120, 0)))
             {
                 char *name = new char[32];
                 strncpy(name, str0, 32);
@@ -253,7 +256,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("Close", ImVec2(120, 0)))
+            if (ImGui::Button("Close##ground", ImVec2(120, 0)))
                 ImGui::CloseCurrentPopup();
 
             ImGui::EndPopup();
@@ -261,7 +264,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
 
         // Save ground list into file
         ImGui::SameLine();
-        if (ImGui::Button("save"))
+        if (ImGui::Button("save##ground"))
         {
             std::time_t timestamp = std::time(nullptr);
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveGroundListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
@@ -280,7 +283,7 @@ void EditorGui::groundSettings(uint32 maxResolution,
 
         // Open ground list fom file
         ImGui::SameLine();
-        if (ImGui::Button("open"))
+        if (ImGui::Button("open##ground"))
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
 
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenGroundListFromFile", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
@@ -437,6 +440,94 @@ void EditorGui::groundSettings(uint32 maxResolution,
             igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadGroundModel");
         }
     }
+
+    ImGui::Separator();
+}
+
+// TODO @WIP:
+void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
+                               std::map<uint32, Skybox*> *Skyboxes)
+{
+    if (ImGui::CollapsingHeader("skybox", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        // Add skybox button
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
+        if (ImGui::Button("add##skybox"))
+        {
+            ImGui::OpenPopup("AddSkybox");
+        }
+
+        // Add skybox modal
+        if (ImGui::BeginPopupModal("AddSkybox"))
+        {
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));
+            ImGui::Text("add a new skybox to the list:");
+            static char str0[32] = "give me a name";
+            ImGui::PushItemWidth(-FLT_MIN);
+            ImGui::InputText("", str0, IM_ARRAYSIZE(str0));
+            ImGui::Separator();
+
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));
+            if (ImGui::Button("Add##skybox", ImVec2(120, 0)))
+            {
+                char *name = new char[32];
+                strncpy(name, str0, 32);
+                name[32 - 1] = '\0';
+
+                // TODO: faces!
+                std::vector<std::string> faces{
+                    "./assets/skybox/test/right.jpg",
+                    "./assets/skybox/test/left.jpg",
+                    "./assets/skybox/test/top.jpg",
+                    "./assets/skybox/test/bottom.jpg",
+                    "./assets/skybox/test/front.jpg",
+                    "./assets/skybox/test/back.jpg"};
+
+                Skybox *skybox = new Skybox(name, faces);
+                std::time_t timestamp = std::time(nullptr);
+                Skyboxes->insert({static_cast<uint32>(timestamp), skybox});
+
+                // Reset input placeholder
+                strncpy(str0, "give me a name", 32);
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Close##skybox", ImVec2(120, 0)))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
+        }
+
+        // Save skybox list into file
+        ImGui::SameLine();
+        if (ImGui::Button("save##skybox"))
+        {
+        }
+
+        // Open skybox list fom file
+        ImGui::SameLine();
+        if (ImGui::Button("open##skybox"))
+        {
+        }
+
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
+        // Skybox list
+        static uint32 selectedIndex = 0;
+        for (auto it = Skyboxes->cbegin(), it_next = it; it != Skyboxes->cend(); it = it_next)
+        {
+            ++it_next;
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentSkyboxIndex == it->first) ? "[selected]" : ""))
+            {
+                ImGui::Text("test content");
+                ImGui::TreePop();
+            }
+        }
+    }
+    
+    ImGui::Separator();
 }
 
 void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
