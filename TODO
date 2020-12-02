@@ -2,10 +2,11 @@
 GENERAL
 
 - @editor: add map of skybox + gui panel (add / select / load / delete / save to list) + open from list
+- @editor: think about loading skybox faces files
 
 - @editor: gui switch perf to string rendering
 
-- @editor: modules list (new / delete / save) + open new list in tab?
+- @editor: improve map of modules list (new / delete / save/ etc) like grounds and skyboxes
 
 - @editor: read and compile all shaders from a directory with debug output at runtime?
 
