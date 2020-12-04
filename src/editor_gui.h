@@ -476,16 +476,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                 strncpy(name, str0, 32);
                 name[32 - 1] = '\0';
 
-                // TODO: faces from 1 file?
-                std::vector<std::string> faces{
-                    "./assets/skybox/test/right.jpg",
-                    "./assets/skybox/test/left.jpg",
-                    "./assets/skybox/test/top.jpg",
-                    "./assets/skybox/test/bottom.jpg",
-                    "./assets/skybox/test/front.jpg",
-                    "./assets/skybox/test/back.jpg"};
-
-                Skybox *skybox = new Skybox(name, faces);
+                Skybox *skybox = new Skybox(name, "");
                 std::time_t timestamp = std::time(nullptr);
                 Skyboxes->insert({static_cast<uint32>(timestamp), skybox});
 
@@ -507,7 +498,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         if (ImGui::Button("save##skybox"))
         {
             std::time_t timestamp = std::time(nullptr);
-            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File", ".list", ".", "crap_skyboxes_"+std::to_string(timestamp));
         }
 
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveSkyboxListInTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
@@ -515,7 +506,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                // TODO: SaveSkyboxListInTextFormat(filePathName.c_str(), Grounds);
+                SaveSkyboxListInTextFormat(filePathName.c_str(), Skyboxes);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveSkyboxListInTextFormat");
@@ -547,13 +538,6 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentSkyboxIndex == it->first) ? "[selected]" : ""))
             {
                 // Skybox data
-                ImGui::Text( ICON_FA_CUBE );
-                ImGui::SameLine();
-                if (it->second->cubeMapFilename.length() == 0)
-                    ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "unknown");
-                else
-                    ImGui::Text("%s", it->second->cubeMapFilename.c_str());
-
                 ImGui::Text( ICON_FA_FOLDER );
                 ImGui::SameLine();
                 if (it->second->directory.length() == 0)
@@ -568,7 +552,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                 if (ImGui::SmallButton("load"))
                 {
                     selectedSkyboxIndex = it->first;
-                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File", ".obj", ".");
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File", 0, ".");
                 }
 
                 // Delete button
@@ -660,12 +644,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-
-                Model *loadedModel = new Model(filePathName);
-                if (loadedModel != nullptr)
-                {
-                    // TODO: load faces from dir?
-                }
+                Skyboxes->find(selectedSkyboxIndex)->second->loadCubeMapTextureFromFile(filePathName);
             }
 
             selectedSkyboxIndex = 0;

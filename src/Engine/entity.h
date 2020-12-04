@@ -88,18 +88,15 @@ struct Ground
 
 struct Skybox
 {
-    Skybox(const char* name, std::vector<std::string> faces);
+    Skybox(const char* name, std::string directoryPath);
     ~Skybox();
+    void loadCubeMapTextureFromFile(std::string directoryPath);
 
     uint32 VAO;
     uint32 VBO;
     uint32 textureID;
     const char* name;
-    std::string cubeMapFilename;
     std::string directory;
-
-private:
-    void load_cubemap_texture_from_file(std::vector<std::string> faces);
 };
 
 // =====================================================
@@ -164,6 +161,31 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
     // DEBUG:
     printf("saved: %s\n", filepath);
     printf("=== END: SaveGroundListInTextFormat\n");
+
+    return 0;
+}
+
+inline int32 SaveSkyboxListInTextFormat(const char *filepath, std::map<uint32, Skybox*> *List)
+{
+    // DEBUG:
+    printf("\n=== BEGIN: SaveSkyboxListInTextFormat\n");
+
+    std::ofstream file;
+    file.open(filepath);
+    file << "HEADER_SKYBOX_LIST\n";
+    for (auto it = List->begin(); it != List->end(); it++)
+    {
+        file << "###\n";
+        file << "id=" << it->first << "\n";
+        file << "name=" << it->second->name << "\n";
+        file << "directory=" <<  it->second->directory << "\n";
+    }
+
+    file.close();
+
+    // DEBUG:
+    printf("saved: %s\n", filepath);
+    printf("=== END: SaveSkyboxListInTextFormat\n");
 
     return 0;
 }

@@ -444,7 +444,29 @@ bool Ground::diffResolutionBuffer()
 
 // ======================================
 
-Skybox::Skybox(const char* name, std::vector<std::string> faces)
+Skybox::Skybox(const char* name, std::string directoryPath)
+{
+    auto p = std::filesystem::proximate(directoryPath);
+    std::string p_string{p.u8string()};
+
+    // this->VAO = 0;
+    // this->VBO = 0;
+    this->name = name;
+    this->directory = p_string;
+
+    if (directoryPath.length() > 0)
+        this->loadCubeMapTextureFromFile(directoryPath);
+}
+
+Skybox::~Skybox()
+{
+    delete[] this->name;
+    glDeleteVertexArrays(1, &this->VAO);
+    glDeleteBuffers(1, &this->VBO);
+    glDeleteTextures(1, &this->textureID);
+}
+
+void Skybox::loadCubeMapTextureFromFile(std::string directoryPath)
 {
     float skyboxVertices[] = {
         -1.0f,  1.0f, -1.0f,
@@ -501,22 +523,15 @@ Skybox::Skybox(const char* name, std::vector<std::string> faces)
 
     this->VAO = VAO;
     this->VBO = VBO;
-    this->name = name;
-    this->cubeMapFilename = ""; // TODO: tmp
-    this->directory = ""; // TODO: tmp
-    this->load_cubemap_texture_from_file(faces);
-}
 
-Skybox::~Skybox()
-{
-    delete[] this->name;
-    glDeleteVertexArrays(1, &this->VAO);
-    glDeleteBuffers(1, &this->VBO);
-    glDeleteTextures(1, &this->textureID);
-}
-
-void Skybox::load_cubemap_texture_from_file(std::vector<std::string> faces)
-{
+    std::vector<std::string> faces{
+        directoryPath + "/right.jpg",
+        directoryPath + "/left.jpg",
+        directoryPath + "/top.jpg",
+        directoryPath + "/bottom.jpg",
+        directoryPath + "/front.jpg",
+        directoryPath + "/back.jpg"};
+    
     glGenTextures(1, &this->textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, this->textureID);
 
@@ -527,7 +542,10 @@ void Skybox::load_cubemap_texture_from_file(std::vector<std::string> faces)
         if (data)
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         else
-            printf("Cubemap texture failed to load at path: %s", faces[i].c_str());
+        {
+            printf("Cubemap texture failed to load at path: %s\n", faces[i].c_str());
+            return;
+        }
 
         stbi_image_free(data);
     }
@@ -537,4 +555,8 @@ void Skybox::load_cubemap_texture_from_file(std::vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    auto p = std::filesystem::proximate(directoryPath);
+    std::string p_string{p.u8string()};
+    this->directory = p_string;
 }

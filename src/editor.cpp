@@ -253,10 +253,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         // Skybox
         if (g_CurrentSkyboxIndex != 0)
         {
-            Shader *skyboxShader = sCache->getShader("skybox");
-            skyboxShader->useProgram();
-            skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-            renderer->drawSkybox(Skyboxes->find(g_CurrentSkyboxIndex)->second);
+            if (Skyboxes->find(g_CurrentSkyboxIndex)->second->directory.length() > 0)
+            {
+                Shader *skyboxShader = sCache->getShader("skybox");
+                skyboxShader->useProgram();
+                skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
+                renderer->drawSkybox(Skyboxes->find(g_CurrentSkyboxIndex)->second);
+            }
         }
 
         // =================== G.U.I ===================
@@ -298,7 +301,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     delete Editor->MeshGrid;
     delete Editor->MeshAxisDebug;
     delete Editor->MeshRay;
-    delete Editor->skybox;
     delete Editor;
 
     delete sCache;
