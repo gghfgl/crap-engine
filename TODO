@@ -1,6 +1,8 @@
 
 GENERAL
 
+- @editor: fix load skybox files unexpected .list extension after opening a skyboxList from file
+
 - @editor: read and compile all shaders from a directory with debug output
 
 - @editor: gui switch perf to string rendering
