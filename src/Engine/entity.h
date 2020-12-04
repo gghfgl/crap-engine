@@ -336,7 +336,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
     if (line != "HEADER_GROUND_LIST")
     {
         // DEBUG:
-        printf("\nfaile to read %s: header is missing", filepath);
+        printf("\nfaile to read %s: header is missing\n", filepath);
         printf("=== END: OpenGroundListFromFile\n");
         return -1;
     }
@@ -397,7 +397,6 @@ inline int32 OpenGroundListFromFile(const char *filepath,
                 /* printf("fullpath= %s\n", fullpath.c_str()); */
                 /* printf("resolution= %d\n", resolution); */
 
-                // TODO
                 char *nameCopy = new char[32];
                 strncpy(nameCopy, name.c_str(), 32);
                 nameCopy[32 - 1] = '\0';
@@ -415,6 +414,100 @@ inline int32 OpenGroundListFromFile(const char *filepath,
     // DEBUG:
     printf("opened: %s\n", filepath);
     printf("=== END: OpenGroundListFromFile\n");
+
+    return 0;
+}
+
+inline int32 OpenSkyboxListFromFile(const char *filepath,
+                                    std::map<uint32,Skybox*> *List)
+{
+    // DEBUG:
+    printf("\n=== BEGIN: OpenSkyboxListFromFile\n");
+
+    std::ifstream file(filepath);
+    if (!file.is_open())
+    {
+        // DEBUG:
+        printf("open file error!\n");
+        return -1;
+    }
+
+    // Clear map
+    for (auto it = List->begin(); it != List->end(); it++)
+        delete it->second;
+    List->clear();
+
+
+    uint32 id = 1;
+    std::string name = "unknown";
+    std::string directory = "unknown";
+
+    uint32 fetch = 0;
+    uint32 nbFields = 3;
+    std::string line;
+
+    std::getline(file, line);
+    if (line != "HEADER_SKYBOX_LIST")
+    {
+        // DEBUG:
+        printf("\nfaile to read %s: header is missing\n", filepath);
+        printf("=== END: OpenSkyboxListFromFile\n");
+        return -1;
+    }
+
+    while (std::getline(file, line))
+    {
+        line.erase(std::remove_if(line.begin(), line.end(), isspace),
+                   line.end());
+
+        {
+            if(line[0] == '#' || line.empty())
+                continue;
+
+            auto delimiterPos = line.find("=");
+            auto key = line.substr(0, delimiterPos);
+            auto value = line.substr(delimiterPos + 1);
+
+            if (key.compare("id") == 0)
+            {
+                id = std::stoi(value);
+                fetch++;
+            }
+
+            if (key.compare("name") == 0)
+            {
+                name = value;
+                fetch++;
+            }
+
+            if (key.compare("directory") == 0)
+            {
+                directory = value ;
+                fetch++;
+            }
+
+            if (fetch == nbFields)
+            {
+                // DEBUG:
+                printf("fetching fields [%d]/[%d]\n", fetch, nbFields);
+
+                char *nameCopy = new char[32];
+                strncpy(nameCopy, name.c_str(), 32);
+                nameCopy[32 - 1] = '\0';
+
+                Skybox *skybox = new Skybox(nameCopy, directory);
+                List->insert({id, skybox});
+		
+                fetch = 0;
+            }            
+        }
+    }
+
+    file.close();
+
+    // DEBUG:
+    printf("opened: %s\n", filepath);
+    printf("=== END: OpenSkyboxListFromFile\n");
 
     return 0;
 }

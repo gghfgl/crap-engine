@@ -522,7 +522,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                // TODO: OpenSkyboxListFromFile(filePathName.c_str(), Grounds);
+                OpenSkyboxListFromFile(filePathName.c_str(), Skyboxes);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenSkyboxListFromFile");
