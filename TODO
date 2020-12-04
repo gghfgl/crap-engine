@@ -1,17 +1,15 @@
 
 GENERAL
 
+- @editor: read and compile all shaders from a directory with debug output
 
 - @editor: gui switch perf to string rendering
 
-- @editor: read and compile all shaders from a directory with debug output
-
-- @editor: improve map of modules list (new / delete / save/ etc) like grounds and skyboxes
+- @editor: add / improve map of modules list (new / delete / save/ etc) like grounds and skyboxes
 
 
 - @editor: loader progress bar at startup editor and loading files?
 - @editor: find something better when loading skybox faces (from a single file ideally)
-- improve skybox import assets
 - rework editor struct and debug rendering tools
 - implement memorypool visualizer
 - improve click setting panel object after selectinID from world

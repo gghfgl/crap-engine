@@ -282,7 +282,10 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         // Open ground list fom file
         ImGui::SameLine();
         if (ImGui::Button("open##ground"))
+        {
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
+            igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
+        }
 
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenGroundListFromFile", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
@@ -337,6 +340,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                 {
                     selectedGroundIndex = it->first;
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel", "Choose File", ".obj", ".");
+                    igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".obj", ImVec4(1,1,0, 0.9));
                 }
 
                 // Delete button
@@ -498,7 +502,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         if (ImGui::Button("save##skybox"))
         {
             std::time_t timestamp = std::time(nullptr);
-            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File", ".list", ".", "crap_skyboxes_"+std::to_string(timestamp));
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File###skybox", ".list", ".", "crap_skyboxes_"+std::to_string(timestamp));
         }
 
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveSkyboxListInTextFormat", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
@@ -515,7 +519,10 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         // Open skybox list fom file
         ImGui::SameLine();
         if (ImGui::Button("open##skybox"))
-            igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenSkyboxListFromFile", "Choose File", ".list", ".");
+        {
+            igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenSkyboxListFromFile", "Choose File###skybox", ".list", ".");
+            igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
+        }
 
         if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenSkyboxListFromFile", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
         {
@@ -552,7 +559,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                 if (ImGui::SmallButton("load"))
                 {
                     selectedSkyboxIndex = it->first;
-                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File", 0, ".");
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File###skybox", 0, ".");
                 }
 
                 // Delete button
@@ -644,6 +651,10 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
+
+                // DEBUG
+                std::cout << "TEST: " << filePathName << "\n";
+                
                 Skyboxes->find(selectedSkyboxIndex)->second->loadCubeMapTextureFromFile(filePathName);
             }
 
