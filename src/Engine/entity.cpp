@@ -449,25 +449,6 @@ Skybox::Skybox(const char* name, std::string directoryPath)
     auto p = std::filesystem::proximate(directoryPath);
     std::string p_string{p.u8string()};
 
-    // this->VAO = 0;
-    // this->VBO = 0;
-    this->name = name;
-    this->directory = p_string;
-
-    if (directoryPath.length() > 0)
-        this->loadCubeMapTextureFromFile(directoryPath);
-}
-
-Skybox::~Skybox()
-{
-    delete[] this->name;
-    glDeleteVertexArrays(1, &this->VAO);
-    glDeleteBuffers(1, &this->VBO);
-    glDeleteTextures(1, &this->textureID);
-}
-
-void Skybox::loadCubeMapTextureFromFile(std::string directoryPath)
-{
     float skyboxVertices[] = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
@@ -520,10 +501,27 @@ void Skybox::loadCubeMapTextureFromFile(std::string directoryPath)
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
+    
     this->VAO = VAO;
     this->VBO = VBO;
+    this->textureID = 0;
+    this->name = name;
+    this->directory = p_string;
 
+    if (directoryPath.length() > 0)
+        this->loadCubeMapTextureFromFile(directoryPath);
+}
+
+Skybox::~Skybox()
+{
+    delete[] this->name;
+    glDeleteVertexArrays(1, &this->VAO);
+    glDeleteBuffers(1, &this->VBO);
+    glDeleteTextures(1, &this->textureID);
+}
+
+void Skybox::loadCubeMapTextureFromFile(std::string directoryPath)
+{
     std::vector<std::string> faces{
         directoryPath + "/right.jpg",
         directoryPath + "/left.jpg",

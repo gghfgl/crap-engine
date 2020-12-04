@@ -1,17 +1,16 @@
 
 GENERAL
 
-- @editor: add map of skybox + gui panel (add / select / load / delete / save to list) + open from list
-- @editor: think about loading skybox faces files
 
 - @editor: gui switch perf to string rendering
 
+- @editor: read and compile all shaders from a directory with debug output
+
 - @editor: improve map of modules list (new / delete / save/ etc) like grounds and skyboxes
 
-- @editor: read and compile all shaders from a directory with debug output at runtime?
 
-
-- @editor: loader start app and loading model files?
+- @editor: loader progress bar at startup editor and loading files?
+- @editor: find something better when loading skybox faces (from a single file ideally)
 - improve skybox import assets
 - rework editor struct and debug rendering tools
 - implement memorypool visualizer
