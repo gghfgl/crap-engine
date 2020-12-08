@@ -8,73 +8,72 @@ void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 static uint32 g_CurrentGroundIndex = 0;
 static uint32 g_CurrentSkyboxIndex = 0;
 
-static const uint32 g_GroundMaxResolution = 50;
+const uint32 g_GroundMaxResolution = 50;
+const uint32 g_ReferenceGridResolution = 50;
 
-// TODO: Clean mess below
+// TODO: Clean mess below and replace it by a state machine struct?
 static uint32 g_HoveredEntity = 0;
 static uint32 g_SelectedEntity = 0;
 static uint32 g_DragEntity = 0;
-const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
 
-const uint32 g_ReferenceGridResolution = 50;
+const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
 
 void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 {
+    // Init minimum stuff needed
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
     Renderer *renderer = new Renderer();
+    EditorGui gui = EditorGui(Window);
 
+    // Compile and cache shaders
     ShaderCache *sCache = new ShaderCache();
     int32 error = sCache->compileShadersFromDirectory("./shaders", camera->projectionMatrix);
     if (error == -1)
         exit(111);
 
     // =================================================
-    // Grid
+
+    // Construct ReferenceGrid mesh
     std::vector<uint32> uEmpty;
     std::vector<Texture> tEmpty;
     std::vector<Vertex> vGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
     Mesh *MeshGrid = new Mesh(vGrid, uEmpty, tEmpty);
 
-    // Axis Debug
+    // Construct DebugOrigin mesh
     std::vector<Vertex> vAxisDebug(6, Vertex());
     Mesh *MeshAxisDebug = new Mesh(vAxisDebug, uEmpty, tEmpty);
 
-    // Ray
-    std::vector<Vertex> vRay(2, Vertex());
-    Mesh *MeshRay = new Mesh(vRay, uEmpty, tEmpty);
-
-    // Entitys array
+    // Construct Grounds, Skyboxes and Modules maps
+    std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
+    std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
     std::map<uint32, Entity*> *SCENE = new std::map<uint32, Entity*>;
 
-
-    // Grounds map
-    std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
-
-    // Skyboxes map
-    std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
-
     // =================================================
+
+    // TODO: clean mess below | useless
     editor_t *Editor = new editor_t;
     Editor->Active = true;
     Editor->GridResolution = 0;
     Editor->MeshGrid = MeshGrid;
     Editor->MeshAxisDebug = MeshAxisDebug;
-    Editor->MeshRay = MeshRay;
     Editor->ShowSkybox = false;
 
-    EditorGui gui = EditorGui(Window);
-
-    // TODO: tmp wainting editor struct
+    // TODO: tmp wainting editor struct | move to entity?
     PrepareAxisDebug(Editor->MeshAxisDebug);
     PushReferenceGridSubData(Editor->MeshGrid, g_ReferenceGridResolution);
+
     // =============================
 
     while (Editor->Active)
     {
         Window->updateTime();
-
-        // NOTE: INPUTS ======================================>
         Window->pollEvents();
+
+        /********************************************************
+         *                                                      *
+         *        NOTE: Handler I/O Keyboard and Mouse          *
+         *                                                      *
+         ********************************************************/
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
             Editor->Active = false;
@@ -122,7 +121,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         else
             g_DragEntity = 0;
 
-        // NOTE: SIMULATE  ======================================>
+        /********************************************************
+         *                                                      *
+         *                 NOTE: Simulate World                 *
+         *                                                      *
+         ********************************************************/
+
         glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
                                                     (float32)Input->mouse->posY,
                                                     Window->getWidth(),
@@ -163,7 +167,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                   &pIntersection))
             pIntersection = glm::vec3(0.0f);
 
-        // NOTE: RENDERING ======================================>
+        /********************************************************
+         *                                                      *
+         *                 NOTE: Rendering                      *
+         *                                                      *
+         ********************************************************/
+
         renderer->resetStats();
         renderer->newContext();
         glm::mat4 viewMatrix = camera->getViewMatrix();
@@ -173,20 +182,15 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         colorShader->setUniform4fv("view", viewMatrix);
         colorShader->setUniform4fv("model", glm::mat4(1.0f));
 
-        // draw reference grid
+        // Draw ReferenceGrid
         colorShader->setUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
         renderer->drawLines(Editor->MeshGrid, 1.0f);
 
-        // draw axis debug
+        // Draw DebugOrigin
         colorShader->setUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         renderer->drawLines(Editor->MeshAxisDebug, 2.0f);
 
-        // draw mouse ray
-        PushMouseRaySubData(Editor->MeshRay, camera->position, rayWorld);
-        colorShader->setUniform4f("color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
-        renderer->drawLines(Editor->MeshRay, 1.0f);
-
-        // draw ground
+        // Draw selected Ground
         if (g_CurrentGroundIndex != 0){
             if (Grounds->find(g_CurrentGroundIndex)->second->entity->model != nullptr)
             {
@@ -210,7 +214,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             }
         }
                   
-        // draw objs
+        // Draw Modules
         Shader *defaultShader = sCache->getShader("default");
         defaultShader->useProgram();
         defaultShader->setUniform4fv("view", viewMatrix);
@@ -242,9 +246,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             renderer->drawMesh(it->second->pickingSphere, defaultShader);
         }
 
-        // =================== E.N.V.I.R.O.N.M.E.N.T ===================
-
-        // Skybox
+        // Draw selected Skybox
         if (g_CurrentSkyboxIndex != 0)
         {
             if (Skyboxes->find(g_CurrentSkyboxIndex)->second->directory.length() > 0)
@@ -256,9 +258,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             }
         }
 
-        // =================== G.U.I ===================
-
-        // draw GUI
+        // Draw GUI
         gui.newFrame();
         gui.performanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
         gui.makePanel(10.f, 10.f);
@@ -269,15 +269,18 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                            g_GroundMaxResolution);
         gui.skyboxSettings(g_CurrentSkyboxIndex,
                            Skyboxes);
-        //gui.entitiesSettings(SCENE, &g_SelectedEntity, g_PickingSphereRadius);
         gui.endPanel();
         gui.draw();
 
-        // TODO:  update memory pool
-        //Renderer->MemoryArena->MaxUsed = 0;
-
+        // Swap buffer
         Window->swapBuffer();
     }
+
+    /********************************************************
+     *                                                      *
+     *                 NOTE: Cleaning                       *
+     *                                                      *
+     ********************************************************/
 
     for (auto it = SCENE->begin(); it != SCENE->end(); it++)
         delete it->second;
@@ -294,7 +297,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // TODO: implement complete full delete Editor method
     delete Editor->MeshGrid;
     delete Editor->MeshAxisDebug;
-    delete Editor->MeshRay;
     delete Editor;
 
     delete sCache;
@@ -304,6 +306,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     delete renderer;
     delete camera;
 }
+
 void PrepareAxisDebug(Mesh *mesh)
 {    
     mesh->Vertices.clear();
