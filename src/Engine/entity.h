@@ -299,7 +299,7 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
     file.close();
 
     // DEBUG:
-    printf("opened: %s", filepath);
+    printf("opened: %s\n", filepath);
     return 0;
 }
 

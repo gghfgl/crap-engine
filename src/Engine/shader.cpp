@@ -160,14 +160,39 @@ void Shader::check_compile_errors(uint32 object, std::string type)
 
 // =================================
 
-void ShaderCache::compileAndAddShader(const char* filepath, const std::string& name, glm::mat4 projectionMatrix)
+int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix)
 {
-    Shader *shader = this->load_shader_from_file(filepath);
+    // DEBUG
+    printf("\n=== BEGIN: Compiling shaders from directory %s:\n\n", directory);
 
-    this->Shaders[name] = shader;
-	
-    shader->useProgram();
-    shader->setUniform4fv("projection", projectionMatrix);
+    for (const auto & entry : std::filesystem::directory_iterator(directory))
+    {
+        std::string p_string{entry.path().u8string()};
+        std::string filename = p_string.substr(p_string.find_last_of('/') + 1, p_string.length());
+        std::string ext = filename.substr(filename.find_last_of(".") + 1);
+        std::string name = filename.substr(0, filename.find_last_of("."));
+
+        if (ext != "glsl")
+        {
+            // DEBUG
+            printf("SHADERCACHE::Error ext '%s' does not match [glsl]\n", ext.c_str());
+            printf("\n=== END: Compile and cache shaders\n");
+            return -1;
+        }
+
+        Shader *shader = this->load_shader_from_file(p_string.c_str());
+        this->Shaders[name] = shader;
+
+        shader->useProgram();
+        shader->setUniform4fv("projection", projectionMatrix);
+
+        // DEBUG
+        printf("%s\t | OK\n", filename.c_str());
+    }
+
+    // DEBUG
+    printf("\n=== END: Compile and cache shaders\n");
+    return 0;
 }
 
 ShaderCache::~ShaderCache()

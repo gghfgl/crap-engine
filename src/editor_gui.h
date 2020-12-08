@@ -443,7 +443,6 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
     ImGui::Separator();
 }
 
-// TODO @WIP:
 void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                                std::map<uint32, Skybox*> *Skyboxes)
 {
@@ -549,19 +548,14 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
 
                 // Load ground model button
                 if (ImGui::SmallButton("load"))
-                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File###skybox", 0, ".");
+                    igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel", "Choose File###skybox", ".jpg", ".");
 
-                // TODO @WIP:
                 // Open dialog load skybox faces files
                 if (igfd::ImGuiFileDialog::Instance()->FileDialog("LoadSkyboxModel", ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
                 {
                     if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
                     {
-                        std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-
-                        // DEBUG
-                        std::cout << "TEST: " << filePathName << "\n";
-                
+                        std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
                         it->second->loadCubeMapTextureFromFile(filePathName);
                     }
 
@@ -651,6 +645,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
     ImGui::Separator();
 }
 
+// TODO @WIP:
 void EditorGui::entitiesSettings(std::map<uint32, Entity*> *Scene,
                                  uint32 *selectedEntity,
                                  float32 pickingSphereRadius)
