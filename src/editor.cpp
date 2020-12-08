@@ -294,15 +294,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         delete it->second;
     delete Skyboxes;
 
-    // TODO: implement complete full delete Editor method
+    // TODO: remove | useless
     delete Editor->MeshGrid;
     delete Editor->MeshAxisDebug;
     delete Editor;
 
     delete sCache;
-
-    // TODO: delete gui?
-    
     delete renderer;
     delete camera;
 }
