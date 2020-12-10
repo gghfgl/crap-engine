@@ -444,6 +444,26 @@ bool Ground::diffResolutionBuffer()
 
 // ======================================
 
+Module::Module(const char* name, std::string const &modelFilePath)
+{
+    this->entity = new Entity;
+    this->entity->pickingSphere = nullptr;
+
+    this->entity->model = nullptr;
+    if (modelFilePath.length() > 0)
+        this->entity->model = new Model(modelFilePath); // TODO: handler error and delete model in case of failure to ensure "unknown" label from GUI.
+
+    this->name = name;
+}
+
+Module::~Module()
+{
+    delete[] this->name;
+    delete this->entity;
+}
+
+// ======================================
+
 Skybox::Skybox(const char* name, std::string directoryPath)
 {
     auto p = std::filesystem::proximate(directoryPath);

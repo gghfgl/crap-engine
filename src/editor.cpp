@@ -7,6 +7,7 @@ void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
 static uint32 g_CurrentGroundIndex = 0;
 static uint32 g_CurrentSkyboxIndex = 0;
+static uint32 g_CurrentModuleIndex = 0;
 
 const uint32 g_GroundMaxResolution = 50;
 const uint32 g_ReferenceGridResolution = 50;
@@ -16,7 +17,7 @@ static uint32 g_HoveredEntity = 0;
 static uint32 g_SelectedEntity = 0;
 static uint32 g_DragEntity = 0;
 
-const float32 g_PickingSphereRadius = 0.2f; // Used for draw sphere and ray intersection
+const float32 g_PickingSphereRadius = 0.5f; // Used for draw sphere and ray intersection
 
 void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 {
@@ -46,7 +47,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // Construct Grounds, Skyboxes and Modules maps
     std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
     std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
-    std::map<uint32, Entity*> *SCENE = new std::map<uint32, Entity*>;
+    std::map<uint32, Module*> *Modules = new std::map<uint32, Module*>;
 
     // =================================================
 
@@ -139,13 +140,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             Grounds->find(g_CurrentGroundIndex)->second->isGenerated = false;
         
         // mouse ray intersection sphere selector objects
-        for (auto it = SCENE->begin(); it != SCENE->end(); it++)
+        for (auto it = Modules->begin(); it != Modules->end(); it++)
         {
             float32 rayIntersection = 0.0f;
             glm::vec3 spherePos = glm::vec3(
-                it->second->position.x,
-                it->second->position.y,
-                it->second->position.z);
+                it->second->entity->position.x,
+                it->second->entity->position.y,
+                it->second->entity->position.z);
 
             if (RaySphereIntersection(camera->position,
                                       rayWorld,
@@ -191,59 +192,67 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(Editor->MeshAxisDebug, 2.0f);
 
         // Draw selected Ground
-        if (g_CurrentGroundIndex != 0){
+        if (g_CurrentGroundIndex != 0)
+        {
             if (Grounds->find(g_CurrentGroundIndex)->second->entity->model != nullptr)
             {
-                if (!Grounds->find(g_CurrentGroundIndex)->second->isGenerated)
+                Ground *selectedGround = Grounds->find(g_CurrentGroundIndex)->second;
+                if (!selectedGround->isGenerated)
                 {
-                    Grounds->find(g_CurrentGroundIndex)->second->clearInstance();
-                    Grounds->find(g_CurrentGroundIndex)->second->updateModelMatrices();
-                    Grounds->find(g_CurrentGroundIndex)->second->instanceBufferID = renderer->prepareInstance(Grounds->find(g_CurrentGroundIndex)->second->entity->model,
-                                                                                                              Grounds->find(g_CurrentGroundIndex)->second->modelMatrices,
-                                                                                                              Grounds->find(g_CurrentGroundIndex)->second->resolution * Grounds->find(g_CurrentGroundIndex)->second->resolution);
-                    Grounds->find(g_CurrentGroundIndex)->second->isGenerated = true;
+                    selectedGround->clearInstance();
+                    selectedGround->updateModelMatrices();
+                    selectedGround->instanceBufferID = renderer->prepareInstance(selectedGround->entity->model,
+                                                                                                              selectedGround->modelMatrices,
+                                                                                                              selectedGround->resolution * selectedGround->resolution);
+                    selectedGround->isGenerated = true;
                 }
 
                 Shader *instancedShader = sCache->getShader("instanced");
                 instancedShader->useProgram();
                 instancedShader->setUniform4fv("view", viewMatrix);
                 instancedShader->setUniform4fv("model", glm::mat4(1.0f));
-                renderer->drawInstanceModel(Grounds->find(g_CurrentGroundIndex)->second->entity->model,
+                renderer->drawInstanceModel(selectedGround->entity->model,
                                             instancedShader,
-                                            Grounds->find(g_CurrentGroundIndex)->second->resolution * Grounds->find(g_CurrentGroundIndex)->second->resolution);
+                                            selectedGround->resolution * selectedGround->resolution);
             }
         }
                   
         // Draw Modules
-        Shader *defaultShader = sCache->getShader("default");
-        defaultShader->useProgram();
-        defaultShader->setUniform4fv("view", viewMatrix);
-        defaultShader->setUniform4fv("model", glm::mat4(1.0f));
-        for (auto it = SCENE->begin(); it != SCENE->end(); it++)
+        if (g_CurrentModuleIndex != 0)
         {
-            bool isSelected = false;
-            if (g_HoveredEntity == it->first || g_SelectedEntity == it->first)
-                isSelected = true;
+            if (Modules->find(g_CurrentModuleIndex)->second->entity->model != nullptr)
+            {
+                Shader *defaultShader = sCache->getShader("default");
+                defaultShader->useProgram();
+                defaultShader->setUniform4fv("view", viewMatrix);
+                defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
-            if (g_DragEntity == it->first)
-                it->second->position = pIntersection;
+                uint32 moduleID = Modules->find(g_CurrentModuleIndex)->first;
+                Module *selectedModel = Modules->find(g_CurrentModuleIndex)->second;
 
-            // Model
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, it->second->position);
-            model = glm::scale(model, glm::vec3(it->second->scale));
-            model = glm::rotate(model, glm::radians(it->second->rotate),
-                                glm::vec3(0.0f, 1.0f, 0.0f));
-            defaultShader->setUniform4fv("model", model);
-            defaultShader->setUniform1ui("flip_color", isSelected);
-            renderer->drawModel(it->second->model, defaultShader);
+                bool isSelected = false;
+                if (g_HoveredEntity == moduleID || g_SelectedEntity == moduleID)
+                    isSelected = true;
 
-            // Picking sphere
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, it->second->position);
-            defaultShader->setUniform4fv("model", model);
-            defaultShader->setUniform1ui("flip_color", isSelected);
-            renderer->drawMesh(it->second->pickingSphere, defaultShader);
+                if (g_DragEntity == moduleID)
+                    selectedModel->entity->position = pIntersection;
+
+                // Model
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, selectedModel->entity->position);
+                model = glm::scale(model, glm::vec3(selectedModel->entity->scale));
+                model = glm::rotate(model, glm::radians(selectedModel->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+                defaultShader->setUniform4fv("model", model);
+                defaultShader->setUniform1ui("flip_color", isSelected);
+                renderer->drawModel(selectedModel->entity->model, defaultShader);
+
+                // // Picking sphere
+                // model = glm::mat4(1.0f);
+                // model = glm::translate(model, selectedModel->entity->position);
+                // defaultShader->setUniform4fv("model", model);
+                // defaultShader->setUniform1ui("flip_color", isSelected);
+                // renderer->drawMesh(selectedModel->entity->pickingSphere, defaultShader);
+            }
         }
 
         // Draw selected Skybox
@@ -269,6 +278,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                            g_GroundMaxResolution);
         gui.skyboxSettings(g_CurrentSkyboxIndex,
                            Skyboxes);
+        gui.moduleSettings(g_CurrentModuleIndex,
+                           Modules);
         gui.endPanel();
         gui.draw();
 
@@ -282,9 +293,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
      *                                                      *
      ********************************************************/
 
-    for (auto it = SCENE->begin(); it != SCENE->end(); it++)
+    for (auto it = Modules->begin(); it != Modules->end(); it++)
         delete it->second;
-    delete SCENE;
+    delete Modules;
 
     for (auto it = Grounds->begin(); it != Grounds->end(); it++)
         delete it->second;

@@ -86,6 +86,15 @@ struct Ground
     const char* name;
 };
 
+struct Module
+{
+    Module(const char* name, std::string const &modelFilePath);
+    ~Module();
+    
+    Entity *entity;
+    const char* name;
+};
+
 struct Skybox
 {
     Skybox(const char* name, std::string directoryPath);
@@ -190,6 +199,7 @@ inline int32 SaveSkyboxListInTextFormat(const char *filepath, std::map<uint32, S
     return 0;
 }
 
+// TODO @WIP:
 inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
                                               std::map<uint32,Entity*> *List)
 {

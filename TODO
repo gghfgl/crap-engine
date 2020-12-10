@@ -4,11 +4,15 @@ GENERAL
 
 - @editor: implement memory viz, add when heap allocated substract when delete from the heap
 
+- @editor: display state of everything
 
+- @editor: switch to complex ray intersec instead of sphere?
+- @editor: implement a better highlight object rendering
 - @editor: add decent logger system
 - @editor: gui switch perf to string rendering
 - @editor: loader progress bar at startup editor and loading files?
 - @editor: find something better when loading skybox faces (from a single file ideally)
+- @game: display state of everything
 - rework editor struct and debug rendering tools
 - implement memorypool visualizer
 - improve click setting panel object after selectinID from world
