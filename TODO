@@ -2,9 +2,10 @@ GENERAL
 
 - @editor: fix load module list from file scale rotate and pos value bug
 
+- @editor: improve logs
 - @editor: implement memory viz, add when heap allocated substract when delete from the heap
-
 - @editor: display state of everything
+- @editor: gestion des erreur avec la GUI
 
 - @editor: switch to complex ray intersec instead of sphere?
 - @editor: implement a better highlight object rendering

@@ -236,7 +236,7 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
     float32 rotate = 0.0f;
     
     uint32 fetch = 0;
-    uint32 nbFields = 8;
+    uint32 nbFields = 9;
     std::string line;
 
     std::getline(file, line);
@@ -323,9 +323,6 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
 
             // DEBUG:
             printf("fetching fields [%d]/[%d]\n", fetch, nbFields);
-            printf("TEST: %f\n", scale);
-            printf("TEST: %f\n", rotate);
-            printf("TEST: %f\n", position.z);
 
             char *nameCopy = new char[32];
             strncpy(nameCopy, name.c_str(), 32);
