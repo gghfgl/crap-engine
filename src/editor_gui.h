@@ -330,7 +330,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                 //ImGui::PushItemWidth(-FLT_MIN);
                 ImGui::Text( ICON_FA_EXPAND );
                 ImGui::SameLine();
-                ImGui::SliderInt("##something", &it->second->resolutionBuffer, 0, maxResolution);
+                ImGui::SliderInt("##resolution", &it->second->resolutionBuffer, 0, maxResolution);
                 ImGui::SameLine();
                 ImGui::Text("max %dx%d", maxResolution, maxResolution);
 
@@ -644,7 +644,6 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
     ImGui::Separator();
 }
 
-// TODO @WIP:
 void EditorGui::moduleSettings(uint32 &currentModuleIndex,
                                std::map<uint32, Module*> *Modules)
 {
@@ -701,7 +700,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                // TODO: SaveModuleListInTextFormat(filePathName.c_str(), Grounds);
+                SaveModuleListInTextFormat(filePathName.c_str(), Modules);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveModuleListInTextFormat");
@@ -720,7 +719,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                // TODO: OpenModuleListFromFile(filePathName.c_str(), Grounds);
+                OpenModuleListFromFile(filePathName.c_str(), Modules);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenModuleListFromFile");
@@ -752,21 +751,24 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
                 else
                     ImGui::Text("%s", it->second->entity->model->directory.c_str());
 
-                ImGui::Text("pos x=%.2f y=%.2f z=%.2f",
+                ImGui::Text( ICON_FA_MAP_MARKER_ALT );
+                ImGui::SameLine();
+                ImGui::Text("x=%.2f y=%.2f z=%.2f",
                             it->second->entity->position.x,
                             it->second->entity->position.y,
                             it->second->entity->position.z);
 
                 // TODO: Show texture checkbox
 
-
-                //ImGui::PushItemWidth(-FLT_MIN);
-                ImGui::SliderScalar("scale##module", ImGuiDataType_Float,
+                ImGui::Text( ICON_FA_EXTERNAL_LINK_ALT );
+                ImGui::SameLine();
+                ImGui::SliderScalar("##scale", ImGuiDataType_Float,
                                     &it->second->entity->scale,
                                     &f32_zero, &f32_ten);
-
                 
-                ImGui::SliderScalar("rotate", ImGuiDataType_Float,
+                ImGui::Text( ICON_FA_SYNC );
+                ImGui::SameLine();
+                ImGui::SliderScalar("##rotate", ImGuiDataType_Float,
                                     &it->second->entity->rotate,
                                     &f32_zero, &f32_360);
 

@@ -1,6 +1,6 @@
 GENERAL
 
-- @editor: add / improve map of modules list (new / delete / save/ etc) like grounds and skyboxes
+- @editor: fix load module list from file scale rotate and pos value bug
 
 - @editor: implement memory viz, add when heap allocated substract when delete from the heap
 

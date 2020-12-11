@@ -451,7 +451,7 @@ Module::Module(const char* name, std::string const &modelFilePath)
 
     this->entity->model = nullptr;
     if (modelFilePath.length() > 0)
-        this->entity->model = new Model(modelFilePath); // TODO: handler error and delete model in case of failure to ensure "unknown" label from GUI.
+        this->entity->model = new Model(modelFilePath); // TODO: handle error and delete model in case of failure to ensure "unknown" label from GUI.
 
     this->name = name;
 }

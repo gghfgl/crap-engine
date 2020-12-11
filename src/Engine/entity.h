@@ -110,31 +110,41 @@ struct Skybox
 
 // =====================================================
 
-inline int32 SaveEntityListInTextFormat(const char *filepath, std::map<uint32, Entity*> *List)
+inline int32 SaveModuleListInTextFormat(const char *filepath, std::map<uint32, Module*> *List)
 {
     // DEBUG:
-    printf("\n=== BEGIN: SaveEntityListInTextFormat\n");
+    printf("\n=== BEGIN: SaveModuleListInTextFormat\n");
 
     std::ofstream file;
     file.open(filepath);
+    file << "HEADER_MODULE_LIST\n";
     for (auto it = List->begin(); it != List->end(); it++)
     {
+        std::string objf = "";
+        std::string dir = "";
+        if (it->second->entity->model != nullptr)
+        {
+            dir = it->second->entity->model->directory.c_str();
+            objf = it->second->entity->model->objFilename.c_str();
+        }
+
         file << "###\n";
-        file << "directory=" << it->second->model->directory.c_str() << "\n";
-        file << "filename=" << it->second->model->objFilename.c_str() << "\n";
         file << "id=" << it->first << "\n";
-        file << "posx=" << it->second->position.x << "\n";
-        file << "posy=" << it->second->position.y << "\n";
-        file << "posz=" << it->second->position.z << "\n";
-        file << "scale=" << it->second->scale << "\n";
-        file << "rotate=" << it->second->rotate << "\n";
+        file << "name=" << it->second->name << "\n";
+        file << "directory=" << dir << "\n";
+        file << "objfile=" << objf << "\n";
+        file << "posx=" << it->second->entity->position.x << "\n";
+        file << "posy=" << it->second->entity->position.y << "\n";
+        file << "posz=" << it->second->entity->position.z << "\n";
+        file << "scale=" << it->second->entity->scale << "\n";
+        file << "rotate=" << it->second->entity->rotate << "\n";
     }
 
     file.close();
 
     // DEBUG:
     printf("saved: %s\n", filepath);
-    printf("=== END: SaveEntityListInTextFormat\n");
+    printf("=== END: SaveModuleListInTextFormat\n");
 
     return 0;
 }
@@ -199,30 +209,45 @@ inline int32 SaveSkyboxListInTextFormat(const char *filepath, std::map<uint32, S
     return 0;
 }
 
-// TODO @WIP:
-inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
-                                              std::map<uint32,Entity*> *List)
+inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Module*> *List)
 {
-    // TODO: check header!
+    // DEBUG:
+    printf("\n=== BEGIN: OpenModuleListFromFile\n");
+
     std::ifstream file(filepath);
     if (!file.is_open())
     {
+        // DEBUG:
         printf("open file error!\n");
         return -1;
     }
 
+    // Clear map
     for (auto it = List->begin(); it != List->end(); it++)
         delete it->second;
     List->clear();
 
-    uint32 fetch = 0;
-    uint32 nbFields = 8;
-    uint32 id = 0;
+
+    uint32 id = 1;
+    std::string name = "unknown";
     std::string fullpath = "";
     glm::vec3 position = glm::vec3(0.0f);
     float32 scale = 0.0f;
     float32 rotate = 0.0f;
+    
+    uint32 fetch = 0;
+    uint32 nbFields = 8;
     std::string line;
+
+    std::getline(file, line);
+    if (line != "HEADER_MODULE_LIST")
+    {
+        // DEBUG:
+        printf("\nfail to read %s: header is missing\n", filepath);
+        printf("=== END: OpenModuleListFromFile\n");
+        return -1;
+    }
+
     while (std::getline(file, line))
     {
         line.erase(std::remove_if(line.begin(), line.end(), isspace),
@@ -235,23 +260,30 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
         auto key = line.substr(0, delimiterPos);
         auto value = line.substr(delimiterPos + 1);
 
+        if (key.compare("id") == 0)
+        {
+            id = std::stoi(value);
+            fetch++;
+        }
+
+        if (key.compare("name") == 0)
+        {
+            name = value;
+            fetch++;
+        }
+
         if (key.compare("directory") == 0)
         {
             fullpath = value ;
             fetch++;
         }
 
-        if (key.compare("filename") == 0)
+        if (key.compare("objfile") == 0)
         {
-            fullpath += "\\" + value;
+            fullpath += "/" + value;
             fetch++;
         }
 	    
-        if (key.compare("id") == 0)
-        {
-            id = std::stoi(value);
-            fetch++;
-        }
 
         if (key.compare("posx") == 0)
         {
@@ -285,22 +317,26 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
 
         if (fetch == nbFields)
         {
-            Entity *entity = new Entity();
-            entity->model = new Model(fullpath);
-            entity->pickingSphere =  new Mesh(0.0f, 0.2f, 15, 15);
-            entity->position = position;
-            entity->scale = scale;
-            entity->rotate = rotate;
+            // in case of no objfile
+            if (fullpath.length() == 1)
+                fullpath = "";
 
-            List->insert({id, entity});
+            // DEBUG:
+            printf("fetching fields [%d]/[%d]\n", fetch, nbFields);
+            printf("TEST: %f\n", scale);
+            printf("TEST: %f\n", rotate);
+            printf("TEST: %f\n", position.z);
 
-            printf("fullpath= %s\n", fullpath.c_str());
-            printf("id= %d\n", id);
-            printf("posx= %f\n", position.x);
-            printf("posy= %f\n", position.y);
-            printf("posz= %f\n", position.z);
-            printf("scale= %f\n", scale);
-            printf("rotate= %f\n", rotate);
+            char *nameCopy = new char[32];
+            strncpy(nameCopy, name.c_str(), 32);
+            nameCopy[32 - 1] = '\0';
+
+            Module *module = new Module(nameCopy, fullpath);
+            //entity->pickingSphere =  new Mesh(0.0f, 0.2f, 15, 15);
+            module->entity->position = position;
+            module->entity->scale = scale;
+            module->entity->rotate = rotate;
+            List->insert({id, module});
 		
             fetch = 0;
         }
@@ -308,13 +344,15 @@ inline int32 OpenEntityListFromFileTextFormat(const char *filepath,
 
     file.close();
 
+
     // DEBUG:
     printf("opened: %s\n", filepath);
+    printf("=== END: OpenModuleListFromFile\n");
+
     return 0;
 }
 
-inline int32 OpenGroundListFromFile(const char *filepath,
-                                    std::map<uint32,Ground*> *List)
+inline int32 OpenGroundListFromFile(const char *filepath, std::map<uint32,Ground*> *List)
 {
     // DEBUG:
     printf("\n=== BEGIN: OpenGroundListFromFile\n");
@@ -346,7 +384,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
     if (line != "HEADER_GROUND_LIST")
     {
         // DEBUG:
-        printf("\nfaile to read %s: header is missing\n", filepath);
+        printf("\nfail to read %s: header is missing\n", filepath);
         printf("=== END: OpenGroundListFromFile\n");
         return -1;
     }
@@ -402,10 +440,6 @@ inline int32 OpenGroundListFromFile(const char *filepath,
 
                 // DEBUG:
                 printf("fetching fields [%d]/[%d]\n", fetch, nbFields);
-                /* printf("id= %d\n", id); */
-                /* printf("name= %s\n", name.c_str()); */
-                /* printf("fullpath= %s\n", fullpath.c_str()); */
-                /* printf("resolution= %d\n", resolution); */
 
                 char *nameCopy = new char[32];
                 strncpy(nameCopy, name.c_str(), 32);
@@ -428,8 +462,7 @@ inline int32 OpenGroundListFromFile(const char *filepath,
     return 0;
 }
 
-inline int32 OpenSkyboxListFromFile(const char *filepath,
-                                    std::map<uint32,Skybox*> *List)
+inline int32 OpenSkyboxListFromFile(const char *filepath, std::map<uint32,Skybox*> *List)
 {
     // DEBUG:
     printf("\n=== BEGIN: OpenSkyboxListFromFile\n");
@@ -460,7 +493,7 @@ inline int32 OpenSkyboxListFromFile(const char *filepath,
     if (line != "HEADER_SKYBOX_LIST")
     {
         // DEBUG:
-        printf("\nfaile to read %s: header is missing\n", filepath);
+        printf("\nfail to read %s: header is missing\n", filepath);
         printf("=== END: OpenSkyboxListFromFile\n");
         return -1;
     }
