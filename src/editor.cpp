@@ -29,8 +29,11 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // Compile and cache shaders
     ShaderCache *sCache = new ShaderCache();
     int32 error = sCache->compileShadersFromDirectory("./shaders", camera->projectionMatrix);
-    if (error == -1)
+    if (error != 0)
+    {
+        Log::error("EXITCODE:111 Failed to compile shaders");
         exit(111);
+    }
 
     // =================================================
 

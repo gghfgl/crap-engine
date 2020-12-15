@@ -13,6 +13,53 @@ typedef double   float64;
 
 #define ASSERT(x) if (!(x)) __debugbreak();
 
+namespace Log
+{
+    void debug(const char* fmt, ...)
+    {
+        std::string info = "[*DEBUG] ";
+        info.append(fmt);
+
+        va_list args;
+        va_start(args, fmt);
+        vprintf(info.c_str(), args);
+        va_end(args);
+    }
+
+    void info(const char* fmt, ...)
+    {
+        std::string info = "[INFO] ";
+        info.append(fmt);
+
+        va_list args;
+        va_start(args, fmt);
+        vprintf(info.c_str(), args);
+        va_end(args);
+    }
+
+    void warn(const char* fmt, ...)
+    {
+        std::string info = "[WARN] ";
+        info.append(fmt);
+
+        va_list args;
+        va_start(args, fmt);
+        vprintf(info.c_str(), args);
+        va_end(args);
+    }
+
+    void error(const char* fmt, ...)
+    {
+        std::string info = "[ERROR] ";
+        info.append(fmt);
+
+        va_list args;
+        va_start(args, fmt);
+        vprintf(info.c_str(), args);
+        va_end(args);
+    }
+}
+
 // TODO: implement a decent mem pool
 /* struct memory_pool */
 /* { */

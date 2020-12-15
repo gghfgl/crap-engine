@@ -141,7 +141,7 @@ void Shader::check_compile_errors(uint32 object, std::string type)
         if (!success)
         {
             glGetShaderInfoLog(object, 1024, NULL, infoLog);
-            printf("| ERROR::SHADER: Compile-time error: Type: %s\n %s\n -- --------------------------------------------------- -- \n",
+            Log::error("SHADER: Compile-time error: Type: %s\n %s\n -- --------------------------------------------------- -- \n",
                    type.c_str(),
                    infoLog);
         }
@@ -151,7 +151,7 @@ void Shader::check_compile_errors(uint32 object, std::string type)
         if (!success)
         {
             glGetProgramInfoLog(object, 1024, NULL, infoLog);
-            printf("| ERROR::SHADER: Link-time error: Type: %s\n %s\n -- --------------------------------------------------- -- \n",
+            Log::error("SHADER: Link-time error: Type: %s\n %s\n -- --------------------------------------------------- -- \n",
                    type.c_str(),
                    infoLog);
         }
@@ -162,8 +162,7 @@ void Shader::check_compile_errors(uint32 object, std::string type)
 
 int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix)
 {
-    // DEBUG
-    printf("\n=== BEGIN: Compiling shaders from directory %s:\n\n", directory);
+    Log::info("=== BEGIN: Compiling shaders from directory %s\n", directory);
 
     for (const auto & entry : std::filesystem::directory_iterator(directory))
     {
@@ -174,9 +173,8 @@ int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 
 
         if (ext != "glsl")
         {
-            // DEBUG
-            printf("SHADERCACHE::Error ext '%s' does not match [glsl]\n", ext.c_str());
-            printf("\n=== END: Compile and cache shaders\n");
+            Log::error("SHADERCACHE extension '%s' does not match [glsl]\n", ext.c_str());
+            Log::info("=== END: Compile and cache shaders\n");
             return -1;
         }
 
@@ -186,12 +184,10 @@ int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 
         shader->useProgram();
         shader->setUniform4fv("projection", projectionMatrix);
 
-        // DEBUG
-        printf("%s\t | OK\n", filename.c_str());
+        Log::info("%s\t | OK\n", filename.c_str());
     }
 
-    // DEBUG
-    printf("\n=== END: Compile and cache shaders\n");
+    Log::info("=== END: Compile and cache shaders\n");
     return 0;
 }
 
@@ -280,7 +276,7 @@ Shader* ShaderCache::load_shader_from_file(const char* filepath)
 //     }
 //     catch (std::exception e)
 //     {
-//         printf("ERROR::SHADER: Failed to read shader_t files\n");
+//         Log::info("ERROR::SHADER: Failed to read shader_t files\n");
 //     }
 //     const char* vShaderCode = vertexCode.c_str();
 //     const char* fShaderCode = fragmentCode.c_str();

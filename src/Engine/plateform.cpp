@@ -107,7 +107,7 @@ Window::Window(uint32 width, uint32 height, const char *title)
     // OpenGL
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        printf("EXITCODE:666 Failed to initialize GLAD");
+        Log::error("EXITCODE:666 Failed to initialize GLAD");
         int exitcode = 666; // TODO: meh ???
         exit(exitcode);
     }
@@ -342,7 +342,7 @@ void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id,
             break;
         }
 
-        printf("%d: %s of %s severity, raised from %s: %s\n",
+        Log::warn("%d: %s of %s severity, raised from %s: %s\n",
                id, _type, _severity, _source, msg);
     }
 }

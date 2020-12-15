@@ -1,11 +1,8 @@
-GENERAL
+TODO
 
-- @editor: fix load module list from file scale rotate and pos value bug
-
-- @editor: improve logs
-- @editor: implement memory viz, add when heap allocated substract when delete from the heap
 - @editor: display state of everything
 - @editor: gestion des erreur avec la GUI
+- @editor: implement memory viz, add when heap allocated substract when delete from the heap
 
 - @editor: switch to complex ray intersec instead of sphere?
 - @editor: implement a better highlight object rendering
@@ -13,7 +10,6 @@ GENERAL
 - @editor: gui switch perf to string rendering
 - @editor: loader progress bar at startup editor and loading files?
 - @editor: find something better when loading skybox faces (from a single file ideally)
-- @game: display state of everything
 - rework editor struct and debug rendering tools
 - implement memorypool visualizer
 - improve click setting panel object after selectinID from world
@@ -27,3 +23,7 @@ GENERAL
 - beautyfull light PBR effects
 - improve scene file format (extend with skybox, etc ...)
 - build engine in microservice? Engine lib?
+
+- @game: display state of everything
+
+- @general: improve logs

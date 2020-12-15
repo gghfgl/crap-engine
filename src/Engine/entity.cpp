@@ -126,8 +126,7 @@ void Mesh::allocate_mesh()
 
 Model::Model(std::string const &path)
 {
-    // DEBUG:
-    printf("\n=== BEGIN: New Model\n");
+    Log::info("=== BEGIN: New Model\n");
 
     // convert to relative path
     auto p = std::filesystem::proximate(path);
@@ -153,9 +152,8 @@ Model::Model(std::string const &path)
         this->directory = "";
         this->objFilename = "";
 
-        // DEBUG:
-        printf("ASSIMP::Error '%s'\n", importer.GetErrorString());
-        printf("=== END: New Model\n");
+        Log::error("ASSIMP: '%s'\n", importer.GetErrorString());
+        Log::info("=== END: New Model\n");
 
         return; // TODO: error management
     }
@@ -163,12 +161,11 @@ Model::Model(std::string const &path)
     this->directory = p_string.substr(0, p_string.find_last_of('/'));
     this->objFilename = p_string.substr(this->directory.length() + 1, p_string.length());
 
-    // DEBUG:
-    printf("load model from directory: %s\n", this->directory.c_str());
-    printf("load model from file: %s\n", this->objFilename.c_str());
+    Log::info("load model from directory: %s\n", this->directory.c_str());
+    Log::info("load model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
-    printf("=== END: New Model\n");
+    Log::info("=== END: New Model\n");
 }
 
 Model::~Model()
@@ -324,8 +321,7 @@ std::vector<Texture> Model::load_material_textures(aiMaterial *mat,
 
 uint32 Model::load_texture_from_file(const char *path, const std::string &directory)
 {
-    // DEBUG
-    printf("texture=%s\n", path);
+    Log::info("texture=%s\n", path);
     
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
@@ -357,7 +353,7 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
     else
-        printf("Texture failed to load at path: '%s'\n", path);
+        Log::warn("Texture failed to load at path: '%s'\n", path);
 
     stbi_image_free(data);
 
@@ -561,7 +557,7 @@ void Skybox::loadCubeMapTextureFromFile(std::string directoryPath)
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         else
         {
-            printf("Cubemap texture failed to load at path: %s\n", faces[i].c_str());
+            Log::warn("Cubemap texture failed to load at path: %s\n", faces[i].c_str());
             return;
         }
 
