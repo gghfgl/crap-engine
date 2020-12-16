@@ -11,10 +11,12 @@ struct editor_t
 	bool ShowSkybox;
 };
 
-struct Environment
+struct GlobalState
 {
-    std::string name;
-    Ground *ground;
-    int32 *sliderResolution;
-    Skybox *skybox;
+    uint32 g_CurrentGroundIndex = 0;
+    uint32 g_CurrentSkyboxIndex = 0;
+    uint32 g_CurrentModuleIndex = 0;
+    uint32 g_HoveredModule = 0;
+    uint32 g_SelectedModule = 0;
+    uint32 g_DragModule = 0;
 };

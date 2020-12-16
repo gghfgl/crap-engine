@@ -1,7 +1,8 @@
 TODO
 
 - @editor: display state of everything
-- @editor: gestion des erreur avec la GUI
+- @editor: make better rendering API. Less verbose
+- @editor: file opening error message with GUI?
 - @editor: implement memory viz, add when heap allocated substract when delete from the heap
 
 - @editor: switch to complex ray intersec instead of sphere?

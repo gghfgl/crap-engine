@@ -14,7 +14,7 @@ struct EditorGui
     void newFrame();
     void draw();
 
-    void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info);
+    void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info, GlobalState *gs);
     void progressPlotWidget(bool animate);
 
     void makePanel(float32 posX, float32 posY);
@@ -95,7 +95,8 @@ void EditorGui::draw()
 
 // TODO: switch to string rendering with param window->time + renderer->stats + plateform->info
 void EditorGui::performanceInfoOverlay(Renderer *renderer,
-                                       PlateformInfo *info)
+                                       PlateformInfo *info,
+                                       GlobalState *gs)
 {
     ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 10));
     ImGui::SetNextWindowBgAlpha(0.35f);
@@ -104,11 +105,21 @@ void EditorGui::performanceInfoOverlay(Renderer *renderer,
         ImGui::Text(info->vendor);
         ImGui::Text(info->graphicAPI);
         ImGui::Text(info->versionAPI);
+
         ImGui::Separator();
         ImGui::Text("ms/f: %.3fms", this->window->time->deltaTime * 1000);
         //ImGui::Text("fps: %d", Window->time->FPS);
         //ImGui::Text("mcy/f: %d", Window->time->megaCyclePerFrame);
         ImGui::Text("drawCalls: %d", renderer->stats.drawCalls);
+
+        ImGui::Separator();
+        ImGui::Text("w_active: %d", this->activeWindow);
+        ImGui::Text("c_ground: %d", gs->g_CurrentGroundIndex);
+        ImGui::Text("c_skybox: %d", gs->g_CurrentSkyboxIndex);
+        ImGui::Text("c_module: %d", gs->g_CurrentModuleIndex);
+        ImGui::Text("m_hover: %d", gs->g_HoveredModule);
+        ImGui::Text("m_select: %d", gs->g_SelectedModule);
+        ImGui::Text("m_drag: %d", gs->g_DragModule);
         ImGui::End();
     }
 }

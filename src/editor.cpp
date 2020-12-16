@@ -5,17 +5,8 @@ void PrepareAxisDebug(Mesh *Mesh); // TODO: rename origin
 void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
 void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
 
-static uint32 g_CurrentGroundIndex = 0;
-static uint32 g_CurrentSkyboxIndex = 0;
-static uint32 g_CurrentModuleIndex = 0;
-
 const uint32 g_GroundMaxResolution = 50;
 const uint32 g_ReferenceGridResolution = 50;
-
-// TODO: Clean mess below and replace it by a state machine struct?
-static uint32 g_HoveredEntity = 0;
-static uint32 g_SelectedEntity = 0;
-static uint32 g_DragEntity = 0;
 
 const float32 g_PickingSphereRadius = 0.5f; // Used for draw sphere and ray intersection
 
@@ -36,6 +27,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     }
 
     // =================================================
+
+    // Global states tracking
+    GlobalState gs;
 
     // Construct ReferenceGrid mesh
     std::vector<uint32> uEmpty;
@@ -108,22 +102,22 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         if (Input->mouse->leftButton)
         {
-            if (g_HoveredEntity != 0)
-                g_SelectedEntity = g_HoveredEntity;
-            else if (g_DragEntity == 0 && !gui.activeWindow)
-                g_SelectedEntity = 0;
+            if (gs.g_HoveredModule != 0)
+                gs.g_SelectedModule = gs.g_HoveredModule;
+            else if (gs.g_DragModule == 0 && !gui.activeWindow)
+                gs.g_SelectedModule = 0;
 
-            if (g_SelectedEntity != 0 && !gui.activeWindow)
-                g_DragEntity = g_SelectedEntity;
+            if (gs.g_SelectedModule != 0 && !gui.activeWindow)
+                gs.g_DragModule = gs.g_SelectedModule;
 
-            if (!gui.activeWindow && !g_SelectedEntity)
+            if (!gui.activeWindow && !gs.g_SelectedModule)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
             }
         }
         else
-            g_DragEntity = 0;
+            gs.g_DragModule = 0;
 
         /********************************************************
          *                                                      *
@@ -139,16 +133,16 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                     camera->getViewMatrix());
 
         // ground slider
-        if (g_CurrentGroundIndex != 0 && Grounds->find(g_CurrentGroundIndex)->second->diffResolutionBuffer())
-            Grounds->find(g_CurrentGroundIndex)->second->isGenerated = false;
+        if (gs.g_CurrentGroundIndex != 0 && Grounds->find(gs.g_CurrentGroundIndex)->second->diffResolutionBuffer())
+            Grounds->find(gs.g_CurrentGroundIndex)->second->isGenerated = false;
         
         // mouse ray intersection sphere selector objects
-        if (g_CurrentModuleIndex != 0)
+        if (gs.g_CurrentModuleIndex != 0)
         {
-            if (Modules->find(g_CurrentModuleIndex)->second->entity->model != nullptr)
+            if (Modules->find(gs.g_CurrentModuleIndex)->second->entity->model != nullptr)
             {
-                uint32 moduleID = Modules->find(g_CurrentModuleIndex)->first;
-                Module *selectedModel = Modules->find(g_CurrentModuleIndex)->second;
+                uint32 moduleID = Modules->find(gs.g_CurrentModuleIndex)->first;
+                Module *selectedModel = Modules->find(gs.g_CurrentModuleIndex)->second;
 
                 float32 rayIntersection = 0.0f;
                 glm::vec3 spherePos = glm::vec3(
@@ -161,9 +155,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                           spherePos,
                                           g_PickingSphereRadius,
                                           &rayIntersection))
-                    g_HoveredEntity = moduleID;
+                    gs.g_HoveredModule = moduleID;
                 else
-                    g_HoveredEntity = 0;
+                    gs.g_HoveredModule = 0;
             }
         }
           
@@ -198,11 +192,11 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(Editor->MeshAxisDebug, 2.0f);
 
         // Draw selected Ground
-        if (g_CurrentGroundIndex != 0)
+        if (gs.g_CurrentGroundIndex != 0)
         {
-            if (Grounds->find(g_CurrentGroundIndex)->second->entity->model != nullptr)
+            if (Grounds->find(gs.g_CurrentGroundIndex)->second->entity->model != nullptr)
             {
-                Ground *selectedGround = Grounds->find(g_CurrentGroundIndex)->second;
+                Ground *selectedGround = Grounds->find(gs.g_CurrentGroundIndex)->second;
                 if (!selectedGround->isGenerated)
                 {
                     selectedGround->clearInstance();
@@ -224,23 +218,23 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (g_CurrentModuleIndex != 0)
+        if (gs.g_CurrentModuleIndex != 0)
         {
-            if (Modules->find(g_CurrentModuleIndex)->second->entity->model != nullptr)
+            if (Modules->find(gs.g_CurrentModuleIndex)->second->entity->model != nullptr)
             {
                 Shader *defaultShader = sCache->getShader("default");
                 defaultShader->useProgram();
                 defaultShader->setUniform4fv("view", viewMatrix);
                 defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
-                uint32 moduleID = Modules->find(g_CurrentModuleIndex)->first;
-                Module *selectedModel = Modules->find(g_CurrentModuleIndex)->second;
+                uint32 moduleID = Modules->find(gs.g_CurrentModuleIndex)->first;
+                Module *selectedModel = Modules->find(gs.g_CurrentModuleIndex)->second;
 
                 bool isSelected = false;
-                if (g_HoveredEntity == moduleID || g_SelectedEntity == moduleID)
+                if (gs.g_HoveredModule == moduleID || gs.g_SelectedModule == moduleID)
                     isSelected = true;
 
-                if (g_DragEntity == moduleID)
+                if (gs.g_DragModule == moduleID)
                     selectedModel->entity->position = pIntersection;
 
                 // Model
@@ -262,29 +256,29 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
 
         // Draw selected Skybox
-        if (g_CurrentSkyboxIndex != 0)
+        if (gs.g_CurrentSkyboxIndex != 0)
         {
-            if (Skyboxes->find(g_CurrentSkyboxIndex)->second->directory.length() > 0)
+            if (Skyboxes->find(gs.g_CurrentSkyboxIndex)->second->directory.length() > 0)
             {
                 Shader *skyboxShader = sCache->getShader("skybox");
                 skyboxShader->useProgram();
                 skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-                renderer->drawSkybox(Skyboxes->find(g_CurrentSkyboxIndex)->second);
+                renderer->drawSkybox(Skyboxes->find(gs.g_CurrentSkyboxIndex)->second);
             }
         }
 
         // Draw GUI
         gui.newFrame();
-        gui.performanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
+        gui.performanceInfoOverlay(renderer, Info, &gs); // TODO: switch to string rendering
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.groundSettings(g_CurrentGroundIndex,
+        gui.groundSettings(gs.g_CurrentGroundIndex,
                            Grounds,
                            g_GroundMaxResolution);
-        gui.skyboxSettings(g_CurrentSkyboxIndex,
+        gui.skyboxSettings(gs.g_CurrentSkyboxIndex,
                            Skyboxes);
-        gui.moduleSettings(g_CurrentModuleIndex,
+        gui.moduleSettings(gs.g_CurrentModuleIndex,
                            Modules);
         gui.endPanel();
         gui.draw();
