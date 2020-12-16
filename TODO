@@ -1,10 +1,11 @@
 TODO
 
-- @editor: display state of everything
-- @editor: make better rendering API. Less verbose
 - @editor: file opening error message with GUI?
-- @editor: implement memory viz, add when heap allocated substract when delete from the heap
+- @editor: make better rendering API. Less verbose
+- @editor: clean messy code in .cpp and .h (crap in .h and prepare funcs in .cpp)
 
+- @editor: implement memory viz, add when heap allocated substract when delete from the heap
+- @editor: improve module struct with necessary fields for gameplay mechanics
 - @editor: switch to complex ray intersec instead of sphere?
 - @editor: implement a better highlight object rendering
 - @editor: add decent logger system

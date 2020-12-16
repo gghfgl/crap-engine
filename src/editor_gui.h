@@ -278,6 +278,9 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         if (ImGui::Button("save##ground"))
         {
             std::time_t timestamp = std::time(nullptr);
+
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveGroundListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
         }
 
@@ -296,6 +299,8 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         ImGui::SameLine();
         if (ImGui::Button("open##ground"))
         {
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -351,6 +356,8 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                 // Load Ground model
                 if (ImGui::SmallButton("load"))
                 {
+                    // Set middleish position for every nex windows
+                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel###"+IDToString, "Choose File", ".obj", ".");
                     igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".obj", ImVec4(1,1,0, 0.9));
                 }
@@ -404,6 +411,9 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
 
                         ImGui::CloseCurrentPopup();
                     }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                        ImGui::CloseCurrentPopup();
 
                     ImGui::EndPopup();
                 }
@@ -504,6 +514,9 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         if (ImGui::Button("save##skybox"))
         {
             std::time_t timestamp = std::time(nullptr);
+
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File###skybox", ".list", ".", "crap_skyboxes_"+std::to_string(timestamp));
         }
 
@@ -522,6 +535,8 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         ImGui::SameLine();
         if (ImGui::Button("open##skybox"))
         {
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenSkyboxListFromFile", "Choose File###skybox", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -561,7 +576,11 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
 
                 // Load Skybox images
                 if (ImGui::SmallButton("load"))
+                {
+                    // Set middleish position for every nex windows
+                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel###"+IDToString, "Choose File###skybox", ".jpg", ".");
+                }
 
                 if (igfd::ImGuiFileDialog::Instance()->FileDialog("LoadSkyboxModel###"+IDToString, ImGuiWindowFlags_NoCollapse, this->dialogMinSize, this->dialogMaxSize))
                 {
@@ -605,6 +624,9 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
 
                         ImGui::CloseCurrentPopup();
                     }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                        ImGui::CloseCurrentPopup();
 
                     ImGui::EndPopup();
                 }
@@ -703,6 +725,9 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
         if (ImGui::Button("save##module"))
         {
             std::time_t timestamp = std::time(nullptr);
+
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveModuleListInTextFormat", "Choose File", ".list", ".", "crap_modules_"+std::to_string(timestamp));
         }
 
@@ -721,6 +746,8 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
         ImGui::SameLine();
         if (ImGui::Button("open##module"))
         {
+            // Set middleish position for every nex windows
+            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenModuleListFromFile", "Choose File", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -791,6 +818,8 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
                 // Load Module
                 if (ImGui::SmallButton("load"))
                 {
+                    // Set middleish position for every nex windows
+                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadModuleModel###"+IDToString, "Choose File", ".obj", ".");
                     igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".obj", ImVec4(1,1,0, 0.9));
                 }
@@ -843,6 +872,9 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
 
                         ImGui::CloseCurrentPopup();
                     }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                        ImGui::CloseCurrentPopup();
 
                     ImGui::EndPopup();
                 }
