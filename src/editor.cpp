@@ -143,25 +143,28 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             Grounds->find(g_CurrentGroundIndex)->second->isGenerated = false;
         
         // mouse ray intersection sphere selector objects
-        for (auto it = Modules->begin(); it != Modules->end(); it++)
+        if (g_CurrentModuleIndex != 0)
         {
-            float32 rayIntersection = 0.0f;
-            glm::vec3 spherePos = glm::vec3(
-                it->second->entity->position.x,
-                it->second->entity->position.y,
-                it->second->entity->position.z);
-
-            if (RaySphereIntersection(camera->position,
-                                      rayWorld,
-                                      spherePos,
-                                      g_PickingSphereRadius,
-                                      &rayIntersection))
+            if (Modules->find(g_CurrentModuleIndex)->second->entity->model != nullptr)
             {
-                g_HoveredEntity = it->first;
-                break;
+                uint32 moduleID = Modules->find(g_CurrentModuleIndex)->first;
+                Module *selectedModel = Modules->find(g_CurrentModuleIndex)->second;
+
+                float32 rayIntersection = 0.0f;
+                glm::vec3 spherePos = glm::vec3(
+                    selectedModel->entity->position.x,
+                    selectedModel->entity->position.y,
+                    selectedModel->entity->position.z);
+
+                if (RaySphereIntersection(camera->position,
+                                          rayWorld,
+                                          spherePos,
+                                          g_PickingSphereRadius,
+                                          &rayIntersection))
+                    g_HoveredEntity = moduleID;
+                else
+                    g_HoveredEntity = 0;
             }
-            else
-                g_HoveredEntity = 0;
         }
           
         glm::vec3 pIntersection = glm::vec3(0.0f);
