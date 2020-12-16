@@ -141,7 +141,7 @@ inline int32 SaveModuleListInTextFormat(const char *filepath, std::map<uint32, M
 
     file.close();
 
-    Log::info("saved: %s\n", filepath);
+    Log::info("\tsaved: %s\n", filepath);
     Log::info("=== END: SaveModuleListInTextFormat\n");
 
     return 0;
@@ -174,7 +174,7 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
 
     file.close();
 
-    Log::info("saved: %s\n", filepath);
+    Log::info("\tsaved: %s\n", filepath);
     Log::info("=== END: SaveGroundListInTextFormat\n");
 
     return 0;
@@ -197,7 +197,7 @@ inline int32 SaveSkyboxListInTextFormat(const char *filepath, std::map<uint32, S
 
     file.close();
 
-    Log::info("saved: %s\n", filepath);
+    Log::info("\tsaved: %s\n", filepath);
     Log::info("=== END: SaveSkyboxListInTextFormat\n");
 
     return 0;
@@ -210,7 +210,7 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
     std::ifstream file(filepath);
     if (!file.is_open())
     {
-        Log::error("open file error!\n");
+        Log::error("\topen file error!\n");
         return -1;
     }
 
@@ -234,7 +234,7 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
     std::getline(file, line);
     if (line != "HEADER_MODULE_LIST")
     {
-        Log::warn("fail to read %s: header is missing\n", filepath);
+        Log::warn("\tfail to read %s: header is missing\n", filepath);
         Log::info("=== END: OpenModuleListFromFile\n");
         return -1;
     }
@@ -312,7 +312,7 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
             if (fullpath.length() == 1)
                 fullpath = "";
 
-            Log::info("fetching fields [%d]/[%d]\n", fetch, nbFields);
+            Log::info("\tfetching fields [%d]/[%d]\n", fetch, nbFields);
 
             char *nameCopy = new char[32];
             strncpy(nameCopy, name.c_str(), 32);
@@ -332,7 +332,7 @@ inline int32 OpenModuleListFromFile(const char *filepath, std::map<uint32, Modul
     file.close();
 
 
-    Log::info("opened: %s\n", filepath);
+    Log::info("\topened: %s\n", filepath);
     Log::info("=== END: OpenModuleListFromFile\n");
 
     return 0;
@@ -345,7 +345,7 @@ inline int32 OpenGroundListFromFile(const char *filepath, std::map<uint32,Ground
     std::ifstream file(filepath);
     if (!file.is_open())
     {
-        Log::error("open file error!\n");
+        Log::error("\topen file error!\n");
         return -1;
     }
 
@@ -367,7 +367,7 @@ inline int32 OpenGroundListFromFile(const char *filepath, std::map<uint32,Ground
     std::getline(file, line);
     if (line != "HEADER_GROUND_LIST")
     {
-        Log::warn("fail to read %s: header is missing\n", filepath);
+        Log::warn("\tfail to read %s: header is missing\n", filepath);
         Log::info("=== END: OpenGroundListFromFile\n");
         return -1;
     }
@@ -421,7 +421,7 @@ inline int32 OpenGroundListFromFile(const char *filepath, std::map<uint32,Ground
                 if (fullpath.length() == 1)
                     fullpath = "";
 
-                Log::info("fetching fields [%d]/[%d]\n", fetch, nbFields);
+                Log::info("\tfetching fields [%d]/[%d]\n", fetch, nbFields);
 
                 char *nameCopy = new char[32];
                 strncpy(nameCopy, name.c_str(), 32);
@@ -437,7 +437,7 @@ inline int32 OpenGroundListFromFile(const char *filepath, std::map<uint32,Ground
 
     file.close();
 
-    Log::info("opened: %s\n", filepath);
+    Log::info("\topened: %s\n", filepath);
     Log::info("=== END: OpenGroundListFromFile\n");
 
     return 0;
@@ -450,7 +450,7 @@ inline int32 OpenSkyboxListFromFile(const char *filepath, std::map<uint32,Skybox
     std::ifstream file(filepath);
     if (!file.is_open())
     {
-        Log::error("open file error!\n");
+        Log::error("\topen file error!\n");
         return -1;
     }
 
@@ -471,7 +471,7 @@ inline int32 OpenSkyboxListFromFile(const char *filepath, std::map<uint32,Skybox
     std::getline(file, line);
     if (line != "HEADER_SKYBOX_LIST")
     {
-        Log::warn("fail to read %s: header is missing\n", filepath);
+        Log::warn("\tfail to read %s: header is missing\n", filepath);
         Log::info("=== END: OpenSkyboxListFromFile\n");
         return -1;
     }
@@ -509,7 +509,7 @@ inline int32 OpenSkyboxListFromFile(const char *filepath, std::map<uint32,Skybox
 
             if (fetch == nbFields)
             {
-                Log::info("fetching fields [%d]/[%d]\n", fetch, nbFields);
+                Log::info("\tfetching fields [%d]/[%d]\n", fetch, nbFields);
 
                 char *nameCopy = new char[32];
                 strncpy(nameCopy, name.c_str(), 32);
@@ -525,7 +525,7 @@ inline int32 OpenSkyboxListFromFile(const char *filepath, std::map<uint32,Skybox
 
     file.close();
 
-    Log::info("opened: %s\n", filepath);
+    Log::info("\topened: %s\n", filepath);
     Log::info("=== END: OpenSkyboxListFromFile\n");
 
     return 0;

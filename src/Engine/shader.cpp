@@ -173,7 +173,7 @@ int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 
 
         if (ext != "glsl")
         {
-            Log::error("SHADERCACHE extension '%s' does not match [glsl]\n", ext.c_str());
+            Log::error("\tSHADERCACHE extension '%s' does not match [glsl]\n", ext.c_str());
             Log::info("=== END: Compile and cache shaders\n");
             return -1;
         }
@@ -184,7 +184,7 @@ int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 
         shader->useProgram();
         shader->setUniform4fv("projection", projectionMatrix);
 
-        Log::info("%s\t | OK\n", filename.c_str());
+        Log::info("\t%s\t | OK\n", filename.c_str());
     }
 
     Log::info("=== END: Compile and cache shaders\n");
