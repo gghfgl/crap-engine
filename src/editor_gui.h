@@ -273,6 +273,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
             ImGui::EndPopup();
         }
 
+        int32 error = 0;
         // Save Ground list into file
         ImGui::SameLine();
         if (ImGui::Button("save##ground"))
@@ -289,7 +290,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                SaveGroundListInTextFormat(filePathName.c_str(), Grounds);
+                error = SaveGroundListInTextFormat(filePathName.c_str(), Grounds);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveGroundListInTextFormat");
@@ -310,10 +311,25 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                OpenGroundListFromFile(filePathName.c_str(), Grounds);
+                error = OpenGroundListFromFile(filePathName.c_str(), Grounds);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenGroundListFromFile");
+        }
+
+        if (error != 0)
+            ImGui::OpenPopup("GroundListError");
+
+        if (ImGui::BeginPopupModal("GroundListError"))
+        {
+            error = 0;
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+            ImGui::Text("Error while saving/opening ground list file");
+            ImGui::Separator();
+            if (ImGui::Button("Close"))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
         }
         
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	
@@ -509,6 +525,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             ImGui::EndPopup();
         }
 
+        int32 error = 0;
         // Save Skybox list into file
         ImGui::SameLine();
         if (ImGui::Button("save##skybox"))
@@ -525,7 +542,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                SaveSkyboxListInTextFormat(filePathName.c_str(), Skyboxes);
+                error = SaveSkyboxListInTextFormat(filePathName.c_str(), Skyboxes);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveSkyboxListInTextFormat");
@@ -546,10 +563,25 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                OpenSkyboxListFromFile(filePathName.c_str(), Skyboxes);
+                error = OpenSkyboxListFromFile(filePathName.c_str(), Skyboxes);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenSkyboxListFromFile");
+        }
+
+        if (error != 0)
+            ImGui::OpenPopup("SkyboxListError");
+
+        if (ImGui::BeginPopupModal("SkyboxListError"))
+        {
+            error = 0;
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+            ImGui::Text("Error while saving/opening skybox list file");
+            ImGui::Separator();
+            if (ImGui::Button("Close"))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
         }
 
         ImGui::Dummy(ImVec2(0.0f, 3.0f));
@@ -720,6 +752,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
             ImGui::EndPopup();
         }
 
+        int32 error = 0;
         // Save Module list into file
         ImGui::SameLine();
         if (ImGui::Button("save##module"))
@@ -736,7 +769,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                SaveModuleListInTextFormat(filePathName.c_str(), Modules);
+                error = SaveModuleListInTextFormat(filePathName.c_str(), Modules);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveModuleListInTextFormat");
@@ -757,10 +790,25 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
-                OpenModuleListFromFile(filePathName.c_str(), Modules);
+                error = OpenModuleListFromFile(filePathName.c_str(), Modules);
             }
 
             igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenModuleListFromFile");
+        }
+
+        if (error != 0)
+            ImGui::OpenPopup("ModuleListError");
+
+        if (ImGui::BeginPopupModal("ModuleListError"))
+        {
+            error = 0;
+            ImGui::Dummy(ImVec2(0.0f, 3.0f));	
+            ImGui::Text("Error while saving/opening module list file");
+            ImGui::Separator();
+            if (ImGui::Button("Close"))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
         }
         
         ImGui::Dummy(ImVec2(0.0f, 3.0f));	

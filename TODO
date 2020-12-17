@@ -1,6 +1,5 @@
 TODO
 
-- @editor: file opening error message with GUI?
 - @editor: make better rendering API. Less verbose
 - @editor: clean messy code in .cpp and .h (crap in .h and prepare funcs in .cpp)
 
