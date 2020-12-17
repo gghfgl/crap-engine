@@ -34,12 +34,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // Construct ReferenceGrid mesh
     std::vector<uint32> uEmpty;
     std::vector<Texture> tEmpty;
-    std::vector<Vertex> vGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
-    Mesh *MeshGrid = new Mesh(vGrid, uEmpty, tEmpty);
+    std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
+    Mesh *MeshReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
 
-    // Construct DebugOrigin mesh
-    std::vector<Vertex> vAxisDebug(6, Vertex());
-    Mesh *MeshAxisDebug = new Mesh(vAxisDebug, uEmpty, tEmpty);
+    // Construct OriginDebug mesh
+    std::vector<Vertex> vOriginDebug(6, Vertex());
+    Mesh *MeshOriginDebug = new Mesh(vOriginDebug, uEmpty, tEmpty);
 
     // Construct Grounds, Skyboxes and Modules maps
     std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
@@ -48,33 +48,25 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
     // =================================================
 
-    // TODO: clean mess below | useless
-    editor_t *Editor = new editor_t;
-    Editor->Active = true;
-    Editor->GridResolution = 0;
-    Editor->MeshGrid = MeshGrid;
-    Editor->MeshAxisDebug = MeshAxisDebug;
-    Editor->ShowSkybox = false;
-
-    // TODO: tmp wainting editor struct | move to entity?
-    PrepareAxisDebug(Editor->MeshAxisDebug);
-    PushReferenceGridSubData(Editor->MeshGrid, g_ReferenceGridResolution);
+    // Prepare static data rendering
+    renderer->prepareOriginDebug(MeshOriginDebug);
+    renderer->prepareReferenceGridSubData(MeshReferenceGrid, g_ReferenceGridResolution);
 
     // =============================
 
-    while (Editor->Active)
+    while (gs.active)
     {
         Window->updateTime();
         Window->pollEvents();
 
         /********************************************************
          *                                                      *
-         *        NOTE: Handler I/O Keyboard and Mouse          *
+         *        NOTE: I/O Keyboard and Mouse          *
          *                                                      *
          ********************************************************/
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-            Editor->Active = false;
+            gs.active = false;
 
         if (!gui.activeWindow)
         {
@@ -102,22 +94,22 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         if (Input->mouse->leftButton)
         {
-            if (gs.g_HoveredModule != 0)
-                gs.g_SelectedModule = gs.g_HoveredModule;
-            else if (gs.g_DragModule == 0 && !gui.activeWindow)
-                gs.g_SelectedModule = 0;
+            if (gs.hoveredModule != 0)
+                gs.selectedModule = gs.hoveredModule;
+            else if (gs.dragModule == 0 && !gui.activeWindow)
+                gs.selectedModule = 0;
 
-            if (gs.g_SelectedModule != 0 && !gui.activeWindow)
-                gs.g_DragModule = gs.g_SelectedModule;
+            if (gs.selectedModule != 0 && !gui.activeWindow)
+                gs.dragModule = gs.selectedModule;
 
-            if (!gui.activeWindow && !gs.g_SelectedModule)
+            if (!gui.activeWindow && !gs.selectedModule)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
             }
         }
         else
-            gs.g_DragModule = 0;
+            gs.dragModule = 0;
 
         /********************************************************
          *                                                      *
@@ -133,16 +125,16 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                     camera->getViewMatrix());
 
         // ground slider
-        if (gs.g_CurrentGroundIndex != 0 && Grounds->find(gs.g_CurrentGroundIndex)->second->diffResolutionBuffer())
-            Grounds->find(gs.g_CurrentGroundIndex)->second->isGenerated = false;
+        if (gs.currentGroundIndex != 0 && Grounds->find(gs.currentGroundIndex)->second->diffResolutionBuffer())
+            Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
         
         // mouse ray intersection sphere selector objects
-        if (gs.g_CurrentModuleIndex != 0)
+        if (gs.currentModuleIndex != 0)
         {
-            if (Modules->find(gs.g_CurrentModuleIndex)->second->entity->model != nullptr)
+            if (Modules->find(gs.currentModuleIndex)->second->entity->model != nullptr)
             {
-                uint32 moduleID = Modules->find(gs.g_CurrentModuleIndex)->first;
-                Module *selectedModel = Modules->find(gs.g_CurrentModuleIndex)->second;
+                uint32 moduleID = Modules->find(gs.currentModuleIndex)->first;
+                Module *selectedModel = Modules->find(gs.currentModuleIndex)->second;
 
                 float32 rayIntersection = 0.0f;
                 glm::vec3 spherePos = glm::vec3(
@@ -155,9 +147,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                           spherePos,
                                           g_PickingSphereRadius,
                                           &rayIntersection))
-                    gs.g_HoveredModule = moduleID;
+                    gs.hoveredModule = moduleID;
                 else
-                    gs.g_HoveredModule = 0;
+                    gs.hoveredModule = 0;
             }
         }
           
@@ -185,25 +177,25 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // Draw ReferenceGrid
         colorShader->setUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-        renderer->drawLines(Editor->MeshGrid, 1.0f);
+        renderer->drawLines(MeshReferenceGrid, 1.0f);
 
         // Draw DebugOrigin
         colorShader->setUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        renderer->drawLines(Editor->MeshAxisDebug, 2.0f);
+        renderer->drawLines(MeshOriginDebug, 2.0f);
 
         // Draw selected Ground
-        if (gs.g_CurrentGroundIndex != 0)
+        if (gs.currentGroundIndex != 0)
         {
-            if (Grounds->find(gs.g_CurrentGroundIndex)->second->entity->model != nullptr)
+            if (Grounds->find(gs.currentGroundIndex)->second->entity->model != nullptr)
             {
-                Ground *selectedGround = Grounds->find(gs.g_CurrentGroundIndex)->second;
+                Ground *selectedGround = Grounds->find(gs.currentGroundIndex)->second;
                 if (!selectedGround->isGenerated)
                 {
                     selectedGround->clearInstance();
                     selectedGround->updateModelMatrices();
                     selectedGround->instanceBufferID = renderer->prepareInstance(selectedGround->entity->model,
-                                                                                                              selectedGround->modelMatrices,
-                                                                                                              selectedGround->resolution * selectedGround->resolution);
+                                                                                 selectedGround->modelMatrices,
+                                                                                 selectedGround->resolution * selectedGround->resolution);
                     selectedGround->isGenerated = true;
                 }
 
@@ -218,23 +210,23 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (gs.g_CurrentModuleIndex != 0)
+        if (gs.currentModuleIndex != 0)
         {
-            if (Modules->find(gs.g_CurrentModuleIndex)->second->entity->model != nullptr)
+            if (Modules->find(gs.currentModuleIndex)->second->entity->model != nullptr)
             {
                 Shader *defaultShader = sCache->getShader("default");
                 defaultShader->useProgram();
                 defaultShader->setUniform4fv("view", viewMatrix);
                 defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
-                uint32 moduleID = Modules->find(gs.g_CurrentModuleIndex)->first;
-                Module *selectedModel = Modules->find(gs.g_CurrentModuleIndex)->second;
+                uint32 moduleID = Modules->find(gs.currentModuleIndex)->first;
+                Module *selectedModel = Modules->find(gs.currentModuleIndex)->second;
 
                 bool isSelected = false;
-                if (gs.g_HoveredModule == moduleID || gs.g_SelectedModule == moduleID)
+                if (gs.hoveredModule == moduleID || gs.selectedModule == moduleID)
                     isSelected = true;
 
-                if (gs.g_DragModule == moduleID)
+                if (gs.dragModule == moduleID)
                     selectedModel->entity->position = pIntersection;
 
                 // Model
@@ -256,14 +248,14 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
 
         // Draw selected Skybox
-        if (gs.g_CurrentSkyboxIndex != 0)
+        if (gs.currentSkyboxIndex != 0)
         {
-            if (Skyboxes->find(gs.g_CurrentSkyboxIndex)->second->directory.length() > 0)
+            if (Skyboxes->find(gs.currentSkyboxIndex)->second->directory.length() > 0)
             {
                 Shader *skyboxShader = sCache->getShader("skybox");
                 skyboxShader->useProgram();
                 skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-                renderer->drawSkybox(Skyboxes->find(gs.g_CurrentSkyboxIndex)->second);
+                renderer->drawSkybox(Skyboxes->find(gs.currentSkyboxIndex)->second);
             }
         }
 
@@ -273,12 +265,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.groundSettings(gs.g_CurrentGroundIndex,
+        gui.groundSettings(gs.currentGroundIndex,
                            Grounds,
                            g_GroundMaxResolution);
-        gui.skyboxSettings(gs.g_CurrentSkyboxIndex,
+        gui.skyboxSettings(gs.currentSkyboxIndex,
                            Skyboxes);
-        gui.moduleSettings(gs.g_CurrentModuleIndex,
+        gui.moduleSettings(gs.currentModuleIndex,
                            Modules);
         gui.endPanel();
         gui.draw();
@@ -306,112 +298,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     delete Skyboxes;
 
     // TODO: remove | useless
-    delete Editor->MeshGrid;
-    delete Editor->MeshAxisDebug;
-    delete Editor;
+    delete MeshReferenceGrid;
+    delete MeshOriginDebug;
 
     delete sCache;
     delete renderer;
     delete camera;
-}
-
-void PrepareAxisDebug(Mesh *mesh)
-{    
-    mesh->Vertices.clear();
-
-    Vertex vXa;
-    vXa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vXa);
-    Vertex vXb;
-    vXb.position = glm::vec3(2.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vXb);
-
-    Vertex vYa;
-    vYa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vYa);
-    Vertex vYb;
-    vYb.position = glm::vec3(0.0f, 2.0f, 0.0f);
-    mesh->Vertices.push_back(vYb);
-
-    Vertex vZa;
-    vZa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vZa);
-    Vertex vZb;
-    vZb.position = glm::vec3(0.0f, 0.1f, -2.0f);
-    mesh->Vertices.push_back(vZb);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
-}
-
-void PushReferenceGridSubData(Mesh *mesh, uint32 resolution)
-{
-    uint32 vCount = resolution * 4 + 4;			   // 44
-    float32 b = (float32)resolution / 2.0f + 1.0f; // 6
-    float32 a = -b;								   // -6
-    float32 xPos = -((float32)resolution / 2.0f);  // -5
-    float32 zPos = xPos;						   // -5
-
-    mesh->Vertices.clear();
-    uint32 i = 0;
-    while (i < vCount / 2) // z axis ->
-    {
-        Vertex v;
-        if (i % 2 == 0)
-        {
-            v.position = glm::vec3(a, 0.0f, zPos);
-        }
-        else
-        {
-            v.position = glm::vec3(b, 0.0f, zPos);
-            zPos += 1.0f;
-        }
-
-        mesh->Vertices.push_back(v);
-        i++;
-    }
-
-    while (i < vCount) // x axis ->
-    {
-        Vertex v;
-        if (i % 2 == 0)
-        {
-            v.position = glm::vec3(xPos, 0.0f, a);
-        }
-        else
-        {
-            v.position = glm::vec3(xPos, 0.0f, b);
-            xPos += 1.0f;
-        }
-
-        mesh->Vertices.push_back(v);
-        i++;
-    }
-        
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
-}
-
-void PushMouseRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
-{
-    glm::vec3 target = origin + (direction * 1.0f);
-
-    mesh->Vertices.clear();
-    Vertex v;
-    v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
-    mesh->Vertices.push_back(v);
-    v.position = target;
-    mesh->Vertices.push_back(v);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
 }

@@ -193,3 +193,104 @@ void Renderer::drawSkybox(Skybox *skybox)
     glDepthFunc(GL_LESS);
     this->stats.drawCalls++;
 }
+
+void Renderer::prepareOriginDebug(Mesh *mesh)
+{    
+    mesh->Vertices.clear();
+
+    Vertex vXa;
+    vXa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vXa);
+    Vertex vXb;
+    vXb.position = glm::vec3(2.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vXb);
+
+    Vertex vYa;
+    vYa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vYa);
+    Vertex vYb;
+    vYb.position = glm::vec3(0.0f, 2.0f, 0.0f);
+    mesh->Vertices.push_back(vYb);
+
+    Vertex vZa;
+    vZa.position = glm::vec3(0.0f, 0.1f, 0.0f);
+    mesh->Vertices.push_back(vZa);
+    Vertex vZb;
+    vZb.position = glm::vec3(0.0f, 0.1f, -2.0f);
+    mesh->Vertices.push_back(vZb);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
+}
+
+void Renderer::prepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
+{
+    uint32 vCount = resolution * 4 + 4;			   // 44
+    float32 b = (float32)resolution / 2.0f + 1.0f; // 6
+    float32 a = -b;								   // -6
+    float32 xPos = -((float32)resolution / 2.0f);  // -5
+    float32 zPos = xPos;						   // -5
+
+    mesh->Vertices.clear();
+    uint32 i = 0;
+    while (i < vCount / 2) // z axis ->
+    {
+        Vertex v;
+        if (i % 2 == 0)
+        {
+            v.position = glm::vec3(a, 0.0f, zPos);
+        }
+        else
+        {
+            v.position = glm::vec3(b, 0.0f, zPos);
+            zPos += 1.0f;
+        }
+
+        mesh->Vertices.push_back(v);
+        i++;
+    }
+
+    while (i < vCount) // x axis ->
+    {
+        Vertex v;
+        if (i % 2 == 0)
+        {
+            v.position = glm::vec3(xPos, 0.0f, a);
+        }
+        else
+        {
+            v.position = glm::vec3(xPos, 0.0f, b);
+            xPos += 1.0f;
+        }
+
+        mesh->Vertices.push_back(v);
+        i++;
+    }
+        
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
+}
+
+void Renderer::prepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
+{
+    glm::vec3 target = origin + (direction * 1.0f);
+
+    mesh->Vertices.clear();
+    Vertex v;
+    v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
+    mesh->Vertices.push_back(v);
+    v.position = target;
+    mesh->Vertices.push_back(v);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    mesh->Vertices.size() * sizeof(Vertex),
+                    &mesh->Vertices[0]);
+}

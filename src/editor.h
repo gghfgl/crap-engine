@@ -13,10 +13,11 @@ struct editor_t
 
 struct GlobalState
 {
-    uint32 g_CurrentGroundIndex = 0;
-    uint32 g_CurrentSkyboxIndex = 0;
-    uint32 g_CurrentModuleIndex = 0;
-    uint32 g_HoveredModule = 0;
-    uint32 g_SelectedModule = 0;
-    uint32 g_DragModule = 0;
+    bool active = true;
+    uint32 currentGroundIndex = 0;
+    uint32 currentSkyboxIndex = 0;
+    uint32 currentModuleIndex = 0;
+    uint32 hoveredModule = 0;
+    uint32 selectedModule = 0;
+    uint32 dragModule = 0;
 };

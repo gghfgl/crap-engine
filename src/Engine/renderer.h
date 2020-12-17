@@ -20,6 +20,12 @@ struct Renderer
     void drawModel(Model *model, Shader *shader);
     void drawInstanceModel(Model *model, Shader *shader, uint32 count);
     void drawSkybox(Skybox *skybox);
+
+    // TODO: meh
+    void prepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction);
+    void prepareReferenceGridSubData(Mesh *mesh, uint32 resolution);
+    void prepareOriginDebug(Mesh *mesh);
+
     
     bool wireframe;
     RendererStat stats;

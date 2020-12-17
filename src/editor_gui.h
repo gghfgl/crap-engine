@@ -114,12 +114,12 @@ void EditorGui::performanceInfoOverlay(Renderer *renderer,
 
         ImGui::Separator();
         ImGui::Text("w_active: %d", this->activeWindow);
-        ImGui::Text("c_ground: %d", gs->g_CurrentGroundIndex);
-        ImGui::Text("c_skybox: %d", gs->g_CurrentSkyboxIndex);
-        ImGui::Text("c_module: %d", gs->g_CurrentModuleIndex);
-        ImGui::Text("m_hover: %d", gs->g_HoveredModule);
-        ImGui::Text("m_select: %d", gs->g_SelectedModule);
-        ImGui::Text("m_drag: %d", gs->g_DragModule);
+        ImGui::Text("c_ground: %d", gs->currentGroundIndex);
+        ImGui::Text("c_skybox: %d", gs->currentSkyboxIndex);
+        ImGui::Text("c_module: %d", gs->currentModuleIndex);
+        ImGui::Text("m_hover: %d", gs->hoveredModule);
+        ImGui::Text("m_select: %d", gs->selectedModule);
+        ImGui::Text("m_drag: %d", gs->dragModule);
         ImGui::End();
     }
 }
