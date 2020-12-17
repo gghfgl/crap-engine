@@ -1,30 +1,25 @@
 TODO
 
-- @editor: make better rendering API. Less verbose
-- @editor: clean messy code in .cpp and .h (crap in .h and prepare funcs in .cpp)
+- @engine: switch to complex ray intersec instead of sphere?
+- @engine: implement a better highlight object rendering
+- @engine: find something better when loading skybox faces (from a single file ideally) + hdr
 
-- @editor: implement memory viz, add when heap allocated substract when delete from the heap
-- @editor: improve module struct with necessary fields for gameplay mechanics
-- @editor: switch to complex ray intersec instead of sphere?
-- @editor: implement a better highlight object rendering
-- @editor: add decent logger system
+- @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
+- @engine: improve module struct with necessary fields for gameplay mechanics
+- @engine: add decent logger system
+- @engine: make better rendering API. Less verbose?
+- @engine: implement beautyfull light PBR + effects
+- @engine: make the engine a static lib or something?
+- @engine: fix / improve texture management from assimp model
+- @engine: assimp be carefull of texture path (need to update blender mtl file)
+- @engine: change to ortho projection? meh not sure
+
+- @editor/@game: improve logs
 - @editor: gui switch perf to string rendering
 - @editor: loader progress bar at startup editor and loading files?
-- @editor: find something better when loading skybox faces (from a single file ideally)
-- rework editor struct and debug rendering tools
-- implement memorypool visualizer
-- improve click setting panel object after selectinID from world
-- improve coordinate system for positionning objects
-- improve skybox loading assets with hdr
-- run rendering scene from editor
-- fix / improve texture management from assimp model
-- assimp be carefull of texture path (need to update blender mtl file)
-- change to ortho projection
-- implement a console
-- beautyfull light PBR effects
-- improve scene file format (extend with skybox, etc ...)
-- build engine in microservice? Engine lib?
+- @editor: run game rendering scene from editor?
+
+- @?: improve coordinate system for positionning objects
+- @?: implement a internal console with simple cli
 
 - @game: display state of everything
-
-- @general: improve logs
