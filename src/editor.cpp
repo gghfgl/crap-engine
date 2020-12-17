@@ -1,10 +1,6 @@
 #include "editor.h"
 #include "editor_gui.h"
 
-void PrepareAxisDebug(Mesh *Mesh); // TODO: rename origin
-void PushReferenceGridSubData(Mesh *Mesh, uint32 resolution);
-void PushMouseRaySubData(Mesh *Mesh, glm::vec3 origin, glm::vec3 direction);
-
 const uint32 g_GroundMaxResolution = 50;
 const uint32 g_ReferenceGridResolution = 50;
 
@@ -297,7 +293,6 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         delete it->second;
     delete Skyboxes;
 
-    // TODO: remove | useless
     delete MeshReferenceGrid;
     delete MeshOriginDebug;
 
