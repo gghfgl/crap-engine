@@ -1,7 +1,7 @@
 TODO
 
 - @engine: switch to complex ray intersec instead of sphere?
-- @engine: implement a better highlight object rendering
+- @engine: implement an object outline rendering
 - @engine: find something better when loading skybox faces (from a single file ideally) + hdr
 
 - @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap

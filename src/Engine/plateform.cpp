@@ -123,6 +123,12 @@ Window::Window(uint32 width, uint32 height, const char *title)
     // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glEnable(GL_LINE_SMOOTH); // TODO: meh? ...
+
+    // TODO: enable stencil test used for outline object
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
     glEnable(GL_DEBUG_OUTPUT); // Faster? // TODO: on the fly setting
     // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting

@@ -310,6 +310,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
+                currentGroundIndex = 0;
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
                 error = OpenGroundListFromFile(filePathName.c_str(), Grounds);
             }
@@ -562,6 +563,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
+                currentSkyboxIndex = 0;
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
                 error = OpenSkyboxListFromFile(filePathName.c_str(), Skyboxes);
             }
@@ -789,6 +791,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
+                currentModuleIndex = 0;
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
                 error = OpenModuleListFromFile(filePathName.c_str(), Modules);
             }

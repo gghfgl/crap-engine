@@ -231,8 +231,21 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                 model = glm::scale(model, glm::vec3(selectedModel->entity->scale));
                 model = glm::rotate(model, glm::radians(selectedModel->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
                 defaultShader->setUniform4fv("model", model);
-                defaultShader->setUniform1ui("flip_color", isSelected);
                 renderer->drawModel(selectedModel->entity->model, defaultShader);
+
+                if (isSelected)
+                {
+                    Shader *outlineShader = sCache->getShader("outline");
+                    outlineShader->useProgram();
+                    outlineShader->setUniform4fv("view", viewMatrix);
+                    outlineShader->setUniform4fv("model", glm::mat4(1.0f));
+
+                    float32 scaleModifier = 1.1f;
+                    model = glm::scale(model, glm::vec3(scaleModifier));
+                    outlineShader->setUniform4fv("model", model);
+
+                    renderer->drawModelOutline(selectedModel->entity->model, outlineShader);
+                }
 
                 // // Picking sphere
                 // model = glm::mat4(1.0f);

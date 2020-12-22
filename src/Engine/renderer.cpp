@@ -20,10 +20,11 @@ Renderer::~Renderer()
 
 void Renderer::newContext()
 {
-    // ===================== platform code =====================
     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // ========================================================
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    // set mask to 0x00 to not write to the stencil buffer
+    glStencilMask(0x00);
 }
 
 void Renderer::resetStats()
@@ -37,9 +38,7 @@ void Renderer::toggleWireframe()
 {
     this->wireframe = !this->wireframe;
 
-    // ===================== platform code =====================
     glPolygonMode(GL_FRONT_AND_BACK, (this->wireframe ? GL_FILL : GL_LINE));
-    // ========================================================
 }
 
 uint32 Renderer::prepareInstance(Model *model,
@@ -170,18 +169,42 @@ void Renderer::drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
 
 void Renderer::drawModel(Model *model, Shader *shader)
 {
+    // write to the stencil buffer
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilMask(0xFF);
+
     for (uint32 i = 0; i < model->Meshes.size(); i++)
         this->drawMesh(model->Meshes[i], shader);
 }
 
+void Renderer::drawModelOutline(Model *model, Shader *shader)
+{
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0x00);
+    //glDisable(GL_DEPTH_TEST);
+
+    for (uint32 i = 0; i < model->Meshes.size(); i++)
+        this->drawMesh(model->Meshes[i], shader);
+
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    //glEnable(GL_DEPTH_TEST);
+}
+
 void Renderer::drawInstanceModel(Model *model, Shader *shader, uint32 count)
 {
+    // set mask to 0x00 to not write to the stencil buffer
+    glStencilMask(0x00);
+
     for (uint32 i = 0; i < model->Meshes.size(); i++)
         this->drawInstanceMesh(model->Meshes[i], shader, count);
 }
     
 void Renderer::drawSkybox(Skybox *skybox)
 {
+    // set mask to 0x00 to not write to the stencil buffer
+    //glStencilMask(0x00);
+
     glDepthFunc(GL_LEQUAL);
 
     glBindVertexArray(skybox->VAO);
