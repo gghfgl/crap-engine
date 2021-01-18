@@ -851,9 +851,12 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
 
                 ImGui::Text( ICON_FA_EXTERNAL_LINK_ALT );
                 ImGui::SameLine();
-                ImGui::SliderScalar("##scale", ImGuiDataType_Float,
+                /* ImGui::SliderScalar("##scale", ImGuiDataType_Float, */
+                /*                     &it->second->entity->scale, */
+                /*                     &f32_zero, &f32_ten); */
+                ImGui::SliderInt("##multiplier",
                                     &it->second->entity->scale,
-                                    &f32_zero, &f32_ten);
+                                    1, 4);
                 
                 ImGui::Text( ICON_FA_SYNC );
                 ImGui::SameLine();

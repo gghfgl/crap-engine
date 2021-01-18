@@ -1,7 +1,7 @@
 TODO
 
-- @engine: fix size outline algo
-- @engine: draw ground and modules from y 0+
+- @engine: draw ground and modules from y 0 (if scale handle it with multiplicator)
+- @engine: draw only ground + skybox OR modules
 - @engine: switch to complex ray intersec instead of sphere?
 
 - @engine: find something better when loading skybox faces (from a single file ideally) + hdr

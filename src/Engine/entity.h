@@ -63,7 +63,7 @@ struct Entity
     Model *model;
     Mesh *pickingSphere;
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-    float32 scale = 1.0f;
+    int scale = 1;
     float32 rotate = 0.0f; // degres
 };
 

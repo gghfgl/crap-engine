@@ -240,7 +240,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                     outlineShader->setUniform4fv("view", viewMatrix);
                     outlineShader->setUniform4fv("model", glm::mat4(1.0f));
 
-                    float32 scaleModifier = 1.1f;
+                    float32 scaleModifier = (float32(selectedModel->entity->scale) + 0.1f) / selectedModel->entity->scale;
                     model = glm::scale(model, glm::vec3(scaleModifier));
                     outlineShader->setUniform4fv("model", model);
 
