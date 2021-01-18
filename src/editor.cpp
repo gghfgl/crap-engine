@@ -227,7 +227,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
                 // Model
                 glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, selectedModel->entity->position);
+                model = glm::translate(model, glm::vec3(selectedModel->entity->position.x,
+                                                        selectedModel->entity->position.y + float32(selectedModel->entity->scale) / 2,
+                                                        selectedModel->entity->position.z));
                 model = glm::scale(model, glm::vec3(selectedModel->entity->scale));
                 model = glm::rotate(model, glm::radians(selectedModel->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
                 defaultShader->setUniform4fv("model", model);

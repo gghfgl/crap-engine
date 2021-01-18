@@ -398,6 +398,9 @@ Ground::~Ground()
 
 void Ground::updateModelMatrices()
 {
+    // NOTE: every ground should have the same fixed size of half of a module
+    const float32 posModifier = 0.25f;
+
     uint32 resolution = (uint32)this->resolutionBuffer;
     this->resolution = resolution;
     this->modelMatrices = new glm::mat4[resolution * resolution];    
@@ -412,7 +415,7 @@ void Ground::updateModelMatrices()
         for (uint32 y = 0; y < resolution; y++)
         {
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, { posX, 0.0f, posZ });
+            model = glm::translate(model, { posX, 0.0f + posModifier, posZ });
             model = glm::scale(model, glm::vec3(1.0f));
             model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             this->modelMatrices[index] = model;
