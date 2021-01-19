@@ -9,4 +9,5 @@ struct GlobalState
     uint32 hoveredModule = 0;
     uint32 selectedModule = 0;
     uint32 dragModule = 0;
+    bool drawModules = false;
 };

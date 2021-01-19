@@ -22,6 +22,7 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
+    void drawSettings(bool &drawModules);
     void groundSettings(uint32 &currentGroundIndex,
                         std::map<uint32, Ground*> *Grounds,
                         uint32 maxResolution);
@@ -144,7 +145,7 @@ void EditorGui::endPanel()
 
 void EditorGui::windowAndInputSettings(InputState *input)
 {
-    if (ImGui::CollapsingHeader("Window & Input", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("window & input", ImGuiTreeNodeFlags_DefaultOpen))
     {
         // Window and input data
         ImGui::Text("SCREEN: %d x %d", this->window->getWidth(), this->window->getHeight());
@@ -227,6 +228,37 @@ void EditorGui::cameraSettings(Camera *camera)
 
         ImGui::Separator();
     }
+}
+
+// TODO: meh ... switch draw option with an enum?
+void EditorGui::drawSettings(bool &drawModules)
+{
+    if (ImGui::CollapsingHeader("draw", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::PushStyleColor(ImGuiCol_Button,
+                              drawModules
+                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                              drawModules
+                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.9f)
+                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                              drawModules
+                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.9f)
+                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.8f));
+
+        
+        ImVec2 bSize(100, 20);
+        if (ImGui::Button(drawModules ? "modules" : "environment", bSize))
+            drawModules = !drawModules;
+        ImGui::PopStyleColor(3);
+
+        ImGui::SameLine();
+        ImGui::Text("DRAW");
+    }
+
+    ImGui::Separator();
 }
 
 void EditorGui::groundSettings(uint32 &currentGroundIndex,

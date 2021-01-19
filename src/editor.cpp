@@ -180,7 +180,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(MeshOriginDebug, 2.0f);
 
         // Draw selected Ground
-        if (gs.currentGroundIndex != 0)
+        if (!gs.drawModules && gs.currentGroundIndex != 0)
         {
             if (Grounds->find(gs.currentGroundIndex)->second->entity->model != nullptr)
             {
@@ -206,7 +206,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (gs.currentModuleIndex != 0)
+        if (gs.drawModules && gs.currentModuleIndex != 0)
         {
             if (Modules->find(gs.currentModuleIndex)->second->entity->model != nullptr)
             {
@@ -259,7 +259,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
 
         // Draw selected Skybox
-        if (gs.currentSkyboxIndex != 0)
+        if (!gs.drawModules && gs.currentSkyboxIndex != 0)
         {
             if (Skyboxes->find(gs.currentSkyboxIndex)->second->directory.length() > 0)
             {
@@ -276,6 +276,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
+        gui.drawSettings(gs.drawModules);
         gui.groundSettings(gs.currentGroundIndex,
                            Grounds,
                            g_GroundMaxResolution);
