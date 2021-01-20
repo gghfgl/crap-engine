@@ -1,5 +1,7 @@
 TODO
 
+- @editor: fix outline draw bug mutli module at same time
+
 - @editor: can draw multiple selected modules at once + verify outline size between differente scale multiplier
 - @editor: improve update positon module with picking sphere only when "mouse selecting" and avoid grabbing module with mouse sometimes. Maybe change select by draw in gui and add select one to fraw outline or when selected from picking sphere.
 - @engine: switch to complex ray intersec instead of sphere?

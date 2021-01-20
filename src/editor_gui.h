@@ -33,7 +33,7 @@ struct EditorGui
                              uint32 maxResolution,
                              bool *showSkybox);
 
-    void moduleSettings(uint32 &currentModuleIndex,
+    void moduleSettings(std::map<uint32, Module*> *selectedModules,
                         std::map<uint32, Module*> *Modules); // TODO: pickingSphereRadius?
     /* void entitiesSettings(std::map<uint32, Entity*> *Scene, */
     /*                       uint32 *selectedEntity, */
@@ -371,7 +371,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         for (auto it = Grounds->cbegin(), it_next = it; it != Grounds->cend(); it = it_next)
         {
             ++it_next; // used because  we deleting entry while looping through the map
-            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[selected]" : ""))
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentGroundIndex == it->first) ? "[draw]" : ""))
             {
                 auto IDToString = std::to_string(it->first);
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));
@@ -467,9 +467,9 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                     ImGui::EndPopup();
                 }
 
-                // Select Ground
+                // Draw Ground
                 ImGui::SameLine();
-                if (ImGui::SmallButton("select"))
+                if (ImGui::SmallButton("draw"))
                 {
                     if (currentGroundIndex == it->first)
                         currentGroundIndex = 0;
@@ -624,7 +624,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         for (auto it = Skyboxes->cbegin(), it_next = it; it != Skyboxes->cend(); it = it_next)
         {
             ++it_next;
-            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentSkyboxIndex == it->first) ? "[selected]" : ""))
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentSkyboxIndex == it->first) ? "[draw]" : ""))
             {
                 auto IDToString = std::to_string(it->first);
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));
@@ -697,9 +697,9 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                     ImGui::EndPopup();
                 }
 
-                // Select Skybox
+                // Draw Skybox
                 ImGui::SameLine();
-                if (ImGui::SmallButton("select"))
+                if (ImGui::SmallButton("draw"))
                 {
                     if (currentSkyboxIndex == it->first)
                         currentSkyboxIndex = 0;
@@ -743,7 +743,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
     ImGui::Separator();
 }
 
-void EditorGui::moduleSettings(uint32 &currentModuleIndex,
+void EditorGui::moduleSettings(std::map<uint32, Module*> *selectedModules,
                                std::map<uint32, Module*> *Modules)
 {
     if (ImGui::CollapsingHeader("module", ImGuiTreeNodeFlags_DefaultOpen))
@@ -823,7 +823,7 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
         {
             if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
             {
-                currentModuleIndex = 0;
+                selectedModules->clear();
                 std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetFilePathName();
                 error = OpenModuleListFromFile(filePathName.c_str(), Modules);
             }
@@ -852,7 +852,8 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
         for (auto it = Modules->cbegin(), it_next = it; it != Modules->cend(); it = it_next)
         {
             ++it_next; // used because  we deleting entry while looping through the map
-            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (currentModuleIndex == it->first) ? "[selected]" : ""))
+            auto foundModule = selectedModules->find(it->first);
+            if (ImGui::TreeNode((void*)(intptr_t)it->first, "%s %s", it->second->name, (foundModule->first == it->first) ? "[draw]" : ""))
             {
                 auto IDToString = std::to_string(it->first);
                 ImGui::Dummy(ImVec2(0.0f, 3.0f));
@@ -965,14 +966,14 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
                     ImGui::EndPopup();
                 }
 
-                // Select Module
+                // Draw Module
                 ImGui::SameLine();
-                if (ImGui::SmallButton("select"))
+                if (ImGui::SmallButton("draw"))
                 {
-                    if (currentModuleIndex == it->first)
-                        currentModuleIndex = 0;
+                    if ( foundModule != selectedModules->end())
+                        selectedModules->erase(foundModule);
                     else
-                        currentModuleIndex = it->first;                    
+                        selectedModules->insert({it->first, it->second});
                 }
 
                 // Delete Module
@@ -987,8 +988,8 @@ void EditorGui::moduleSettings(uint32 &currentModuleIndex,
                     ImGui::Separator();
 
                     if (ImGui::Button("OK", ImVec2(120, 0))) {
-                        if (it->first == currentModuleIndex)
-                            currentModuleIndex = 0;
+                        if (it->first == foundModule->first)
+                            selectedModules->erase(foundModule);
 
                         delete it->second;
                         Modules->erase(it);

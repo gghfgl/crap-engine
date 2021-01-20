@@ -26,6 +26,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
     // Global states tracking
     GlobalState gs;
+    gs.selectedModules = new std::map<uint32, Module*>;
 
     // Construct ReferenceGrid mesh
     std::vector<uint32> uEmpty;
@@ -123,29 +124,33 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         // ground slider
         if (gs.currentGroundIndex != 0 && Grounds->find(gs.currentGroundIndex)->second->diffResolutionBuffer())
             Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
-        
+
+                        
+        // DEBUG
+        std::cout << gs.hoveredModule << "-" << std::endl;
+
         // mouse ray intersection sphere selector objects
-        if (gs.currentModuleIndex != 0)
+        if (gs.drawModules)
         {
-            if (Modules->find(gs.currentModuleIndex)->second->entity->model != nullptr)
+            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->cend(); it++)
             {
-                uint32 moduleID = Modules->find(gs.currentModuleIndex)->first;
-                Module *selectedModel = Modules->find(gs.currentModuleIndex)->second;
+                if (it->second->entity->model != nullptr)
+                {
+                    float32 rayIntersection = 0.0f;
+                    glm::vec3 spherePos = glm::vec3(
+                        it->second->entity->position.x,
+                        it->second->entity->position.y,
+                        it->second->entity->position.z);
 
-                float32 rayIntersection = 0.0f;
-                glm::vec3 spherePos = glm::vec3(
-                    selectedModel->entity->position.x,
-                    selectedModel->entity->position.y,
-                    selectedModel->entity->position.z);
-
-                if (RaySphereIntersection(camera->position,
-                                          rayWorld,
-                                          spherePos,
-                                          g_PickingSphereRadius,
-                                          &rayIntersection))
-                    gs.hoveredModule = moduleID;
-                else
-                    gs.hoveredModule = 0;
+                    if (RaySphereIntersection(camera->position,
+                                              rayWorld,
+                                              spherePos,
+                                              g_PickingSphereRadius,
+                                              &rayIntersection))
+                        gs.hoveredModule = it->first;
+                    else
+                        gs.hoveredModule = 0;
+                }
             }
         }
           
@@ -206,55 +211,55 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (gs.drawModules && gs.currentModuleIndex != 0)
+        if (gs.drawModules)
         {
-            if (Modules->find(gs.currentModuleIndex)->second->entity->model != nullptr)
+            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->cend(); it++)
             {
-                Shader *defaultShader = sCache->getShader("default");
-                defaultShader->useProgram();
-                defaultShader->setUniform4fv("view", viewMatrix);
-                defaultShader->setUniform4fv("model", glm::mat4(1.0f));
-
-                uint32 moduleID = Modules->find(gs.currentModuleIndex)->first;
-                Module *selectedModel = Modules->find(gs.currentModuleIndex)->second;
-
-                bool isSelected = false;
-                if (gs.hoveredModule == moduleID || gs.selectedModule == moduleID)
-                    isSelected = true;
-
-                if (gs.dragModule == moduleID)
-                    selectedModel->entity->position = pIntersection;
-
-                // Model
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(selectedModel->entity->position.x,
-                                                        selectedModel->entity->position.y + float32(selectedModel->entity->scale) / 2,
-                                                        selectedModel->entity->position.z));
-                model = glm::scale(model, glm::vec3(selectedModel->entity->scale));
-                model = glm::rotate(model, glm::radians(selectedModel->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
-                defaultShader->setUniform4fv("model", model);
-                renderer->drawModel(selectedModel->entity->model, defaultShader);
-
-                if (isSelected)
+                if (it->second->entity->model != nullptr)
                 {
-                    Shader *outlineShader = sCache->getShader("outline");
-                    outlineShader->useProgram();
-                    outlineShader->setUniform4fv("view", viewMatrix);
-                    outlineShader->setUniform4fv("model", glm::mat4(1.0f));
+                    Shader *defaultShader = sCache->getShader("default");
+                    defaultShader->useProgram();
+                    defaultShader->setUniform4fv("view", viewMatrix);
+                    defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
-                    float32 scaleModifier = (float32(selectedModel->entity->scale) + 0.1f) / selectedModel->entity->scale;
-                    model = glm::scale(model, glm::vec3(scaleModifier));
-                    outlineShader->setUniform4fv("model", model);
+                    bool isSelected = false;
+                    if (gs.hoveredModule == it->first || gs.selectedModule == it->first)
+                        isSelected = true;
 
-                    renderer->drawModelOutline(selectedModel->entity->model, outlineShader);
+                    if (gs.dragModule == it->first)
+                        it->second->entity->position = pIntersection;
+
+                    // Model
+                    glm::mat4 model = glm::mat4(1.0f);
+                    model = glm::translate(model, glm::vec3(it->second->entity->position.x,
+                                                            it->second->entity->position.y + float32(it->second->entity->scale) / 2,
+                                                            it->second->entity->position.z));
+                    model = glm::scale(model, glm::vec3(it->second->entity->scale));
+                    model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+                    defaultShader->setUniform4fv("model", model);
+                    renderer->drawModel(it->second->entity->model, defaultShader);
+
+                    if (isSelected)
+                    {
+                        Shader *outlineShader = sCache->getShader("outline");
+                        outlineShader->useProgram();
+                        outlineShader->setUniform4fv("view", viewMatrix);
+                        outlineShader->setUniform4fv("model", glm::mat4(1.0f));
+
+                        float32 scaleModifier = (float32(it->second->entity->scale) + 0.1f) / it->second->entity->scale;
+                        model = glm::scale(model, glm::vec3(scaleModifier));
+                        outlineShader->setUniform4fv("model", model);
+
+                        renderer->drawModelOutline(it->second->entity->model, outlineShader);
+                    }
+
+                    // // Picking sphere
+                    // model = glm::mat4(1.0f);
+                    // model = glm::translate(model, selectedModel->entity->position);
+                    // defaultShader->setUniform4fv("model", model);
+                    // defaultShader->setUniform1ui("flip_color", isSelected);
+                    // renderer->drawMesh(selectedModel->entity->pickingSphere, defaultShader);
                 }
-
-                // // Picking sphere
-                // model = glm::mat4(1.0f);
-                // model = glm::translate(model, selectedModel->entity->position);
-                // defaultShader->setUniform4fv("model", model);
-                // defaultShader->setUniform1ui("flip_color", isSelected);
-                // renderer->drawMesh(selectedModel->entity->pickingSphere, defaultShader);
             }
         }
 
@@ -282,7 +287,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                            g_GroundMaxResolution);
         gui.skyboxSettings(gs.currentSkyboxIndex,
                            Skyboxes);
-        gui.moduleSettings(gs.currentModuleIndex,
+        gui.moduleSettings(gs.selectedModules,
                            Modules);
         gui.endPanel();
         gui.draw();
