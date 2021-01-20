@@ -14,7 +14,8 @@ struct EditorGui
     void newFrame();
     void draw();
 
-    void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info, GlobalState *gs);
+    void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info);
+    void globalStatesOverlay(GlobalState *gs);
     void progressPlotWidget(bool animate);
 
     void makePanel(float32 posX, float32 posY);
@@ -22,7 +23,7 @@ struct EditorGui
 
     void windowAndInputSettings(InputState *input);
     void cameraSettings(Camera *camera);
-    void drawSettings(bool &drawModules);
+    void drawSettings(DRAW_FILTER &drawFilter);
     void groundSettings(uint32 &currentGroundIndex,
                         std::map<uint32, Ground*> *Grounds,
                         uint32 maxResolution);
@@ -96,31 +97,37 @@ void EditorGui::draw()
 
 // TODO: switch to string rendering with param window->time + renderer->stats + plateform->info
 void EditorGui::performanceInfoOverlay(Renderer *renderer,
-                                       PlateformInfo *info,
-                                       GlobalState *gs)
+                                       PlateformInfo *info)
 {
     ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 10));
-    ImGui::SetNextWindowBgAlpha(0.35f);
-    if (ImGui::Begin("perf_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+    //ImGui::SetNextWindowBgAlpha(0.35f);
+    if (ImGui::Begin("perf_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
     {
         ImGui::Text(info->vendor);
         ImGui::Text(info->graphicAPI);
         ImGui::Text(info->versionAPI);
 
-        ImGui::Separator();
+        //ImGui::Separator();
         ImGui::Text("ms/f: %.3fms", this->window->time->deltaTime * 1000);
         //ImGui::Text("fps: %d", Window->time->FPS);
         //ImGui::Text("mcy/f: %d", Window->time->megaCyclePerFrame);
         ImGui::Text("drawCalls: %d", renderer->stats.drawCalls);
+        ImGui::End();
+    }
+}
 
-        ImGui::Separator();
-        ImGui::Text("w_active: %d", this->activeWindow);
-        ImGui::Text("c_ground: %d", gs->currentGroundIndex);
-        ImGui::Text("c_skybox: %d", gs->currentSkyboxIndex);
-        ImGui::Text("c_module: %d", gs->currentModuleIndex);
-        ImGui::Text("m_hover: %d", gs->hoveredModule);
-        ImGui::Text("m_select: %d", gs->selectedModule);
-        ImGui::Text("m_drag: %d", gs->dragModule);
+void EditorGui::globalStatesOverlay(GlobalState *gs)
+{
+    ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 115));
+    //ImGui::SetNextWindowBgAlpha(0.35f);
+    if (ImGui::Begin("global_state", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
+    {
+        ImGui::Text("window_active: %d", this->activeWindow);
+        ImGui::Text("ground: %d", gs->currentGroundIndex);
+        ImGui::Text("skybox: %d", gs->currentSkyboxIndex);
+        ImGui::Text("hovered: %d", gs->hoveredModule);
+        ImGui::Text("selected: %d", gs->selectedModuleIndex);
+        ImGui::Text("drag: %d", gs->dragModule);
         ImGui::End();
     }
 }
@@ -231,31 +238,47 @@ void EditorGui::cameraSettings(Camera *camera)
 }
 
 // TODO: meh ... switch draw option with an enum?
-void EditorGui::drawSettings(bool &drawModules)
+void EditorGui::drawSettings(DRAW_FILTER &drawFilter)
 {
     if (ImGui::CollapsingHeader("draw", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::PushStyleColor(ImGuiCol_Button,
-                              drawModules
-                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.8f)
-                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.6f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                              drawModules
-                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.9f)
-                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.8f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-                              drawModules
-                              ? (ImVec4)ImColor::HSV(0.1f, 1.0f, 0.9f)
-                              : (ImVec4)ImColor::HSV(2.8f, 1.0f, 0.8f));
-
-        
         ImVec2 bSize(100, 20);
-        if (ImGui::Button(drawModules ? "modules" : "environment", bSize))
-            drawModules = !drawModules;
+        ImGui::PushStyleColor(ImGuiCol_Button,
+                              drawFilter == MODULES_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.6f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                              drawFilter == MODULES_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                              drawFilter == MODULES_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+
+        if (ImGui::Button("modules", bSize))
+            drawFilter = MODULES_FILTER;
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::Text("DRAW");
+        ImGui::PushStyleColor(ImGuiCol_Button,
+                              drawFilter == ENVIRONMENT_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.6f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
+                              drawFilter == ENVIRONMENT_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,
+                              drawFilter == ENVIRONMENT_FILTER
+                              ? (ImVec4)ImColor::HSV(0.3f, 1.0f, 0.8f)
+                              : (ImVec4)ImColor::HSV(0.0f, 1.0f, 0.8f));
+        if (ImGui::Button("environment", bSize))
+            drawFilter = ENVIRONMENT_FILTER;
+        ImGui::PopStyleColor(3);
+
+        ImGui::SameLine();
+        ImGui::Text("filter");
     }
 
     ImGui::Separator();

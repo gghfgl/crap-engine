@@ -92,14 +92,14 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         if (Input->mouse->leftButton)
         {
             if (gs.hoveredModule != 0)
-                gs.selectedModule = gs.hoveredModule;
+                gs.selectedModuleIndex = gs.hoveredModule;
             else if (gs.dragModule == 0 && !gui.activeWindow)
-                gs.selectedModule = 0;
+                gs.selectedModuleIndex = 0;
 
-            if (gs.selectedModule != 0 && !gui.activeWindow)
-                gs.dragModule = gs.selectedModule;
+            if (gs.selectedModuleIndex != 0 && !gui.activeWindow)
+                gs.dragModule = gs.selectedModuleIndex;
 
-            if (!gui.activeWindow && !gs.selectedModule)
+            if (!gui.activeWindow && !gs.selectedModuleIndex)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
@@ -126,7 +126,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
 
         // mouse ray intersection with modules (picking spheres)
-        if (gs.drawModules)
+        if (gs.drawFilter == MODULES_FILTER)
         {
             for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->end(); it++)
             {
@@ -184,7 +184,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(MeshOriginDebug, 2.0f);
 
         // Draw selected Ground
-        if (!gs.drawModules && gs.currentGroundIndex != 0)
+        if (gs.drawFilter == ENVIRONMENT_FILTER && gs.currentGroundIndex != 0)
         {
             if (Grounds->find(gs.currentGroundIndex)->second->entity->model != nullptr)
             {
@@ -210,7 +210,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (gs.drawModules)
+        if (gs.drawFilter == MODULES_FILTER)
         {
             for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->cend(); it++)
             {
@@ -222,7 +222,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                     defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
                     bool isSelected = false;
-                    if (gs.hoveredModule == it->first || gs.selectedModule == it->first)
+                    if (gs.hoveredModule == it->first || gs.selectedModuleIndex == it->first)
                         isSelected = true;
 
                     if (gs.dragModule == it->first)
@@ -263,7 +263,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
 
         // Draw selected Skybox
-        if (!gs.drawModules && gs.currentSkyboxIndex != 0)
+        if (gs.drawFilter == ENVIRONMENT_FILTER && gs.currentSkyboxIndex != 0)
         {
             if (Skyboxes->find(gs.currentSkyboxIndex)->second->directory.length() > 0)
             {
@@ -276,11 +276,12 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         // Draw GUI
         gui.newFrame();
-        gui.performanceInfoOverlay(renderer, Info, &gs); // TODO: switch to string rendering
+        gui.performanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
+        gui.globalStatesOverlay(&gs);
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.drawSettings(gs.drawModules);
+        gui.drawSettings(gs.drawFilter);
         gui.groundSettings(gs.currentGroundIndex,
                            Grounds,
                            g_GroundMaxResolution);
@@ -300,6 +301,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
      *                 NOTE: Cleaning                       *
      *                                                      *
      ********************************************************/
+
+    delete gs.selectedModules;
 
     for (auto it = Modules->begin(); it != Modules->end(); it++)
         delete it->second;
