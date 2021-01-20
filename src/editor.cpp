@@ -125,14 +125,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         if (gs.currentGroundIndex != 0 && Grounds->find(gs.currentGroundIndex)->second->diffResolutionBuffer())
             Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
 
-                        
-        // DEBUG
-        std::cout << gs.hoveredModule << "-" << std::endl;
-
-        // mouse ray intersection sphere selector objects
+        // mouse ray intersection with modules (picking spheres)
         if (gs.drawModules)
         {
-            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->cend(); it++)
+            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->end(); it++)
             {
                 if (it->second->entity->model != nullptr)
                 {
@@ -147,7 +143,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                               spherePos,
                                               g_PickingSphereRadius,
                                               &rayIntersection))
+                    {
                         gs.hoveredModule = it->first;
+                        break;
+                    }
                     else
                         gs.hoveredModule = 0;
                 }
