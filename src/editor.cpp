@@ -96,7 +96,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             else if (gs.dragModule == 0 && !gui.activeWindow)
                 gs.selectedModuleIndex = 0;
 
-            if (gs.selectedModuleIndex != 0 && !gui.activeWindow)
+            if (gs.selectedModuleIndex != 0 && !gui.activeWindow && gs.dragModule == 0)
                 gs.dragModule = gs.selectedModuleIndex;
 
             if (!gui.activeWindow && !gs.selectedModuleIndex)
@@ -126,29 +126,32 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
 
         // mouse ray intersection with modules (picking spheres)
-        if (gs.drawFilter == MODULES_FILTER)
+        if (!Input->mouse->leftButton)
         {
-            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->end(); it++)
+            if (gs.drawFilter == MODULES_FILTER)
             {
-                if (it->second->entity->model != nullptr)
+                for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->end(); it++)
                 {
-                    float32 rayIntersection = 0.0f;
-                    glm::vec3 spherePos = glm::vec3(
-                        it->second->entity->position.x,
-                        it->second->entity->position.y,
-                        it->second->entity->position.z);
-
-                    if (RaySphereIntersection(camera->position,
-                                              rayWorld,
-                                              spherePos,
-                                              g_PickingSphereRadius,
-                                              &rayIntersection))
+                    if (it->second->entity->model != nullptr)
                     {
-                        gs.hoveredModule = it->first;
-                        break;
+                        float32 rayIntersection = 0.0f;
+                        glm::vec3 spherePos = glm::vec3(
+                            it->second->entity->position.x,
+                            it->second->entity->position.y,
+                            it->second->entity->position.z);
+
+                        if (RaySphereIntersection(camera->position,
+                                                  rayWorld,
+                                                  spherePos,
+                                                  g_PickingSphereRadius,
+                                                  &rayIntersection))
+                        {
+                            gs.hoveredModule = it->first;
+                            break;
+                        }
+                        else
+                            gs.hoveredModule = 0;
                     }
-                    else
-                        gs.hoveredModule = 0;
                 }
             }
         }
