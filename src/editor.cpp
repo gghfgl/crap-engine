@@ -125,7 +125,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         if (gs.currentGroundIndex != 0 && Grounds->find(gs.currentGroundIndex)->second->diffResolutionBuffer())
             Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
 
-        // mouse ray intersection with modules (picking spheres)
+        // mouse ray intersection with modules (OBB)
         if (!Input->mouse->leftButton)
         {
             if (gs.drawFilter == MODULES_FILTER)
@@ -136,19 +136,19 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                     {
                         float32 rayIntersection = 0.0f;
                         glm::mat4 model = glm::mat4(1.0f);
-                        glm::vec3 aabbMin = glm::vec3(
+                        glm::vec3 AABBmin = glm::vec3(
                             it->second->entity->position.x - float32(it->second->entity->scale) / 2,
                             0.0f,
                             it->second->entity->position.z + float32(it->second->entity->scale) / 2);
-                        glm::vec3 aabbMax = glm::vec3(
+                        glm::vec3 AABBmax = glm::vec3(
                             it->second->entity->position.x + float32(it->second->entity->scale) / 2,
                             float32(it->second->entity->scale),
                             it->second->entity->position.z - float32(it->second->entity->scale) / 2);
 
                         if (TestRayOBBIntersection(camera->position,
                                                    rayWorld,
-                                                   aabbMin,
-                                                   aabbMax,
+                                                   AABBmin,
+                                                   AABBmax,
                                                    model,
                                                    rayIntersection))
                         {
