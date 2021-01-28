@@ -1,6 +1,9 @@
 TODO
 
-- @engine: switch to complex ray intersec instead of sphere? or fix picking sphere position since the module is drawn from y0
+- @engine: improve ray mouse collision with modules
+  -> OBB (Oriented Bounding Box)
+  -> AABB (Axis Aligned Bounding Box) collision ?
+  -> Ray intersection / collision algo ?
 
 - @engine: find something better when loading skybox faces (from a single file ideally) + hdr
 

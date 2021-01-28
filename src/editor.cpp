@@ -135,16 +135,47 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                     if (it->second->entity->model != nullptr)
                     {
                         float32 rayIntersection = 0.0f;
-                        glm::vec3 spherePos = glm::vec3(
-                            it->second->entity->position.x,
-                            it->second->entity->position.y,
-                            it->second->entity->position.z);
+                        // glm::vec3 spherePos = glm::vec3(
+                        //     it->second->entity->position.x,
+                        //     it->second->entity->position.y,
+                        //     it->second->entity->position.z);
 
-                        if (RaySphereIntersection(camera->position,
-                                                  rayWorld,
-                                                  spherePos,
-                                                  g_PickingSphereRadius,
-                                                  &rayIntersection))
+                        glm::vec3 aabbMin = glm::vec3(
+                            it->second->entity->position.x - float32(it->second->entity->scale) / 2,
+                            0.0f,
+                            it->second->entity->position.z + float32(it->second->entity->scale) / 2);
+
+                        std::cout << "AABB min x=" << it->second->entity->position.x - 0.5f << "\n"
+                        << "AABB min y=" << it->second->entity->position.y - 0.5f << "\n"
+                        << "AABB min z=" << it->second->entity->position.z - 0.5f << "\n\n"
+                        << "AABB max x=" << it->second->entity->position.x + 0.5f << "\n"
+                        << "AABB max y=" << it->second->entity->position.y + 0.5f << "\n"
+                        << "AABB max z=" << it->second->entity->position.z + 0.5f << "\n";
+
+                        glm::vec3 aabbMax = glm::vec3(
+                            it->second->entity->position.x + float32(it->second->entity->scale) / 2,
+                            float32(it->second->entity->scale),
+                            it->second->entity->position.z - float32(it->second->entity->scale) / 2);
+
+                        glm::mat4 model = glm::mat4(1.0f);
+                        model = glm::translate(model, glm::vec3(it->second->entity->position.x,
+                                                                it->second->entity->position.y + float32(it->second->entity->scale) / 2,
+                                                                it->second->entity->position.z));
+                        model = glm::scale(model, glm::vec3(it->second->entity->scale));
+                        model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+
+                        // if (TestRaySphereIntersection(camera->position,
+                        //                           rayWorld,
+                        //                           spherePos,
+                        //                           g_PickingSphereRadius,
+                        //                           &rayIntersection))
+                        // {
+                        if (TestRayOBBIntersection(camera->position,
+                                                   rayWorld,
+                                                   aabbMin,
+                                                   aabbMax,
+                                                   model,
+                                                   rayIntersection))
                         {
                             gs.hoveredModule = it->first;
                             break;
