@@ -380,13 +380,13 @@ Ground::Ground(const char* name, std::string const &modelFilePath, uint32 resolu
     if (modelFilePath.length() > 0)
         this->entity->model = new Model(modelFilePath); // TODO: handler error and delete model in case of failure to ensure "unknown" label from GUI.
 
-    this->resolution = resolution;
     this->resolutionBuffer = (int)resolution;
     this->instanceBufferID = 0;
-    this->isGenerated = false;
     this->name = name;
 
     this->updateModelMatrices();
+
+    this->resolution = 0; // reset resolution to trigger the diffResolution at the first loop
 }
 
 Ground::~Ground()

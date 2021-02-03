@@ -445,7 +445,6 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                         {
                             delete it->second->entity->model;
                             it->second->entity->model = loadedModel;
-                            it->second->isGenerated = false;
                         }
                     }
 

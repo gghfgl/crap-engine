@@ -81,7 +81,6 @@ struct Ground
     uint32 resolution; // default size
     int32 resolutionBuffer;
     uint32 instanceBufferID;
-    bool isGenerated = false;
     glm::mat4 *modelMatrices;
     const char* name;
 };

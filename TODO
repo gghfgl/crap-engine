@@ -1,7 +1,7 @@
 TODO
 
 - @engine: improve ray mouse collision with modules
-  -> OBB (Oriented Bounding Box)
+  -> OBB (Oriented Bounding Box) collision ?
   -> AABB (Axis Aligned Bounding Box) collision ?
   -> Ray intersection / collision algo ?
 

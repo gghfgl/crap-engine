@@ -8,7 +8,7 @@ const float32 g_PickingSphereRadius = 0.5f; // Used for draw sphere and ray inte
 
 void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 {
-    // Init minimum stuff needed
+    // Init basic stuff
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
     Renderer *renderer = new Renderer();
     EditorGui gui = EditorGui(Window);
@@ -24,21 +24,21 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
     // =================================================
 
-    // Global states tracking
+    // Global states
     GlobalState gs;
     gs.selectedModules = new std::map<uint32, Module*>;
 
-    // Construct ReferenceGrid mesh
+    // ReferenceGrid mesh
     std::vector<uint32> uEmpty;
     std::vector<Texture> tEmpty;
     std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
     Mesh *MeshReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
 
-    // Construct OriginDebug mesh
+    // OriginDebug mesh
     std::vector<Vertex> vOriginDebug(6, Vertex());
     Mesh *MeshOriginDebug = new Mesh(vOriginDebug, uEmpty, tEmpty);
 
-    // Construct Grounds, Skyboxes and Modules maps
+    // Grounds, Skyboxes and Modules maps
     std::map<uint32, Ground*> *Grounds = new std::map<uint32, Ground*>;
     std::map<uint32, Skybox*> *Skyboxes = new std::map<uint32, Skybox*>;
     std::map<uint32, Module*> *Modules = new std::map<uint32, Module*>;
@@ -58,7 +58,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         /********************************************************
          *                                                      *
-         *        NOTE: I/O Keyboard and Mouse          *
+         *        NOTE: I/O Keyboard and Mouse                  *
          *                                                      *
          ********************************************************/
 
@@ -114,16 +114,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
          *                                                      *
          ********************************************************/
 
+        // compute ray world from mouse
         glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
                                                     (float32)Input->mouse->posY,
                                                     Window->getWidth(),
                                                     Window->getHeight(),
                                                     camera->projectionMatrix,
                                                     camera->getViewMatrix());
-
-        // ground slider
-        if (gs.currentGroundIndex != 0 && Grounds->find(gs.currentGroundIndex)->second->diffResolutionBuffer())
-            Grounds->find(gs.currentGroundIndex)->second->isGenerated = false;
 
         // mouse ray intersection with modules (OBB)
         if (!Input->mouse->leftButton)
@@ -198,14 +195,13 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
             if (Grounds->find(gs.currentGroundIndex)->second->entity->model != nullptr)
             {
                 Ground *selectedGround = Grounds->find(gs.currentGroundIndex)->second;
-                if (!selectedGround->isGenerated)
+                if (selectedGround->diffResolutionBuffer())
                 {
                     selectedGround->clearInstance();
                     selectedGround->updateModelMatrices();
                     selectedGround->instanceBufferID = renderer->prepareInstance(selectedGround->entity->model,
                                                                                  selectedGround->modelMatrices,
                                                                                  selectedGround->resolution * selectedGround->resolution);
-                    selectedGround->isGenerated = true;
                 }
 
                 Shader *instancedShader = sCache->getShader("instanced");
