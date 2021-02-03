@@ -35,10 +35,7 @@ struct EditorGui
                              bool *showSkybox);
 
     void moduleSettings(std::map<uint32, Module*> *selectedModules,
-                        std::map<uint32, Module*> *Modules); // TODO: pickingSphereRadius?
-    /* void entitiesSettings(std::map<uint32, Entity*> *Scene, */
-    /*                       uint32 *selectedEntity, */
-    /*                       float32 pickingSphereRadius); */
+                        std::map<uint32, Module*> *Modules);
     
     bool activeWindow;
     Window *window;

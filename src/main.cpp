@@ -9,7 +9,7 @@ const uint32 c_Height = 900;
 int main(int, char**)
 {
     Plateform *plateform = new Plateform(c_Width, c_Height, "crapengine_editor");
-
+    
     RunEditorMode(plateform->window, plateform->input, plateform->info);    
 
     delete plateform;

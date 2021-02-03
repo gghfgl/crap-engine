@@ -1,30 +1,27 @@
 TODO
 
-- @engine: improve ray mouse collision with modules
-  -> OBB (Oriented Bounding Box) collision ?
-  -> AABB (Axis Aligned Bounding Box) collision ?
-  -> Ray intersection / collision algo ?
-
-- @editor/@engine: improve coordinate system + rework design pattern from input handling & simulate world & draw
-
-- @engine: find something better when loading skybox faces (from a single file ideally) + hdr
-
+- @engine: improve coordinate system for positionning objects
 - @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
 - @engine: improve module struct with necessary fields for gameplay mechanics
-- @engine: add decent logger system
 - @engine: make better rendering API. Less verbose?
 - @engine: implement beautyfull light PBR + effects
 - @engine: make the engine a static lib or something?
 - @engine: fix / improve texture management from assimp model
 - @engine: assimp be carefull of texture path (need to update blender mtl file)
-- @engine: change to ortho projection? meh not sure
+- @engine: find something better when loading skybox faces (from a single file ideally) + hdr
 
-- @editor/@game: improve logs
 - @editor: gui switch perf to string rendering
 - @editor: loader progress bar at startup editor and loading files?
 - @editor: run game rendering scene from editor?
 
-- @?: improve coordinate system for positionning objects
-- @?: implement a internal console with simple cli
+- @editor/@game: improve logger system
 
+- @game: implement a internal console with simple cli
 - @game: display state of everything
+
+REMEMBER
+
+- @engine: improve ray mouse collision with modules
+  -> OBB (Oriented Bounding Box) collision ?
+  -> AABB (Axis Aligned Bounding Box) collision ?
+  -> Ray intersection / collision algo ?
