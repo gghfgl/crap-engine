@@ -31,3 +31,11 @@ REMEMBER
   -> OBB (Oriented Bounding Box) collision ?
   -> AABB (Axis Aligned Bounding Box) collision ?
   -> Ray intersection / collision algo ?
+
+- @general: efficient + pretty error handling
+- @general: use memory block heap allocated and use offset to move around data? john blow
+- @general: string const& vs const char*
+- @general: opengl debug synchronous
+- @general: prefer unordered map
+- @general: command & observer pattern
+- @general: always default values from struct, just should init ptrs at constructor
