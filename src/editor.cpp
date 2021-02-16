@@ -1,12 +1,28 @@
 #include "editor.h"
 #include "editor_gui.h"
 
+void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs);
+void runGameMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs);
+
+void Run(Window *Window, InputState *Input, PlateformInfo *Info)
+{
+    GlobalState gs;
+
+    while (gs.currentMode != EXIT_MODE)
+    {
+        if (gs.currentMode == EDITOR_MODE)
+            runEditorMode(Window, Input, Info, &gs);
+
+        if (gs.currentMode == GAME_MODE)
+            runGameMode(Window, Input, Info, &gs);
+    }
+}
+
+// TODO: refact?
 const uint32 g_GroundMaxResolution = 50;
 const uint32 g_ReferenceGridResolution = 50;
 
-const float32 g_PickingSphereRadius = 0.5f; // Used for draw sphere and ray intersection
-
-void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
+void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs)
 {
     // Init basic stuff
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
@@ -25,8 +41,8 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     // =================================================
 
     // Global states
-    GlobalState gs;
-    gs.selectedModules = new std::map<uint32, Module*>;
+    EditorState es;
+    es.selectedModules = new std::map<uint32, Module*>;
 
     // ReferenceGrid mesh
     std::vector<uint32> uEmpty;
@@ -51,7 +67,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
     // =============================
 
-    while (gs.active)
+    while (gs->currentMode == EDITOR_MODE)
     {
         Window->updateTime();
         Window->pollEvents();
@@ -63,7 +79,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
          ********************************************************/
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-            gs.active = false;
+            gs->currentMode = EXIT_MODE;
+
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_G])
+            gs->currentMode = GAME_MODE;
 
         if (!gui.activeWindow)
         {
@@ -91,22 +110,22 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
 
         if (Input->mouse->leftButton)
         {
-            if (gs.hoveredModule != 0)
-                gs.selectedModuleIndex = gs.hoveredModule;
-            else if (gs.dragModule == 0 && !gui.activeWindow)
-                gs.selectedModuleIndex = 0;
+            if (es.hoveredModule != 0)
+                es.selectedModuleIndex = es.hoveredModule;
+            else if (es.dragModule == 0 && !gui.activeWindow)
+                es.selectedModuleIndex = 0;
 
-            if (gs.selectedModuleIndex != 0 && !gui.activeWindow && gs.dragModule == 0)
-                gs.dragModule = gs.selectedModuleIndex;
+            if (es.selectedModuleIndex != 0 && !gui.activeWindow && es.dragModule == 0)
+                es.dragModule = es.selectedModuleIndex;
 
-            if (!gui.activeWindow && !gs.selectedModuleIndex)
+            if (!gui.activeWindow && !es.selectedModuleIndex)
             {
                 Input->updateMouseOffsets();
                 camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
             }
         }
         else
-            gs.dragModule = 0;
+            es.dragModule = 0;
 
         /********************************************************
          *                                                      *
@@ -125,9 +144,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         // mouse ray intersection with modules (OBB)
         if (!Input->mouse->leftButton)
         {
-            if (gs.drawFilter == MODULES_FILTER)
+            if (es.drawFilter == MODULES_FILTER)
             {
-                for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->end(); it++)
+                for (auto it = es.selectedModules->begin(); it != es.selectedModules->end(); it++)
                 {
                     if (it->second->entity->model != nullptr)
                     {
@@ -149,11 +168,11 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                                                    model,
                                                    rayIntersection))
                         {
-                            gs.hoveredModule = it->first;
+                            es.hoveredModule = it->first;
                             break;
                         }
                         else
-                            gs.hoveredModule = 0;
+                            es.hoveredModule = 0;
                     }
                 }
             }
@@ -190,11 +209,11 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         renderer->drawLines(MeshOriginDebug, 2.0f);
 
         // Draw selected Ground
-        if (gs.drawFilter == ENVIRONMENT_FILTER && gs.currentGroundIndex != 0)
+        if (es.drawFilter == ENVIRONMENT_FILTER && es.currentGroundIndex != 0)
         {
-            if (Grounds->find(gs.currentGroundIndex)->second->entity->model != nullptr)
+            if (Grounds->find(es.currentGroundIndex)->second->entity->model != nullptr)
             {
-                Ground *selectedGround = Grounds->find(gs.currentGroundIndex)->second;
+                Ground *selectedGround = Grounds->find(es.currentGroundIndex)->second;
                 if (selectedGround->diffResolutionBuffer())
                 {
                     selectedGround->clearInstance();
@@ -215,9 +234,9 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
                   
         // Draw Modules
-        if (gs.drawFilter == MODULES_FILTER)
+        if (es.drawFilter == MODULES_FILTER)
         {
-            for (auto it = gs.selectedModules->begin(); it != gs.selectedModules->cend(); it++)
+            for (auto it = es.selectedModules->begin(); it != es.selectedModules->cend(); it++)
             {
                 if (it->second->entity->model != nullptr)
                 {
@@ -227,10 +246,10 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
                     defaultShader->setUniform4fv("model", glm::mat4(1.0f));
 
                     bool isSelected = false;
-                    if (gs.hoveredModule == it->first || gs.selectedModuleIndex == it->first)
+                    if (es.hoveredModule == it->first || es.selectedModuleIndex == it->first)
                         isSelected = true;
 
-                    if (gs.dragModule == it->first)
+                    if (es.dragModule == it->first)
                         it->second->entity->position = pIntersection;
 
                     // Model
@@ -261,31 +280,31 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
         }
 
         // Draw selected Skybox
-        if (gs.drawFilter == ENVIRONMENT_FILTER && gs.currentSkyboxIndex != 0)
+        if (es.drawFilter == ENVIRONMENT_FILTER && es.currentSkyboxIndex != 0)
         {
-            if (Skyboxes->find(gs.currentSkyboxIndex)->second->directory.length() > 0)
+            if (Skyboxes->find(es.currentSkyboxIndex)->second->directory.length() > 0)
             {
                 Shader *skyboxShader = sCache->getShader("skybox");
                 skyboxShader->useProgram();
                 skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-                renderer->drawSkybox(Skyboxes->find(gs.currentSkyboxIndex)->second);
+                renderer->drawSkybox(Skyboxes->find(es.currentSkyboxIndex)->second);
             }
         }
 
         // Draw GUI
         gui.newFrame();
         gui.performanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
-        gui.globalStatesOverlay(&gs);
+        gui.editorStatesOverlay(&es);
         gui.makePanel(10.f, 10.f);
         gui.windowAndInputSettings(Input);
         gui.cameraSettings(camera);
-        gui.drawSettings(gs.drawFilter);
-        gui.groundSettings(gs.currentGroundIndex,
+        gui.drawSettings(es.drawFilter);
+        gui.groundSettings(es.currentGroundIndex,
                            Grounds,
                            g_GroundMaxResolution);
-        gui.skyboxSettings(gs.currentSkyboxIndex,
+        gui.skyboxSettings(es.currentSkyboxIndex,
                            Skyboxes);
-        gui.moduleSettings(gs.selectedModules,
+        gui.moduleSettings(es.selectedModules,
                            Modules);
         gui.endPanel();
         gui.draw();
@@ -300,7 +319,7 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
      *                                                      *
      ********************************************************/
 
-    delete gs.selectedModules;
+    delete es.selectedModules;
 
     for (auto it = Modules->begin(); it != Modules->end(); it++)
         delete it->second;
@@ -320,4 +339,18 @@ void RunEditorMode(Window *Window, InputState *Input, PlateformInfo *Info)
     delete sCache;
     delete renderer;
     delete camera;
+}
+
+void runGameMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs)
+{
+    while (gs->currentMode == GAME_MODE)
+    {
+        Window->updateTime();
+        Window->pollEvents();
+
+        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_E])
+            gs->currentMode = EDITOR_MODE;
+
+        std::cout << "game mode" << "\n";
+    }
 }

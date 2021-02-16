@@ -15,7 +15,7 @@ struct EditorGui
     void draw();
 
     void performanceInfoOverlay(Renderer *renderer, PlateformInfo *info);
-    void globalStatesOverlay(GlobalState *gs);
+    void editorStatesOverlay(EditorState *es);
     void progressPlotWidget(bool animate);
 
     void makePanel(float32 posX, float32 posY);
@@ -113,18 +113,18 @@ void EditorGui::performanceInfoOverlay(Renderer *renderer,
     }
 }
 
-void EditorGui::globalStatesOverlay(GlobalState *gs)
+void EditorGui::editorStatesOverlay(EditorState *es)
 {
     ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 115));
     //ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("global_state", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
     {
         ImGui::Text("window_active: %d", this->activeWindow);
-        ImGui::Text("ground: %d", gs->currentGroundIndex);
-        ImGui::Text("skybox: %d", gs->currentSkyboxIndex);
-        ImGui::Text("hovered: %d", gs->hoveredModule);
-        ImGui::Text("selected: %d", gs->selectedModuleIndex);
-        ImGui::Text("drag: %d", gs->dragModule);
+        ImGui::Text("ground: %d", es->currentGroundIndex);
+        ImGui::Text("skybox: %d", es->currentSkyboxIndex);
+        ImGui::Text("hovered: %d", es->hoveredModule);
+        ImGui::Text("selected: %d", es->selectedModuleIndex);
+        ImGui::Text("drag: %d", es->dragModule);
         ImGui::End();
     }
 }

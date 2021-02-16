@@ -1,5 +1,11 @@
 TODO
 
+- @game: render game in window editor
+- @game: load all assets with quick selector / draw
+- @game: add the same OBB mouse ray collisions with drag mecanism
+
+
+
 - @engine: improve coordinate system for positionning objects
 - @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
 - @engine: improve module struct with necessary fields for gameplay mechanics
