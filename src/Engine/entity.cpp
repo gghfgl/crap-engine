@@ -463,6 +463,40 @@ Module::~Module()
 
 // ======================================
 
+Player::Player(const char* name, std::string const &modelFilePath, glm::vec3 position)
+{
+    this->entity = new Entity;
+    this->entity->pickingSphere = nullptr;
+    this->entity->position = position;
+
+    this->entity->model = nullptr;
+    if (modelFilePath.length() > 0)
+        this->entity->model = new Model(modelFilePath); // TODO: handle error and delete model in case of failure to ensure "unknown" label from GUI.
+
+    this->name = name;
+}
+
+Player::~Player()
+{
+    delete[] this->name;
+    delete this->entity;
+}
+
+void Player::UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration = 1.0f)
+{
+    float32 velocity = m_speed * acceleration * deltaTime;
+    if (direction == ENTITY_FORWARD)
+        entity->position -= glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
+    if (direction == ENTITY_BACKWARD)
+        entity->position += glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
+    if (direction == ENTITY_LEFT)
+        entity->position -= glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
+    if (direction == ENTITY_RIGHT)
+        entity->position += glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
+}
+
+// ======================================
+
 Skybox::Skybox(const char* name, std::string directoryPath)
 {
     auto p = std::filesystem::proximate(directoryPath);

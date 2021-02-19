@@ -1,5 +1,15 @@
 #pragma once
 
+enum EntityDirection
+{
+    ENTITY_FORWARD,
+    ENTITY_BACKWARD,
+    ENTITY_LEFT,
+    ENTITY_RIGHT,
+    ENTITY_UP,
+    ENTITY_DOWN
+};
+
 struct Vertex
 {
     glm::vec3 position;
@@ -105,6 +115,18 @@ struct Skybox
     uint32 textureID;
     const char* name;
     std::string directory;
+};
+
+struct Player
+{
+    Player(const char* name, std::string const &modelFilePath, glm::vec3 position);
+    ~Player();
+    void UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration);
+    
+    Entity *entity;
+    const char* name;
+
+    float32 m_speed = 10.0f;
 };
 
 // =====================================================

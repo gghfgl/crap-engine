@@ -2,7 +2,7 @@
 #include "precompile.h"
 #include "global.h"
 
-//#include "editor.cpp"
+#include "editor.cpp"
 #include "game.cpp"
 
 const uint32 c_Width = 1440;
@@ -16,8 +16,8 @@ int main(int, char**)
 
     while (gs.currentMode != EXIT_MODE)
     {
-        // if (gs.currentMode == EDITOR_MODE)
-        //     RunEditor(plateform->window, plateform->input, plateform->info, &gs);
+        if (gs.currentMode == EDITOR_MODE)
+            RunEditor(plateform->window, plateform->input, plateform->info, &gs);
 
         if (gs.currentMode == GAME_MODE)
             RunGame(plateform->window, plateform->input, &gs);

@@ -11,14 +11,24 @@ const uint32 g_ReferenceGridResolution = 50;
 
 void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *GlobalState)
 {
-    // Init basic stuff
-    Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
+    // Init camera
+    Camera *camera = new Camera(
+        glm::vec3(0.0f, 5.0f, 10.0f), // position
+        glm::vec3(0.0f, 5.0f, 10.0f),   // lookAt
+        glm::vec3(0.0f, 1.0f, 0.0f),   // worldUp
+        45.0f,                         // fov
+        (float32)Window->getWidth() / (float32)Window->getHeight(), // aspect
+        0.1f, 100.0f);                 // near plane & far plane
+
+    // Init renderer
     Renderer *renderer = new Renderer();
+
+    // Init GUI
     EditorGui gui = EditorGui(Window);
 
     // Compile and cache shaders
     ShaderCache *sCache = new ShaderCache();
-    int32 error = sCache->compileShadersFromDirectory("./shaders", camera->projectionMatrix);
+    int32 error = sCache->compileShadersFromDirectory("./shaders", camera->m_projectionMatrix);
     if (error != 0)
     {
         Log::error("EXITCODE:111 Failed to compile shaders");
@@ -99,24 +109,24 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         if (!gui.activeWindow)
         {
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
-                camera->processMovementDirection(FORWARD, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_FORWARD, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
-                camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_BACKWARD, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
-                camera->processMovementDirection(LEFT, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_LEFT, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
-                camera->processMovementDirection(RIGHT, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_RIGHT, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-                camera->processMovementDirection(UP, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_UP, Window->time->deltaTime);
             if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-                camera->processMovementDirection(DOWN, Window->time->deltaTime);
+                camera->UpdatePositionFromDirection(CAMERA_DOWN, Window->time->deltaTime);
 
             if (Input->mouse->scrollOffsetY != 0.0f)
             {
                 if (Input->getMouseScrollOffsetY() > 0)
-                    camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
+                    camera->UpdatePositionFromDirection(CAMERA_FORWARD, Window->time->deltaTime, 10.0f);
                 else
-                    camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
+                    camera->UpdatePositionFromDirection(CAMERA_BACKWARD, Window->time->deltaTime, 10.0f);
             }
         }
 
@@ -133,7 +143,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
             if (!gui.activeWindow && !es.selectedModuleIndex)
             {
                 Input->updateMouseOffsets();
-                camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
+                camera->UpdatePositionFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
             }
         }
         else
@@ -150,8 +160,8 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
                                                     (float32)Input->mouse->posY,
                                                     Window->getWidth(),
                                                     Window->getHeight(),
-                                                    camera->projectionMatrix,
-                                                    camera->getViewMatrix());
+                                                    camera->m_projectionMatrix,
+                                                    camera->m_viewMatrix);
 
         // mouse ray intersection with modules (OBB)
         if (!Input->mouse->leftButton)
@@ -173,7 +183,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
                             float32(it->second->entity->scale),
                             it->second->entity->position.z - float32(it->second->entity->scale) / 2);
 
-                        if (TestRayOBBIntersection(camera->position,
+                        if (TestRayOBBIntersection(camera->m_position,
                                                    rayWorld,
                                                    AABBmin,
                                                    AABBmax,
@@ -191,11 +201,15 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         }
           
         glm::vec3 pIntersection = glm::vec3(0.0f);
-        if (!RayPlaneIntersection(camera->position,
+        if (!RayPlaneIntersection(camera->m_position,
                                   rayWorld, glm::vec3(0.0f),
                                   glm::vec3(0.0f, 1.0f, 0.0f),
                                   &pIntersection))
             pIntersection = glm::vec3(0.0f);
+
+        // disable lookAt
+        camera->SetCameraView(camera->m_position, camera->m_position, camera->m_worldUp);
+
 
         /********************************************************
          *                                                      *
@@ -205,7 +219,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
 
         renderer->resetStats();
         renderer->newContext();
-        glm::mat4 viewMatrix = camera->getViewMatrix();
+        glm::mat4 viewMatrix = camera->m_viewMatrix;
 
         Shader *colorShader = sCache->getShader("color");
         colorShader->useProgram();

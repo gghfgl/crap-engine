@@ -194,40 +194,40 @@ void EditorGui::cameraSettings(Camera *camera)
     if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
     {
         // Camera data
-        ImGui::Text("yaw: %.2f", camera->settings->yaw);
-        ImGui::Text("pitch: %.2f", camera->settings->pitch);
-        ImGui::Text("speed: %.2f", camera->settings->speed);
-        ImGui::Text("sensitivity: %.2f", camera->settings->sensitivity);
-        ImGui::Text("fov: %.2f", camera->settings->fov);
+        ImGui::Text("yaw: %.2f", camera->m_yaw);
+        ImGui::Text("pitch: %.2f", camera->m_pitch);
+        ImGui::Text("speed: %.2f", camera->m_speed);
+        ImGui::Text("sensitivity: %.2f", camera->m_sensitivity);
+        ImGui::Text("fov: %.2f", camera->m_fov);
         ImGui::Text("pos: %.2f, %.2f, %.2f",
-                    camera->position.x,
-                    camera->position.y,
-                    camera->position.z);
+                    camera->m_position.x,
+                    camera->m_position.y,
+                    camera->m_position.z);
         ImGui::Text("worldup: %.2f, %.2f, %.2f",
-                    camera->worldUp.x,
-                    camera->worldUp.y,
-                    camera->worldUp.z);
+                    camera->m_upVector.x,
+                    camera->m_upVector.y,
+                    camera->m_upVector.z);
 
         // Reset bouton
         ImVec2 bSize(100, 20);
         if (ImGui::Button("Reset Default", bSize))
         {
-            camera->position = glm::vec3(0.0f, 5.0f, 10.0f);
-            camera->settings->yaw = -90.0f;
-            camera->settings->pitch = 0.0f;
-            camera->settings->fov = 45.0f;
-            camera->processMovementAngles(0.0f, 0.0f);
+            camera->m_position = glm::vec3(0.0f, 5.0f, 10.0f);
+            camera->m_yaw = -90.0f;
+            camera->m_pitch = 0.0f;
+            camera->m_fov = 45.0f;
+            camera->UpdatePositionFromAngle(0.0f, 0.0f);
         }
 
         // Reset button
         ImGui::SameLine();
         if (ImGui::Button("Reset Up", bSize))
         {
-            camera->position = glm::vec3(0.0f, 30.0f, 0.0f);
-            camera->settings->yaw = -90.0f;
-            camera->settings->pitch = -90.0f;
-            camera->settings->fov = 45.0f;
-            camera->processMovementAngles(0.0f, 0.0f);
+            camera->m_position = glm::vec3(0.0f, 30.0f, 0.0f);
+            camera->m_yaw = -90.0f;
+            camera->m_pitch = -90.0f;
+            camera->m_fov = 45.0f;
+            camera->UpdatePositionFromAngle(0.0f, 0.0f);
         }
 
         ImGui::Separator();
