@@ -1,19 +1,8 @@
 #pragma once
 
-enum EXEC_MODE {
-    EXIT_MODE = 0,
-    EDITOR_MODE = 1,
-    GAME_MODE   = 2
-};
-
 enum DRAW_FILTER {
     MODULES_FILTER = 1,
     ENVIRONMENT_FILTER = 2
-};
-
-struct GlobalState
-{
-    EXEC_MODE currentMode = EDITOR_MODE;
 };
 
 struct EditorState

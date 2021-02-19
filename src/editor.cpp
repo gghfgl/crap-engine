@@ -1,22 +1,6 @@
+#include "global.h"
 #include "editor.h"
 #include "editor_gui.h"
-
-void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs);
-void runGameMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs);
-
-void Run(Window *Window, InputState *Input, PlateformInfo *Info)
-{
-    GlobalState gs;
-
-    while (gs.currentMode != EXIT_MODE)
-    {
-        if (gs.currentMode == EDITOR_MODE)
-            runEditorMode(Window, Input, Info, &gs);
-
-        if (gs.currentMode == GAME_MODE)
-            runGameMode(Window, Input, Info, &gs);
-    }
-}
 
 const char* defaultGroundList = "./assets/lists/crap_grounds_default.list";
 const char* defaultSkyboxList = "./assets/lists/crap_skyboxes_default.list";
@@ -25,7 +9,7 @@ const char* defaultModuleList = "./assets/lists/crap_modules_default.list";
 const uint32 g_GroundMaxResolution = 50;
 const uint32 g_ReferenceGridResolution = 50;
 
-void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs)
+void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *GlobalState)
 {
     // Init basic stuff
     Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
@@ -67,7 +51,7 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
     if (error != 0)
     {
         Log::error("\terror while opening file: %s\n", defaultGroundList);
-        gs->currentMode = EXIT_MODE;
+        GlobalState->currentMode = EXIT_MODE;
         return;
     }
 
@@ -75,7 +59,7 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
     if (error != 0)
     {
         Log::error("\terror while opening file: %s\n", defaultSkyboxList);
-        gs->currentMode = EXIT_MODE;
+        GlobalState->currentMode = EXIT_MODE;
         return;
     }
 
@@ -83,7 +67,7 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
     if (error != 0)
     {
         Log::error("\terror while opening file: %s", defaultModuleList);
-        gs->currentMode = EXIT_MODE;
+        GlobalState->currentMode = EXIT_MODE;
         return;
     }
 
@@ -95,7 +79,7 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
 
     // =============================
 
-    while (gs->currentMode == EDITOR_MODE)
+    while (GlobalState->currentMode == EDITOR_MODE)
     {
         Window->updateTime();
         Window->pollEvents();
@@ -107,10 +91,10 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
          ********************************************************/
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-            gs->currentMode = EXIT_MODE;
+            GlobalState->currentMode = EXIT_MODE;
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_G])
-            gs->currentMode = GAME_MODE;
+            GlobalState->currentMode = GAME_MODE;
 
         if (!gui.activeWindow)
         {
@@ -363,139 +347,6 @@ void runEditorMode(Window *Window, InputState *Input, PlateformInfo *Info, Globa
 
     delete MeshReferenceGrid;
     delete MeshOriginDebug;
-
-    delete sCache;
-    delete renderer;
-    delete camera;
-}
-
-void runGameMode(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *gs)
-{
-    // while (gs->currentMode == GAME_MODE)
-    // {
-    //     Window->updateTime();
-    //     Window->pollEvents();
-
-    //     if (Input->keyboard->isPressed[keyboard::CRAP_KEY_E])
-    //         gs->currentMode = EDITOR_MODE;
-
-    //     std::cout << "game mode" << "\n";
-    // }
-
-    // Init basic stuff
-    Camera *camera = new Camera((float32)Window->getWidth(), (float32)Window->getHeight(), glm::vec3(0.0f, 5.0f, 10.0f));
-    Renderer *renderer = new Renderer();
-
-    // Compile and cache shaders
-    ShaderCache *sCache = new ShaderCache();
-    int32 error = sCache->compileShadersFromDirectory("./shaders", camera->projectionMatrix);
-    if (error != 0)
-    {
-        Log::error("EXITCODE:111 Failed to compile shaders");
-        exit(111);
-    }
-
-    // =================================================
-
-    // ReferenceGrid mesh
-    std::vector<uint32> uEmpty;
-    std::vector<Texture> tEmpty;
-    std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
-    Mesh *MeshReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
-
-    // =================================================
-
-    // Prepare static data rendering
-    renderer->prepareReferenceGridSubData(MeshReferenceGrid, g_ReferenceGridResolution);
-
-    // =============================
-
-    while (gs->currentMode == GAME_MODE)
-    {
-        Window->updateTime();
-        Window->pollEvents();
-
-        /********************************************************
-         *                                                      *
-         *        NOTE: I/O Keyboard and Mouse                  *
-         *                                                      *
-         ********************************************************/
-
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_ESCAPE])
-            gs->currentMode = EXIT_MODE;
-
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_E])
-            gs->currentMode = EDITOR_MODE;
-
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
-            camera->processMovementDirection(FORWARD, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
-            camera->processMovementDirection(BACKWARD, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
-            camera->processMovementDirection(LEFT, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
-            camera->processMovementDirection(RIGHT, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-            camera->processMovementDirection(UP, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-            camera->processMovementDirection(DOWN, Window->time->deltaTime);
-
-        if (Input->mouse->scrollOffsetY != 0.0f)
-        {
-            if (Input->getMouseScrollOffsetY() > 0)
-                camera->processMovementDirection(FORWARD, Window->time->deltaTime, 10.0f);
-            else
-                camera->processMovementDirection(BACKWARD, Window->time->deltaTime, 10.0f);
-        }
-
-        if (Input->mouse->leftButton)
-        {
-            Input->updateMouseOffsets();
-            camera->processMovementAngles(Input->mouse->offsetX, Input->mouse->offsetY);
-        }
-
-        /********************************************************
-         *                                                      *
-         *                 NOTE: Simulate World                 *
-         *                                                      *
-         ********************************************************/
-
-
-        
-        // ...
-
-
-        
-        /********************************************************
-         *                                                      *
-         *                 NOTE: Rendering                      *
-         *                                                      *
-         ********************************************************/
-
-        renderer->resetStats();
-        renderer->newContext();
-        glm::mat4 viewMatrix = camera->getViewMatrix();
-
-        Shader *colorShader = sCache->getShader("color");
-        colorShader->useProgram();
-        colorShader->setUniform4fv("view", viewMatrix);
-        colorShader->setUniform4fv("model", glm::mat4(1.0f));
-
-        // Draw ReferenceGrid
-        colorShader->setUniform4f("color", glm::vec4(0.360f, 1.0f, 0.360f, 1.0f));
-        renderer->drawLines(MeshReferenceGrid, 1.0f);
-
-        // Swap buffer
-        Window->swapBuffer();
-    }
-
-    /********************************************************
-     *                                                      *
-     *                 NOTE: Cleaning                       *
-     *                                                      *
-     ********************************************************/
-
-    delete MeshReferenceGrid;
 
     delete sCache;
     delete renderer;

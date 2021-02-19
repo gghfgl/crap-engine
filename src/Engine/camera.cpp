@@ -1,104 +1,106 @@
 #include "camera.h"
 
-Camera::Camera(float32 windowWidth, float32 windowHeight,
-               glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
-               glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f),
-               float32 yaw = g_DefaultYawSetting,
-               float32 pitch = g_DefaultPitchSetting,
-               float32 speed = g_DefaultSpeedSetting,
-               float32 sensitivity = g_DefaultSensitivitySetting,
-               float32 fov = g_DefaultFovSetting,
-               float32 nearPlane = 0.1f, float32 farPlane = 100.0f)
+Camera::Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector,
+               float32 fov, float32 aspect, float32 nearPlane, float32 farPlane)
 {
-    CameraSetting *settings = new CameraSetting;
-    settings->yaw = yaw;
-    settings->pitch = pitch;
-    settings->speed = speed;
-    settings->sensitivity = sensitivity;
-    settings->fov = fov;
+    m_position = position;
+    m_lookAt = lookAt;
+    m_upVector = upVector;
+    m_frontVector = glm::vec3(0.0f, 0.0f, -1.0f);
+    
+    m_fov = fov;
+    m_aspect = aspect;
+    m_nearPlane = nearPlane;
+    m_farPlane = farPlane;
 
-    glm::mat4 projection = glm::perspective(
-        glm::radians(fov),
-        windowWidth / windowHeight,
-        nearPlane, farPlane);
-			
-    this->settings = settings;
-    this->position = position;
-    this->front = glm::vec3(0.0f, 0.0f, -1.0f);
-    this->worldUp = worldUp;
-    this->projectionMatrix = projection;
-
-    this->update_camera_vectors();
+    update_projection_matrix();
+    update_normalize_vectors();
+    update_view_matrix();
 }
 
-Camera::~Camera()
+void Camera::SetCameraView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector)
 {
-    delete this->settings;
+    m_position = position;
+    m_lookAt = lookAt;
+    m_upVector = upVector;
+
+    update_normalize_vectors();
+    update_view_matrix();
 }
 
-glm::mat4 Camera::getViewMatrix()
-{
-    return glm::lookAt(this->position, this->position + this->front, this->up);
-}
-
-void Camera::processMovementDirection(CameraDirection direction,
+void Camera::UpdatePositionFromDirection(CameraDirection direction,
                                       float32 deltaTime,
                                       float32 acceleration = 1.0f)
 {
-    float32 velocity = this->settings->speed * acceleration * deltaTime;
+    float32 velocity = m_speed * acceleration * deltaTime;
     if (direction == FORWARD)
-        this->position += this->front * velocity;
+        m_position += m_frontVector * velocity;
     if (direction == BACKWARD)
-        this->position -= this->front * velocity;
+        m_position -= m_frontVector * velocity;
     if (direction == LEFT)
-        this->position -= this->right * velocity;
+        m_position -= m_rightVector * velocity;
     if (direction == RIGHT)
-        this->position += this->right * velocity;
+        m_position += m_rightVector * velocity;
     if (direction == UP)
-        this->position += this->up * velocity;
+        m_position += m_upVector * velocity;
     if (direction == DOWN)
-        this->position -= this->up * velocity;
+        m_position -= m_upVector * velocity;
+
+    update_view_matrix();
 }
 
-void Camera::processMovementAngles(float32 xoffset,
+void Camera::UpdatePositionFromAngle(float32 xoffset,
                                    float32 yoffset,
                                    bool constrainPitch = true)
 {
-    xoffset *= this->settings->sensitivity;
-    yoffset *= this->settings->sensitivity;
-    this->settings->yaw += xoffset;
-    this->settings->pitch += yoffset;
+    xoffset *= m_sensitivity;
+    yoffset *= m_sensitivity;
+    m_yaw += xoffset;
+    m_pitch += yoffset;
 
     if (constrainPitch)
     {
-        if (this->settings->pitch > 89.0f)
-            this->settings->pitch = 89.0f;
-        if (this->settings->pitch < -89.0f)
-            this->settings->pitch = -89.0f;
+        if (m_pitch > 89.0f)
+            m_pitch = 89.0f;
+        if (m_pitch < -89.0f)
+            m_pitch = -89.0f;
     }
 
-    update_camera_vectors();
+    update_normalize_vectors();
+    update_view_matrix();
 }
 
-void Camera::processMovementFov(float32 yoffset)
+void Camera::UpdateProjectionFromFOV(float32 yoffset)
 {
-    if (this->settings->fov >= 1.0f && this->settings->fov <= 45.0f)
-        this->settings->fov -= yoffset;
-    if (this->settings->fov <= 1.0f)
-        this->settings->fov = 1.0f;
-    if (this->settings->fov >= 45.0f)
-        this->settings->fov = 45.0f;
+    if (m_fov >= 1.0f && m_fov <= 45.0f)
+        m_fov -= yoffset;
+    if (m_fov <= 1.0f)
+        m_fov = 1.0f;
+    if (m_fov >= 45.0f)
+        m_fov = 45.0f;
+
+    update_projection_matrix();
 }
 
-void Camera::update_camera_vectors()
+void Camera::update_view_matrix()
+{
+    m_viewMatrix =  glm::lookAt(m_position, m_position + m_frontVector, m_upVector);
+}
+
+void Camera::update_projection_matrix()
+{
+    m_projectionMatrix = glm::perspective(glm::radians(m_fov), m_aspect, m_nearPlane, m_farPlane);
+}
+
+void Camera::update_normalize_vectors()
 {
     // Calculates the front vector from the Camera's (updated) Euler Angles
     glm::vec3 front;
-    front.x = cos(glm::radians(this->settings->yaw)) * cos(glm::radians(this->settings->pitch));
-    front.y = sin(glm::radians(this->settings->pitch));
-    front.z = sin(glm::radians(this->settings->yaw)) * cos(glm::radians(this->settings->pitch));
-    this->front = glm::normalize(front);
+    front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    front.y = sin(glm::radians(m_pitch));
+    front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+    m_frontVector = glm::normalize(front);
     // Also re-calculate the Right and Up vector
-    this->right = glm::normalize(glm::cross(this->front, this->worldUp)); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    this->up = glm::normalize(glm::cross(this->right, this->front));
+    m_rightVector = glm::normalize(glm::cross(m_frontVector, m_upVector)); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    m_upVector = glm::normalize(glm::cross(m_rightVector, m_frontVector));
 }
