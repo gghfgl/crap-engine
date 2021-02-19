@@ -83,7 +83,7 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         if (Input->mouse->leftButton)
         {
             Input->updateMouseOffsets();
-            camera->UpdatePositionFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
+            camera->UpdateArcballFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
         }
 
         /********************************************************

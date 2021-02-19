@@ -15,6 +15,7 @@ struct Camera {
     void SetCameraView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector);
     void UpdatePositionFromDirection(CameraDirection direction, float32 deltaTime, float32 acceleration);
     void UpdatePositionFromAngle(float32 xoffset, float32 yoffset, bool constrainPitch);
+    void UpdateArcballFromAngle(float32 xoffset, float32 yoffset, bool constrainPitch);
     void UpdateProjectionFromFOV(float32 yoffset);
 
     glm::vec3 m_position;
@@ -32,6 +33,7 @@ struct Camera {
     float32 m_pitch = -60.0f;
     float32 m_speed = 10.0f;
     float32 m_sensitivity = 0.1f;
+    float32 m_lastTheta 0.0f; // TODO:
 
     float32 m_fov = 45.0f;
     float32 m_aspect;
