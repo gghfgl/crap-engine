@@ -1,5 +1,7 @@
 TODO
 
+- @all: rename func exported unexported convention
+
 - @game: render game in window editor
 - @game: load all assets with quick selector / draw
 - @game: add the same OBB mouse ray collisions with drag mecanism

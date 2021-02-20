@@ -1,7 +1,7 @@
 #include "camera.h"
 
 Camera::Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp,
-               float32 fov, float32 aspect, float32 nearPlane, float32 farPlane)
+               float32 fov, float32 pitch, float32 aspect, float32 nearPlane, float32 farPlane)
 {
     m_position = position;
     m_lookAt = lookAt;
@@ -9,6 +9,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 worldUp,
     m_frontVector = glm::vec3(0.0f, 0.0f, -1.0f);
     
     m_fov = fov;
+    m_pitch = pitch;
     m_aspect = aspect;
     m_nearPlane = nearPlane;
     m_farPlane = farPlane;

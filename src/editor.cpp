@@ -17,6 +17,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         glm::vec3(0.0f, 5.0f, 10.0f),   // lookAt
         glm::vec3(0.0f, 1.0f, 0.0f),   // worldUp
         45.0f,                         // fov
+        0.0f,                          // pitch
         (float32)Window->getWidth() / (float32)Window->getHeight(), // aspect
         0.1f, 100.0f);                 // near plane & far plane
 

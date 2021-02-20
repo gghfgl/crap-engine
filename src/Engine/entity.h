@@ -126,7 +126,7 @@ struct Player
     Entity *entity;
     const char* name;
 
-    float32 m_speed = 10.0f;
+    float32 m_speed = 30.0f;
 };
 
 // =====================================================

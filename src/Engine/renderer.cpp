@@ -302,7 +302,9 @@ void Renderer::prepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
 
 void Renderer::prepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
-    glm::vec3 target = origin + (direction * 1.0f);
+    //glm::vec3 target = origin + (direction * 1.0f);
+
+    glm::vec3 target = direction * 1.0f;
 
     mesh->Vertices.clear();
     Vertex v;

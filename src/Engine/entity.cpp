@@ -482,7 +482,7 @@ Player::~Player()
     delete this->entity;
 }
 
-void Player::UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration = 1.0f)
+void Player::UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration = 0.5f)
 {
     float32 velocity = m_speed * acceleration * deltaTime;
     if (direction == ENTITY_FORWARD)

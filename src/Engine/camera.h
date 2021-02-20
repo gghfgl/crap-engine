@@ -11,7 +11,7 @@ enum CameraDirection
 };
 
 struct Camera {
-    Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector, float32 fov, float32 aspect, float32 nearPlane, float32 farPlane);
+    Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector, float32 fov, float32 pitch, float32 aspect, float32 nearPlane, float32 farPlane);
     void SetCameraView(glm::vec3 position, glm::vec3 lookAt, glm::vec3 upVector);
     void UpdatePositionFromDirection(CameraDirection direction, float32 deltaTime, float32 acceleration);
     void UpdatePositionFromAngle(float32 xoffset, float32 yoffset, bool constrainPitch);
@@ -30,7 +30,7 @@ struct Camera {
     glm::mat4 m_viewMatrix;
 
     float32 m_yaw = -90.0f;
-    float32 m_pitch = -60.0f;
+    float32 m_pitch = 0.0f;
     float32 m_speed = 10.0f;
     float32 m_sensitivity = 0.1f;
 
