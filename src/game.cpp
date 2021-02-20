@@ -123,6 +123,9 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
                                   &mouseRayIntersection))
             mouseRayIntersection = glm::vec3(0.0f);
 
+        // TODO: Rotate player from rayIntersec
+        // testPlayer->entity->rotate
+
         /********************************************************
          *                                                      *
          *                 NOTE: Rendering                      *
@@ -161,7 +164,7 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
         model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
         defaultShader->setUniform4fv("model", model);
-        //renderer->drawModel(testPlayer->entity->model, defaultShader);
+        renderer->drawModel(testPlayer->entity->model, defaultShader);
         
         // Draw modules
         for (auto it = Modules->begin(); it != Modules->cend(); it++)
