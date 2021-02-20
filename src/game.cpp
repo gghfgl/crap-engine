@@ -67,45 +67,29 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
             testPlayer->UpdatePositionFromDirection(ENTITY_LEFT, Window->time->deltaTime);
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
             testPlayer->UpdatePositionFromDirection(ENTITY_RIGHT, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_SPACE])
-            camera->UpdatePositionFromDirection(CAMERA_UP, Window->time->deltaTime);
-        if (Input->keyboard->isPressed[keyboard::CRAP_KEY_LEFT_CONTROL])
-            camera->UpdatePositionFromDirection(CAMERA_DOWN, Window->time->deltaTime);
 
         if (Input->mouse->scrollOffsetY != 0.0f)
         {
             if (Input->getMouseScrollOffsetY() > 0)
-                camera->UpdatePositionFromDirection(CAMERA_FORWARD, Window->time->deltaTime, 10.0f);
+                camera->UpdatePositionFromDirection(CAMERA_FORWARD, Window->time->deltaTime, 30.0f);
             else
-                camera->UpdatePositionFromDirection(CAMERA_BACKWARD, Window->time->deltaTime, 10.0f);
+                camera->UpdatePositionFromDirection(CAMERA_BACKWARD, Window->time->deltaTime, 30.0f);
         }
 
-        if (Input->mouse->leftButton)
-        {
-            Input->updateMouseOffsets();
-            camera->UpdateArcballFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
-        }
+        // if (Input->mouse->leftButton)
+        // {
+        //     Input->updateMouseOffsets();
+        //     camera->UpdateArcballFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
+        // }
 
         /********************************************************
          *                                                      *
          *                 NOTE: Simulate World                 *
          *                                                      *
          ********************************************************/
-
-        // TODO
-        // glm::mat4 viewTest = glm::mat4(1.0f);
-        // float radius = 10.0f;
-        // float camX   = sin(glfwGetTime()) * radius;
-        // float camZ   = cos(glfwGetTime()) * radius;
-
-        // glm::mat4 rot_mat = glm::rotate(glm::mat4(1.f), camera->m_yaw, glm::vec3(1,0,0));
-        // rot_mat = glm::rotate(glm::mat4(1.f), camera->m_pitch, glm::vec3(0,1,0)) * rot_mat;
-        // glm::vec3 aa = rot_mat * glm::vec4(testPlayer->entity->position - camera->m_position, 0.0f);
-        // glm::vec3 bb = camera->m_position + aa;
-        // viewTest = glm::lookAt(bb, testPlayer->entity->position, glm::vec3(0.0f, 1.0f, 0.0f));
-
+        
         glm::vec3 behindPlayer = glm::vec3(testPlayer->entity->position.x, camera->m_position.y, testPlayer->entity->position.z + 20.0f);
-        camera->SetCameraView(behindPlayer, testPlayer->entity->position, camera->m_upVector);
+        camera->SetCameraView(behindPlayer, testPlayer->entity->position, camera->m_worldUp);
 
         /********************************************************
          *                                                      *

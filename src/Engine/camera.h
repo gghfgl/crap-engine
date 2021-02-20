@@ -33,7 +33,6 @@ struct Camera {
     float32 m_pitch = -60.0f;
     float32 m_speed = 10.0f;
     float32 m_sensitivity = 0.1f;
-    float32 m_lastTheta 0.0f; // TODO:
 
     float32 m_fov = 45.0f;
     float32 m_aspect;
