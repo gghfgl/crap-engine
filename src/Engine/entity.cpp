@@ -12,52 +12,52 @@ Mesh::Mesh(std::vector<Vertex> vertices,
 }
 
 // primtive sphere constructor
-Mesh::Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
-{
-    uint32 nbVerticesPerSphere = 0;
-    std::vector<Vertex> vertices;
-    std::vector<uint32> indices;
+// Mesh::Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices)
+// {
+//     uint32 nbVerticesPerSphere = 0;
+//     std::vector<Vertex> vertices;
+//     std::vector<uint32> indices;
 
-    for (uint32 i = 0; i <= stacks; i++)
-    {
-        GLfloat V   = i / (float) stacks;
-        GLfloat phi = V * glm::pi <float> ();
+//     for (uint32 i = 0; i <= stacks; i++)
+//     {
+//         GLfloat V   = i / (float) stacks;
+//         GLfloat phi = V * glm::pi <float> ();
         
-        for (uint32 j = 0; j <= slices; ++j)
-        {
-            GLfloat U = j / (float) slices;
-            GLfloat theta = U * (glm::pi <float> () * 2);
+//         for (uint32 j = 0; j <= slices; ++j)
+//         {
+//             GLfloat U = j / (float) slices;
+//             GLfloat theta = U * (glm::pi <float> () * 2);
             
-            // Calc The Vertex Positions
-            GLfloat x = cosf (theta) * sinf (phi);
-            GLfloat y = cosf (phi);
-            GLfloat z = sinf (theta) * sinf (phi);
-            Vertex vertex;
-            vertex.position = glm::vec3(x * radius + margin, y * radius, z * radius);
-            vertices.push_back(vertex);
-            nbVerticesPerSphere += 1; // nb vertices per sphere reference
-        }
-    }
+//             // Calc The Vertex Positions
+//             GLfloat x = cosf (theta) * sinf (phi);
+//             GLfloat y = cosf (phi);
+//             GLfloat z = sinf (theta) * sinf (phi);
+//             Vertex vertex;
+//             vertex.position = glm::vec3(x * radius + margin, y * radius, z * radius);
+//             vertices.push_back(vertex);
+//             nbVerticesPerSphere += 1; // nb vertices per sphere reference
+//         }
+//     }
 
-    for (uint32 i = 0; i < slices * stacks + slices; ++i)
-    {        
-        indices.push_back (i);
-        indices.push_back (i + slices + 1);
-        indices.push_back (i + slices);
+//     for (uint32 i = 0; i < slices * stacks + slices; ++i)
+//     {        
+//         indices.push_back (i);
+//         indices.push_back (i + slices + 1);
+//         indices.push_back (i + slices);
         
-        indices.push_back (i + slices + 1);
-        indices.push_back (i);
-        indices.push_back (i + 1);
-    }
+//         indices.push_back (i + slices + 1);
+//         indices.push_back (i);
+//         indices.push_back (i + 1);
+//     }
 
-    std::vector<Texture> tEmpty;
+//     std::vector<Texture> tEmpty;
 
-    this->Vertices = vertices;
-    this->Indices = indices;
-    this->Textures = tEmpty;
+//     this->Vertices = vertices;
+//     this->Indices = indices;
+//     this->Textures = tEmpty;
 
-    this->allocate_mesh();
-}
+//     this->allocate_mesh();
+// }
 
 Mesh::~Mesh()
 {
@@ -365,8 +365,42 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
 Entity::~Entity()
 {
     delete this->model;
-    if (this->pickingSphere != nullptr)
-        delete this->pickingSphere;
+    // if (this->pickingSphere != nullptr)
+    //     delete this->pickingSphere;
+}
+
+void Entity::UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration = 0.5f)
+{
+    float32 velocity = m_speed * acceleration * deltaTime;
+    if (direction == ENTITY_FORWARD)
+        position -= glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
+    if (direction == ENTITY_BACKWARD)
+        position += glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
+    if (direction == ENTITY_LEFT)
+        position -= glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
+    if (direction == ENTITY_RIGHT)
+        position += glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
+}
+
+// TODO: could be generic
+void Entity::UpdateRotationFollowVec(glm::vec3 followWorld, glm::vec2 followScreen, float32 farPlane)
+{
+    // Compute angle between two position
+    glm::vec3 origin = position;
+    glm::vec3 A = glm::vec3(position.x, 0.0f, farPlane);
+    glm::vec3 B = followWorld;
+    glm::vec3 da=glm::normalize(A-origin);
+    glm::vec3 db=glm::normalize(B-origin);
+    float32 angle = glm::acos(glm::dot(da, db));
+
+    // Convert from radian to degres
+    angle = angle * 180 / M_PI;
+
+    // Handling 180 -> 360 decrease angle
+    if (followScreen.x > 720)
+        rotate = angle;
+    else
+        rotate = -angle;
 }
 
 // ======================================
@@ -374,7 +408,6 @@ Entity::~Entity()
 Ground::Ground(const char* name, std::string const &modelFilePath, uint32 resolution=10)
 {
     this->entity = new Entity;
-    this->entity->pickingSphere = nullptr;
 
     this->entity->model = nullptr;
     if (modelFilePath.length() > 0)
@@ -446,7 +479,6 @@ bool Ground::diffResolutionBuffer()
 Module::Module(const char* name, std::string const &modelFilePath)
 {
     this->entity = new Entity;
-    this->entity->pickingSphere = nullptr;
 
     this->entity->model = nullptr;
     if (modelFilePath.length() > 0)
@@ -466,7 +498,6 @@ Module::~Module()
 Player::Player(const char* name, std::string const &modelFilePath, glm::vec3 position)
 {
     this->entity = new Entity;
-    this->entity->pickingSphere = nullptr;
     this->entity->position = position;
 
     this->entity->model = nullptr;
@@ -480,19 +511,6 @@ Player::~Player()
 {
     delete[] this->name;
     delete this->entity;
-}
-
-void Player::UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration = 0.5f)
-{
-    float32 velocity = m_speed * acceleration * deltaTime;
-    if (direction == ENTITY_FORWARD)
-        entity->position -= glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
-    if (direction == ENTITY_BACKWARD)
-        entity->position += glm::vec3(0.0f, 0.0f, 1.0f) * velocity;
-    if (direction == ENTITY_LEFT)
-        entity->position -= glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
-    if (direction == ENTITY_RIGHT)
-        entity->position += glm::vec3(1.0f, 0.0f, 0.0f) * velocity;
 }
 
 // ======================================

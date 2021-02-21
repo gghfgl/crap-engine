@@ -3,15 +3,18 @@
 
 void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
 {
+    // Init game state
+    GameState gs;
+    
     // Init camera
     Camera *camera = new Camera(
         glm::vec3(0.0f, 30.0f, 20.0f), // position
         glm::vec3(0.0f, 0.0f, 0.0f),   // lookAt
         glm::vec3(0.0f, 1.0f, 0.0f),   // worldUp
         45.0f,                         // fov
-        -60.0f,                          // pitch
+        -60.0f,                        // pitch
         (float32)Window->getWidth() / (float32)Window->getHeight(), // aspect
-        0.1f, 100.0f);                 // near plane & far plane
+        gs.nearPlane, gs.farPlane);    // near plane & far plane
 
     // Init renderer
     Renderer *renderer = new Renderer();
@@ -75,13 +78,13 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
             GlobalState->currentMode = EDITOR_MODE;
 
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_W])
-            testPlayer->UpdatePositionFromDirection(ENTITY_FORWARD, Window->time->deltaTime);
+            testPlayer->entity->UpdatePositionFromDirection(ENTITY_FORWARD, Window->time->deltaTime);
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_S])
-            testPlayer->UpdatePositionFromDirection(ENTITY_BACKWARD, Window->time->deltaTime);
+            testPlayer->entity->UpdatePositionFromDirection(ENTITY_BACKWARD, Window->time->deltaTime);
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_A])
-            testPlayer->UpdatePositionFromDirection(ENTITY_LEFT, Window->time->deltaTime);
+            testPlayer->entity->UpdatePositionFromDirection(ENTITY_LEFT, Window->time->deltaTime);
         if (Input->keyboard->isPressed[keyboard::CRAP_KEY_D])
-            testPlayer->UpdatePositionFromDirection(ENTITY_RIGHT, Window->time->deltaTime);
+            testPlayer->entity->UpdatePositionFromDirection(ENTITY_RIGHT, Window->time->deltaTime);
 
         if (Input->mouse->scrollOffsetY != 0.0f)
         {
@@ -123,8 +126,8 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
                                   &mouseRayIntersection))
             mouseRayIntersection = glm::vec3(0.0f);
 
-        // TODO: Rotate player from rayIntersec
-        // testPlayer->entity->rotate
+        // Player follow mouse pointer
+        testPlayer->entity->UpdateRotationFollowVec(mouseRayIntersection, glm::vec2(Input->mouse->posX, Input->mouse->posY), gs.farPlane);
 
         /********************************************************
          *                                                      *
@@ -156,7 +159,7 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         defaultShader->useProgram();
         defaultShader->setUniform4fv("view", viewMatrix);
         defaultShader->setUniform4fv("model", glm::mat4(1.0f));
-
+        
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(testPlayer->entity->position.x,
                                                 testPlayer->entity->position.y + float32(testPlayer->entity->scale) / 2,

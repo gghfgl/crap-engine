@@ -28,10 +28,8 @@ struct Texture
 
 struct Mesh
 {
-    Mesh(std::vector<Vertex> vertices,
-         std::vector<uint32> indices,
-         std::vector<Texture> textures);
-    Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
+    Mesh(std::vector<Vertex> vertices, std::vector<uint32> indices, std::vector<Texture> textures);
+    //Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
     ~Mesh();
     
     uint32 VAO;
@@ -53,6 +51,7 @@ struct Model
 
     std::vector<Mesh*> Meshes;
     std::vector<Texture> TexturesLoadedCache;
+
     std::string objFilename;
     std::string directory;
     bool gammaCorrection;
@@ -60,22 +59,24 @@ struct Model
 private:
     void process_node(aiNode *node, const aiScene *scene);
     Mesh* process_mesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<Texture> load_material_textures(aiMaterial *mat,
-                                                aiTextureType type,
-                                                std::string typeName);
+    std::vector<Texture> load_material_textures(aiMaterial *mat, aiTextureType type, std::string typeName);
     uint32 load_texture_from_file(const char *path, const std::string &directory);
 };
 
 struct Entity
 {
     ~Entity();
+    void UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration);
+    void UpdateRotationFollowVec(glm::vec3 followWorld, glm::vec2 followScreen, float32 farPlane);
     
     Model *model;
-    Mesh *pickingSphere;
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     int scale = 1;
     float32 rotate = 0.0f; // degres
+    float32 m_speed = 30.0f;
 };
+
+// ======================================
 
 // ======================================
 
@@ -121,12 +122,9 @@ struct Player
 {
     Player(const char* name, std::string const &modelFilePath, glm::vec3 position);
     ~Player();
-    void UpdatePositionFromDirection(EntityDirection direction, float32 deltaTime, float32 acceleration);
     
     Entity *entity;
     const char* name;
-
-    float32 m_speed = 30.0f;
 };
 
 // =====================================================

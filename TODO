@@ -2,10 +2,10 @@ TODO
 
 - @all: rename func exported unexported convention
 
-- @game: render game in window editor
-- @game: load all assets with quick selector / draw
-- @game: add the same OBB mouse ray collisions with drag mecanism
-
+- @game: shift sprint player
+- @game: show plateform infos string rendering
+- @game: draw circle around player?
+- @game: entity system with atachable component (health, dynamic, etc ...)
 
 
 - @engine: improve coordinate system for positionning objects
