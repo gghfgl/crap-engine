@@ -314,8 +314,12 @@ void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 directi
     mesh->Vertices.push_back(v);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
+    // glBufferSubData(GL_ARRAY_BUFFER,
+    //                 0,
+    //                 mesh->Vertices.size() * sizeof(Vertex),
+    //                 &mesh->Vertices[0]);
+    glBufferData(GL_ARRAY_BUFFER,
+                 mesh->Vertices.size() * sizeof(Vertex),
+                 &mesh->Vertices[0],
+                 GL_DYNAMIC_DRAW);
 }
