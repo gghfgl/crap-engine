@@ -8,78 +8,78 @@ Shader::~Shader()
     this->UniformLocations.clear();
 }
 
-void Shader::useProgram()
+void Shader::UseProgram()
 {
     glUseProgram(this->ID);
 }
 
-void Shader::setUniform1f(const char* name, float32 value)
+void Shader::SetUniform1f(const char* name, float32 value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform1f(id, value);
 }
 
-void Shader::setUniform1i(const char* name, int32 value)
+void Shader::SetUniform1i(const char* name, int32 value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform1i(id, value);
 }
 
-// void Shader::setUniform1iv(const char* name, int32 *value)
+// void Shader::SetUniform1iv(const char* name, int32 *value)
 // {
 // 	uint32 id = this->get_uniform_location(name);
 // 	glUniform1iv(id, (GLsizei)(sizeof(value)/sizeof(value[0])), value);
 // }
 
-void Shader::setUniform1ui(const char* name, uint32 value)
+void Shader::SetUniform1ui(const char* name, uint32 value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform1ui(id, value);
 }
 
-void Shader::setUniform2f(const char* name, float32 x, float32 y)
+void Shader::SetUniform2f(const char* name, float32 x, float32 y)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform2f(id, x, y);
 }
 
-void Shader::setUniform2f(const char* name, const glm::vec2 &value)
+void Shader::SetUniform2f(const char* name, const glm::vec2 &value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform2f(id, value.x, value.y);
 }
 
-void Shader::setUniform3f(const char* name, float32 x, float32 y, float32 z)
+void Shader::SetUniform3f(const char* name, float32 x, float32 y, float32 z)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform3f(id, x, y, z);
 }
 
-void Shader::setUniform3f(const char* name, const glm::vec3 &value)
+void Shader::SetUniform3f(const char* name, const glm::vec3 &value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform3f(id, value.x, value.y, value.z);
 }
 
-void Shader::setUniform4f(const char* name, float32 x, float32 y, float32 z, float32 w)
+void Shader::SetUniform4f(const char* name, float32 x, float32 y, float32 z, float32 w)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform4f(id, x, y, z, w);
 }
 
-void Shader::setUniform4f(const char* name, const glm::vec4 &value)
+void Shader::SetUniform4f(const char* name, const glm::vec4 &value)
 {
     uint32 id = this->get_uniform_location(name);
     glUniform4f(id, value.x, value.y, value.z, value.w);
 }
 
-void Shader::setUniform4fv(const char* name, const glm::mat4 &matrix)
+void Shader::SetUniform4fv(const char* name, const glm::mat4 &matrix)
 {
     uint32 id = this->get_uniform_location(name);
     glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
-void Shader::compileSources(const char* vertexSource,
+void Shader::CompileSources(const char* vertexSource,
                              const char* fragmentSource,
                              const char* geometrySource)
 {
@@ -160,7 +160,7 @@ void Shader::check_compile_errors(uint32 object, std::string type)
 
 // =================================
 
-int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix)
+int32 ShaderCache::CompileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix)
 {
     Log::info("=== BEGIN: Compiling shaders from directory %s\n", directory);
 
@@ -181,8 +181,8 @@ int32 ShaderCache::compileShadersFromDirectory(const char* directory, glm::mat4 
         Shader *shader = this->load_shader_from_file(p_string.c_str());
         this->Shaders[name] = shader;
 
-        shader->useProgram();
-        shader->setUniform4fv("projection", projectionMatrix);
+        shader->UseProgram();
+        shader->SetUniform4fv("projection", projectionMatrix);
 
         Log::info("\t%s\t | OK\n", filename.c_str());
     }
@@ -201,7 +201,7 @@ ShaderCache::~ShaderCache()
     }
 }
 
-Shader* ShaderCache::getShader(const std::string& name)
+Shader* ShaderCache::GetShader(const std::string& name)
 {
     return this->Shaders[name];
 }
@@ -231,7 +231,7 @@ Shader* ShaderCache::load_shader_from_file(const char* filepath)
     }
 
     Shader *shader = new Shader;
-    shader->compileSources((const char*)ss[(int)ShaderType::VERTEX].str().c_str(),
+    shader->CompileSources((const char*)ss[(int)ShaderType::VERTEX].str().c_str(),
                             (const char*)ss[(int)ShaderType::FRAGMENT].str().c_str(),
                             (const char*)ss[(int)ShaderType::GEOMETRY].str().c_str());
 

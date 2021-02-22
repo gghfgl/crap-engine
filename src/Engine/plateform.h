@@ -23,8 +23,8 @@ struct MouseEvent
 struct InputState
 {
     ~InputState();
-    void updateMouseOffsets();
-    float32 getMouseScrollOffsetY();
+    void UpdateMouseOffsets();
+    float32 GetMouseScrollOffsetY();
 
     KeyboardEvent *keyboard;
     MouseEvent    *mouse;
@@ -40,13 +40,13 @@ struct FrameTime {
 struct Window {
     Window(uint32 width, uint32 height, const char *title);
     ~Window();
-    uint32 getWidth() { return m_width; };
-    uint32 getHeight() { return m_height; };
-    bool getVsync() { return m_vsync; };
-    void updateTime();
-    void pollEvents();
-    void swapBuffer();
-    void toggleVsync();
+    uint32 GetWidth() { return width; };
+    uint32 GetHeight() { return height; };
+    bool GetVsync() { return vsync; };
+    void UpdateTime();
+    void PollEvents();
+    void SwapBuffer();
+    void ToggleVsync();
     
     bool debug;
     GLFWwindow *context;
@@ -56,9 +56,9 @@ private:
     void terminate_window();
     void reset_time();
 
-    uint32 m_width, m_height;
-    bool m_vsync;
-    const char* m_title;
+    uint32 width, height;
+    bool vsync;
+    const char* title;
 };
 
 struct PlateformInfo

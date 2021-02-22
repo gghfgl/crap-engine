@@ -66,7 +66,7 @@ EditorGui::EditorGui(Window* window)
 
     this->activeWindow = false;
     this->window = window;
-    this->dialogMaxSize = ImVec2((float)window->getWidth(), (float)window->getHeight());
+    this->dialogMaxSize = ImVec2((float)window->GetWidth(), (float)window->GetHeight());
     this->dialogMinSize = ImVec2(500.f, 250.f);
 }
 
@@ -96,7 +96,7 @@ void EditorGui::draw()
 void EditorGui::performanceInfoOverlay(Renderer *renderer,
                                        PlateformInfo *info)
 {
-    ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 10));
+    ImGui::SetNextWindowPos(ImVec2((float32)(this->window->GetWidth() - 210), 10));
     //ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("perf_stats", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
     {
@@ -115,7 +115,7 @@ void EditorGui::performanceInfoOverlay(Renderer *renderer,
 
 void EditorGui::editorStatesOverlay(EditorState *es)
 {
-    ImGui::SetNextWindowPos(ImVec2((float32)(this->window->getWidth() - 210), 115));
+    ImGui::SetNextWindowPos(ImVec2((float32)(this->window->GetWidth() - 210), 115));
     //ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("global_state", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
     {
@@ -132,7 +132,7 @@ void EditorGui::editorStatesOverlay(EditorState *es)
 void EditorGui::makePanel(float32 posX, float32 posY)
 {
     ImGui::SetNextWindowPos(ImVec2(posX, posY));
-    ImGui::SetNextWindowSize(ImVec2(410, (float32)(this->window->getHeight() - 20)));
+    ImGui::SetNextWindowSize(ImVec2(410, (float32)(this->window->GetHeight() - 20)));
     ImGui::Begin("settings", nullptr, ImGuiWindowFlags_NoResize);
 }
 
@@ -152,7 +152,7 @@ void EditorGui::windowAndInputSettings(InputState *input)
     if (ImGui::CollapsingHeader("window & input", ImGuiTreeNodeFlags_DefaultOpen))
     {
         // Window and input data
-        ImGui::Text("SCREEN: %d x %d", this->window->getWidth(), this->window->getHeight());
+        ImGui::Text("SCREEN: %d x %d", this->window->GetWidth(), this->window->GetHeight());
         ImGui::Text("MousePos: %d x %d",
                     (uint32)input->mouse->posX,
                     (uint32)input->mouse->posY);
@@ -161,7 +161,7 @@ void EditorGui::windowAndInputSettings(InputState *input)
         ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
         // Vsync toggle
-        bool vsync = this->window->getVsync();
+        bool vsync = this->window->GetVsync();
 
         ImGui::PushStyleColor(ImGuiCol_Button,
                               vsync
@@ -179,7 +179,7 @@ void EditorGui::windowAndInputSettings(InputState *input)
         
         ImVec2 bSize(100, 20);
         if (ImGui::Button(vsync ? "on" : "off", bSize))
-            this->window->toggleVsync();
+            this->window->ToggleVsync();
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
@@ -194,28 +194,28 @@ void EditorGui::cameraSettings(Camera *camera)
     if (ImGui::CollapsingHeader("camera", ImGuiTreeNodeFlags_DefaultOpen))
     {
         // Camera data
-        ImGui::Text("yaw: %.2f", camera->m_yaw);
-        ImGui::Text("pitch: %.2f", camera->m_pitch);
-        ImGui::Text("speed: %.2f", camera->m_speed);
-        ImGui::Text("sensitivity: %.2f", camera->m_sensitivity);
-        ImGui::Text("fov: %.2f", camera->m_fov);
+        ImGui::Text("yaw: %.2f", camera->yaw);
+        ImGui::Text("pitch: %.2f", camera->pitch);
+        ImGui::Text("speed: %.2f", camera->speed);
+        ImGui::Text("sensitivity: %.2f", camera->sensitivity);
+        ImGui::Text("fov: %.2f", camera->fov);
         ImGui::Text("pos: %.2f, %.2f, %.2f",
-                    camera->m_position.x,
-                    camera->m_position.y,
-                    camera->m_position.z);
+                    camera->position.x,
+                    camera->position.y,
+                    camera->position.z);
         ImGui::Text("worldup: %.2f, %.2f, %.2f",
-                    camera->m_upVector.x,
-                    camera->m_upVector.y,
-                    camera->m_upVector.z);
+                    camera->upVector.x,
+                    camera->upVector.y,
+                    camera->upVector.z);
 
         // Reset bouton
         ImVec2 bSize(100, 20);
         if (ImGui::Button("Reset Default", bSize))
         {
-            camera->m_position = glm::vec3(0.0f, 5.0f, 10.0f);
-            camera->m_yaw = -90.0f;
-            camera->m_pitch = 0.0f;
-            camera->m_fov = 45.0f;
+            camera->position = glm::vec3(0.0f, 5.0f, 10.0f);
+            camera->yaw = -90.0f;
+            camera->pitch = 0.0f;
+            camera->fov = 45.0f;
             camera->UpdatePositionFromAngle(0.0f, 0.0f);
         }
 
@@ -223,10 +223,10 @@ void EditorGui::cameraSettings(Camera *camera)
         ImGui::SameLine();
         if (ImGui::Button("Reset Up", bSize))
         {
-            camera->m_position = glm::vec3(0.0f, 30.0f, 0.0f);
-            camera->m_yaw = -90.0f;
-            camera->m_pitch = -90.0f;
-            camera->m_fov = 45.0f;
+            camera->position = glm::vec3(0.0f, 30.0f, 0.0f);
+            camera->yaw = -90.0f;
+            camera->pitch = -90.0f;
+            camera->fov = 45.0f;
             camera->UpdatePositionFromAngle(0.0f, 0.0f);
         }
 
@@ -333,7 +333,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
             std::time_t timestamp = std::time(nullptr);
 
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveGroundListInTextFormat", "Choose File", ".list", ".", "crap_grounds_"+std::to_string(timestamp));
         }
 
@@ -353,7 +353,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
         if (ImGui::Button("open##ground"))
         {
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenGroundListFromFile", "Choose File", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -426,7 +426,7 @@ void EditorGui::groundSettings(uint32 &currentGroundIndex,
                 if (ImGui::SmallButton("load"))
                 {
                     // Set middleish position for every nex windows
-                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+                    ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadGroundModel###"+IDToString, "Choose File", ".obj", ".");
                     igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".obj", ImVec4(1,1,0, 0.9));
                 }
@@ -585,7 +585,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
             std::time_t timestamp = std::time(nullptr);
 
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveSkyboxListInTextFormat", "Choose File###skybox", ".list", ".", "crap_skyboxes_"+std::to_string(timestamp));
         }
 
@@ -605,7 +605,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
         if (ImGui::Button("open##skybox"))
         {
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenSkyboxListFromFile", "Choose File###skybox", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -663,7 +663,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                 if (ImGui::SmallButton("load"))
                 {
                     // Set middleish position for every nex windows
-                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+                    ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadSkyboxModel###"+IDToString, "Choose File###skybox", ".jpg", ".");
                 }
 
@@ -672,7 +672,7 @@ void EditorGui::skyboxSettings(uint32 &currentSkyboxIndex,
                     if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
                     {
                         std::string filePathName = igfd::ImGuiFileDialog::Instance()->GetCurrentPath();
-                        it->second->loadCubeMapTextureFromFile(filePathName);
+                        it->second->LoadCubeMapTextureFromFile(filePathName);
                     }
 
                     igfd::ImGuiFileDialog::Instance()->CloseDialog("LoadSkyboxModel###"+IDToString);
@@ -813,7 +813,7 @@ void EditorGui::moduleSettings(std::map<uint32, Module*> *selectedModules,
             std::time_t timestamp = std::time(nullptr);
 
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("SaveModuleListInTextFormat", "Choose File", ".list", ".", "crap_modules_"+std::to_string(timestamp));
         }
 
@@ -833,7 +833,7 @@ void EditorGui::moduleSettings(std::map<uint32, Module*> *selectedModules,
         if (ImGui::Button("open##module"))
         {
             // Set middleish position for every nex windows
-            ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+            ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
             igfd::ImGuiFileDialog::Instance()->OpenDialog("OpenModuleListFromFile", "Choose File", ".list", ".");
             igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".list", ImVec4(0,1,0, 0.9));
         }
@@ -925,7 +925,7 @@ void EditorGui::moduleSettings(std::map<uint32, Module*> *selectedModules,
                 if (ImGui::SmallButton("load"))
                 {
                     // Set middleish position for every nex windows
-                    ImGui::SetNextWindowPos(ImVec2(this->window->getWidth() / 2.5, this->window->getHeight() / 2.5));
+                    ImGui::SetNextWindowPos(ImVec2(this->window->GetWidth() / 2.5, this->window->GetHeight() / 2.5));
                     igfd::ImGuiFileDialog::Instance()->OpenDialog("LoadModuleModel###"+IDToString, "Choose File", ".obj", ".");
                     igfd::ImGuiFileDialog::Instance()->SetExtentionInfos(".obj", ImVec4(1,1,0, 0.9));
                 }

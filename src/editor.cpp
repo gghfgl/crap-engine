@@ -18,7 +18,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         glm::vec3(0.0f, 1.0f, 0.0f),   // worldUp
         45.0f,                         // fov
         0.0f,                          // pitch
-        (float32)Window->getWidth() / (float32)Window->getHeight(), // aspect
+        (float32)Window->GetWidth() / (float32)Window->GetHeight(), // aspect
         0.1f, 100.0f);                 // near plane & far plane
 
     // Init renderer
@@ -29,7 +29,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
 
     // Compile and cache shaders
     ShaderCache *sCache = new ShaderCache();
-    int32 error = sCache->compileShadersFromDirectory("./shaders", camera->m_projectionMatrix);
+    int32 error = sCache->CompileShadersFromDirectory("./shaders", camera->projectionMatrix);
     if (error != 0)
     {
         Log::error("EXITCODE:111 Failed to compile shaders");
@@ -85,15 +85,15 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
     // =================================================
 
     // Prepare static data rendering
-    renderer->prepareOriginDebug(MeshOriginDebug);
-    renderer->prepareReferenceGridSubData(MeshReferenceGrid, g_ReferenceGridResolution);
+    renderer->PrepareOriginDebug(MeshOriginDebug);
+    renderer->PrepareReferenceGridSubData(MeshReferenceGrid, g_ReferenceGridResolution);
 
     // =============================
 
     while (GlobalState->currentMode == EDITOR_MODE)
     {
-        Window->updateTime();
-        Window->pollEvents();
+        Window->UpdateTime();
+        Window->PollEvents();
 
         /********************************************************
          *                                                      *
@@ -124,7 +124,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
 
             if (Input->mouse->scrollOffsetY != 0.0f)
             {
-                if (Input->getMouseScrollOffsetY() > 0)
+                if (Input->GetMouseScrollOffsetY() > 0)
                     camera->UpdatePositionFromDirection(CAMERA_FORWARD, Window->time->deltaTime, 10.0f);
                 else
                     camera->UpdatePositionFromDirection(CAMERA_BACKWARD, Window->time->deltaTime, 10.0f);
@@ -143,7 +143,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
 
             if (!gui.activeWindow && !es.selectedModuleIndex)
             {
-                Input->updateMouseOffsets();
+                Input->UpdateMouseOffsets();
                 camera->UpdatePositionFromAngle(Input->mouse->offsetX, Input->mouse->offsetY);
             }
         }
@@ -159,10 +159,10 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         // compute ray world from mouse
         glm::vec3 rayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
                                                     (float32)Input->mouse->posY,
-                                                    Window->getWidth(),
-                                                    Window->getHeight(),
-                                                    camera->m_projectionMatrix,
-                                                    camera->m_viewMatrix);
+                                                    Window->GetWidth(),
+                                                    Window->GetHeight(),
+                                                    camera->projectionMatrix,
+                                                    camera->viewMatrix);
 
         // mouse ray intersection with modules (OBB)
         if (!Input->mouse->leftButton)
@@ -184,7 +184,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
                             float32(it->second->entity->scale),
                             it->second->entity->position.z - float32(it->second->entity->scale) / 2);
 
-                        if (TestRayOBBIntersection(camera->m_position,
+                        if (RayOBBIntersection(camera->position,
                                                    rayWorld,
                                                    AABBmin,
                                                    AABBmax,
@@ -202,14 +202,14 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         }
           
         glm::vec3 pIntersection = glm::vec3(0.0f);
-        if (!RayPlaneIntersection(camera->m_position,
+        if (!RayPlaneIntersection(camera->position,
                                   rayWorld, glm::vec3(0.0f),
                                   glm::vec3(0.0f, 1.0f, 0.0f),
                                   &pIntersection))
             pIntersection = glm::vec3(0.0f);
 
         // disable lookAt
-        camera->SetCameraView(camera->m_position, camera->m_position, camera->m_worldUp);
+        camera->SetCameraView(camera->position, camera->position, camera->worldUp);
 
 
         /********************************************************
@@ -218,22 +218,22 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
          *                                                      *
          ********************************************************/
 
-        renderer->resetStats();
-        renderer->newContext();
-        glm::mat4 viewMatrix = camera->m_viewMatrix;
+        renderer->ResetStats();
+        renderer->NewContext();
+        glm::mat4 viewMatrix = camera->viewMatrix;
 
-        Shader *colorShader = sCache->getShader("color");
-        colorShader->useProgram();
-        colorShader->setUniform4fv("view", viewMatrix);
-        colorShader->setUniform4fv("model", glm::mat4(1.0f));
+        Shader *colorShader = sCache->GetShader("color");
+        colorShader->UseProgram();
+        colorShader->SetUniform4fv("view", viewMatrix);
+        colorShader->SetUniform4fv("model", glm::mat4(1.0f));
 
         // Draw ReferenceGrid
-        colorShader->setUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
-        renderer->drawLines(MeshReferenceGrid, 1.0f);
+        colorShader->SetUniform4f("color", glm::vec4(0.360f, 0.360f, 0.360f, 1.0f));
+        renderer->DrawLines(MeshReferenceGrid, 1.0f);
 
         // Draw DebugOrigin
-        colorShader->setUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        renderer->drawLines(MeshOriginDebug, 2.0f);
+        colorShader->SetUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        renderer->DrawLines(MeshOriginDebug, 2.0f);
 
         // Draw selected Ground
         if (es.drawFilter == ENVIRONMENT_FILTER && es.currentGroundIndex != 0)
@@ -241,20 +241,20 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
             if (Grounds->find(es.currentGroundIndex)->second->entity->model != nullptr)
             {
                 Ground *selectedGround = Grounds->find(es.currentGroundIndex)->second;
-                if (selectedGround->diffResolutionBuffer())
+                if (selectedGround->DiffResolutionBuffer())
                 {
-                    selectedGround->clearInstance();
-                    selectedGround->updateModelMatrices();
-                    selectedGround->instanceBufferID = renderer->prepareInstance(selectedGround->entity->model,
+                    selectedGround->ClearInstance();
+                    selectedGround->UpdateModelMatrices();
+                    selectedGround->instanceBufferID = renderer->PrepareInstance(selectedGround->entity->model,
                                                                                  selectedGround->modelMatrices,
                                                                                  selectedGround->resolution * selectedGround->resolution);
                 }
 
-                Shader *instancedShader = sCache->getShader("instanced");
-                instancedShader->useProgram();
-                instancedShader->setUniform4fv("view", viewMatrix);
-                instancedShader->setUniform4fv("model", glm::mat4(1.0f));
-                renderer->drawInstanceModel(selectedGround->entity->model,
+                Shader *instancedShader = sCache->GetShader("instanced");
+                instancedShader->UseProgram();
+                instancedShader->SetUniform4fv("view", viewMatrix);
+                instancedShader->SetUniform4fv("model", glm::mat4(1.0f));
+                renderer->DrawInstanceModel(selectedGround->entity->model,
                                             instancedShader,
                                             selectedGround->resolution * selectedGround->resolution);
             }
@@ -267,10 +267,10 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
             {
                 if (it->second->entity->model != nullptr)
                 {
-                    Shader *defaultShader = sCache->getShader("default");
-                    defaultShader->useProgram();
-                    defaultShader->setUniform4fv("view", viewMatrix);
-                    defaultShader->setUniform4fv("model", glm::mat4(1.0f));
+                    Shader *defaultShader = sCache->GetShader("default");
+                    defaultShader->UseProgram();
+                    defaultShader->SetUniform4fv("view", viewMatrix);
+                    defaultShader->SetUniform4fv("model", glm::mat4(1.0f));
 
                     bool isSelected = false;
                     if (es.hoveredModule == it->first || es.selectedModuleIndex == it->first)
@@ -286,21 +286,21 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
                                                             it->second->entity->position.z));
                     model = glm::scale(model, glm::vec3(it->second->entity->scale));
                     model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
-                    defaultShader->setUniform4fv("model", model);
-                    renderer->drawModel(it->second->entity->model, defaultShader);
+                    defaultShader->SetUniform4fv("model", model);
+                    renderer->DrawModel(it->second->entity->model, defaultShader);
 
                     if (isSelected)
                     {
-                        Shader *outlineShader = sCache->getShader("outline");
-                        outlineShader->useProgram();
-                        outlineShader->setUniform4fv("view", viewMatrix);
-                        outlineShader->setUniform4fv("model", glm::mat4(1.0f));
+                        Shader *outlineShader = sCache->GetShader("outline");
+                        outlineShader->UseProgram();
+                        outlineShader->SetUniform4fv("view", viewMatrix);
+                        outlineShader->SetUniform4fv("model", glm::mat4(1.0f));
 
                         float32 scaleModifier = (float32(it->second->entity->scale) + 0.1f) / it->second->entity->scale;
                         model = glm::scale(model, glm::vec3(scaleModifier));
-                        outlineShader->setUniform4fv("model", model);
+                        outlineShader->SetUniform4fv("model", model);
 
-                        renderer->drawModelOutline(it->second->entity->model, outlineShader);
+                        renderer->DrawModelOutline(it->second->entity->model, outlineShader);
                     }
                 }
             }
@@ -311,10 +311,10 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         {
             if (Skyboxes->find(es.currentSkyboxIndex)->second->directory.length() > 0)
             {
-                Shader *skyboxShader = sCache->getShader("skybox");
-                skyboxShader->useProgram();
-                skyboxShader->setUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
-                renderer->drawSkybox(Skyboxes->find(es.currentSkyboxIndex)->second);
+                Shader *skyboxShader = sCache->GetShader("skybox");
+                skyboxShader->UseProgram();
+                skyboxShader->SetUniform4fv("view", glm::mat4(glm::mat3(viewMatrix))); // remove translation from the view matrix
+                renderer->DrawSkybox(Skyboxes->find(es.currentSkyboxIndex)->second);
             }
         }
 
@@ -337,7 +337,7 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
         gui.draw();
 
         // Swap buffer
-        Window->swapBuffer();
+        Window->SwapBuffer();
     }
 
     /********************************************************

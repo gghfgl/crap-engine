@@ -65,7 +65,7 @@ InputState::~InputState()
     delete this->mouse;
 }
 
-void InputState::updateMouseOffsets()
+void InputState::UpdateMouseOffsets()
 {
     if (this->mouse->leftButtonFirstClick)
     {
@@ -81,7 +81,7 @@ void InputState::updateMouseOffsets()
     this->mouse->lastY = this->mouse->posY;
 }
 
-float32 InputState::getMouseScrollOffsetY()
+float32 InputState::GetMouseScrollOffsetY()
 {
     float32 rValue = (float32)this->mouse->scrollOffsetY;
     this->mouse->scrollOffsetY = 0.0f;
@@ -133,10 +133,10 @@ Window::Window(uint32 width, uint32 height, const char *title)
     // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(debug_message_callback, NULL); // TODO: on the fly setting
 
-    this->m_width = width;
-    this->m_height = height;
-    this->m_title = title;
-    this->m_vsync = true;
+    this->width = width;
+    this->height = height;
+    this->title = title;
+    this->vsync = true;
     this->debug = false;
     this->context = window;
     this->time = new FrameTime;
@@ -150,24 +150,24 @@ Window::~Window()
     delete this->time;
 }
 
-void Window::toggleVsync()
+void Window::ToggleVsync()
 {
-    this->m_vsync = !this->m_vsync;
-    glfwSwapInterval(this->m_vsync);
+    this->vsync = !this->vsync;
+    glfwSwapInterval(this->vsync);
 }
 
-void Window::swapBuffer()
+void Window::SwapBuffer()
 {
     glfwSwapBuffers(this->context);
     glFinish();
 }
 
-void Window::pollEvents()
+void Window::PollEvents()
 {
     glfwPollEvents();
 }
 
-void Window::updateTime()
+void Window::UpdateTime()
 {
     float currentFrame = (float32)glfwGetTime();
     this->time->deltaTime = currentFrame - this->time->lastFrame;

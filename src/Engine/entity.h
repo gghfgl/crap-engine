@@ -10,59 +10,6 @@ enum EntityDirection
     ENTITY_DOWN
 };
 
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texCoords;
-    glm::vec3 tangent;
-    glm::vec3 bitangent;
-};
-
-struct Texture
-{
-    uint32 ID;
-    std::string type;
-    std::string path;
-};
-
-struct Mesh
-{
-    Mesh(std::vector<Vertex> vertices, std::vector<uint32> indices, std::vector<Texture> textures);
-    //Mesh(float32 margin, float32 radius, uint32 stacks, uint32 slices);
-    ~Mesh();
-    
-    uint32 VAO;
-    uint32 VBO;
-    uint32 IBO;
-
-    std::vector<Vertex> Vertices;
-    std::vector<uint32> Indices;
-    std::vector<Texture> Textures;
-
-private:
-    void allocate_mesh();
-};
-
-struct Model
-{
-    Model(std::string const &path);
-    ~Model();
-
-    std::vector<Mesh*> Meshes;
-    std::vector<Texture> TexturesLoadedCache;
-
-    std::string objFilename;
-    std::string directory;
-    bool gammaCorrection;
-
-private:
-    void process_node(aiNode *node, const aiScene *scene);
-    Mesh* process_mesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<Texture> load_material_textures(aiMaterial *mat, aiTextureType type, std::string typeName);
-    uint32 load_texture_from_file(const char *path, const std::string &directory);
-};
-
 struct Entity
 {
     ~Entity();
@@ -73,7 +20,7 @@ struct Entity
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     int scale = 1;
     float32 rotate = 0.0f; // degres
-    float32 m_speed = 30.0f;
+    float32 speed = 30.0f;
 };
 
 // ======================================
@@ -84,9 +31,9 @@ struct Ground
 {
     Ground(const char* name, std::string const &modelFilePath, uint32 resolution);
     ~Ground();
-    void updateModelMatrices();
-    void clearInstance();
-    bool diffResolutionBuffer();
+    void UpdateModelMatrices();
+    void ClearInstance();
+    bool DiffResolutionBuffer();
     
     Entity *entity;
     uint32 resolution; // default size
@@ -109,7 +56,7 @@ struct Skybox
 {
     Skybox(const char* name, std::string directoryPath);
     ~Skybox();
-    void loadCubeMapTextureFromFile(std::string directoryPath);
+    void LoadCubeMapTextureFromFile(std::string directoryPath);
 
     uint32 VAO;
     uint32 VBO;

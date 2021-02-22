@@ -19,7 +19,7 @@ glm::vec3 MouseRayDirectionWorld(float32 mouseX,float32 mouseY,
     return normalize(rayWorld);
 }
 
-bool TestRaySphereIntersection(glm::vec3 rayOriginWorld,
+bool RaySphereIntersection(glm::vec3 rayOriginWorld,
 						   glm::vec3 rayDirectionWorld,
 						   glm::vec3 sphereCenterWorld,
 						   float32 sphereRadius,
@@ -106,7 +106,7 @@ bool RayPlaneIntersection(glm::vec3 rayOriginWorld,
 }
 
 // Test Ray vs Oriented bounding box
-bool TestRayOBBIntersection(glm::vec3 ray_origin,         // Ray origin, in world space
+bool RayOBBIntersection(glm::vec3 ray_origin,         // Ray origin, in world space
                             glm::vec3 ray_direction,      // Ray direction (NOT target position!), in world space. Must be normalize()'d.
                             glm::vec3 aabb_min,           // Minimum X,Y,Z coords of the mesh when not transformed at all.
                             glm::vec3 aabb_max,           // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.

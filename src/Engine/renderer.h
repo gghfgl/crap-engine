@@ -10,22 +10,22 @@ struct Renderer
 {
     Renderer();
     ~Renderer();
-    void newContext();
-    void resetStats();
-    void toggleWireframe();
-    uint32 prepareInstance(Model *model, glm::mat4 *modelMatrices, uint32 count);
-    void drawLines(Mesh *mesh, float32 width);
-    void drawMesh(Mesh *mesh, Shader *shader);
-    void drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count);
-    void drawModel(Model *model, Shader *shader);
-    void drawModelOutline(Model *model, Shader *shader);
-    void drawInstanceModel(Model *model, Shader *shader, uint32 count);
-    void drawSkybox(Skybox *skybox);
+    void NewContext();
+    void ResetStats();
+    void ToggleWireframe();
+    uint32 PrepareInstance(Model *model, glm::mat4 *modelMatrices, uint32 count);
+    void DrawLines(Mesh *mesh, float32 width);
+    void DrawMesh(Mesh *mesh, Shader *shader);
+    void DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count);
+    void DrawModel(Model *model, Shader *shader);
+    void DrawModelOutline(Model *model, Shader *shader);
+    void DrawInstanceModel(Model *model, Shader *shader, uint32 count);
+    void DrawSkybox(Skybox *skybox);
 
     // TODO: meh
-    void prepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction);
-    void prepareReferenceGridSubData(Mesh *mesh, uint32 resolution);
-    void prepareOriginDebug(Mesh *mesh);
+    void PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction);
+    void PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution);
+    void PrepareOriginDebug(Mesh *mesh);
 
     
     bool wireframe;

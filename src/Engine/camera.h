@@ -18,26 +18,26 @@ struct Camera {
     void UpdateArcballFromAngle(float32 xoffset, float32 yoffset, bool constrainPitch);
     void UpdateProjectionFromFOV(float32 yoffset);
 
-    glm::vec3 m_position;
-    glm::vec3 m_lookAt;
-    glm::vec3 m_worldUp;
+    glm::vec3 position;
+    glm::vec3 lookAt;
+    glm::vec3 worldUp;
     
-    glm::vec3 m_upVector;
-    glm::vec3 m_rightVector;
-    glm::vec3 m_frontVector;
+    glm::vec3 upVector;
+    glm::vec3 rightVector;
+    glm::vec3 frontVector;
 
-    glm::mat4 m_projectionMatrix;
-    glm::mat4 m_viewMatrix;
+    glm::mat4 projectionMatrix;
+    glm::mat4 viewMatrix;
 
-    float32 m_yaw = -90.0f;
-    float32 m_pitch = 0.0f;
-    float32 m_speed = 10.0f;
-    float32 m_sensitivity = 0.1f;
+    float32 yaw = -90.0f;
+    float32 pitch = 0.0f;
+    float32 speed = 10.0f;
+    float32 sensitivity = 0.1f;
 
-    float32 m_fov = 45.0f;
-    float32 m_aspect;
-    float32 m_nearPlane = 1.0f;
-    float32 m_farPlane = 100.0f;
+    float32 fov = 45.0f;
+    float32 aspect;
+    float32 nearPlane = 1.0f;
+    float32 farPlane = 100.0f;
 
 private:
     void update_view_matrix();

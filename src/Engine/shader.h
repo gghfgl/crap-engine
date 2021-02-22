@@ -15,21 +15,21 @@ enum ShaderType
 
 struct Shader {
     ~Shader();
-    void useProgram();
-    void compileSources(const char* vertexSource,
+    void UseProgram();
+    void CompileSources(const char* vertexSource,
                          const char* fragmentSource,
                          const char* geometrySource);
 
-    void setUniform1f(const char* name, float32 value);
-    void setUniform1i(const char* name, int32 value);
-    void setUniform1ui(const char* name, uint32 value);
-    void setUniform2f(const char* name, float32 x, float32 y);
-    void setUniform2f(const char* name, const glm::vec2 &value);
-    void setUniform3f(const char* name, float32 x, float32 y, float32 z);
-    void setUniform3f(const char* name, const glm::vec3 &value);
-    void setUniform4f(const char* name, float32 x, float32 y, float32 z, float32 w);
-    void setUniform4f(const char* name, const glm::vec4 &value);
-    void setUniform4fv(const char* name, const glm::mat4 &matrix);
+    void SetUniform1f(const char* name, float32 value);
+    void SetUniform1i(const char* name, int32 value);
+    void SetUniform1ui(const char* name, uint32 value);
+    void SetUniform2f(const char* name, float32 x, float32 y);
+    void SetUniform2f(const char* name, const glm::vec2 &value);
+    void SetUniform3f(const char* name, float32 x, float32 y, float32 z);
+    void SetUniform3f(const char* name, const glm::vec3 &value);
+    void SetUniform4f(const char* name, float32 x, float32 y, float32 z, float32 w);
+    void SetUniform4f(const char* name, const glm::vec4 &value);
+    void SetUniform4fv(const char* name, const glm::mat4 &matrix);
     
     uint32 ID;
     std::unordered_map<std::string, uint32> UniformLocations;
@@ -42,8 +42,8 @@ private:
 struct ShaderCache
 {
     ~ShaderCache();
-    int32 compileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix);
-    Shader* getShader(const std::string& name);
+    int32 CompileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix);
+    Shader* GetShader(const std::string& name);
     
     std::map<std::string, Shader*> Shaders;
 

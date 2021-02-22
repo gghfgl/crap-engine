@@ -1,16 +1,29 @@
+GOAL
+
+* 3D top down
+* model animation
+* nice light system
+* in game GUI
+* environment collision
+* weapon shooting stuff
+* netcode multiplayer
+* base hideout
+* traders / faction / reputation
+
 TODO
 
-- @all: rename func exported unexported convention
+- @all: rename func exported unexported convention and member field
 
-- @game: shift sprint player
+- @engine: load a player model and a tree model?
+- @engine: implement animation system
+- @engine: implement physics collisions
 - @game: show plateform infos string rendering
+- @game: add simple GUI to the game
 - @game: draw circle around player?
 - @game: entity system with atachable component (health, dynamic, etc ...)
 
-
 - @engine: improve coordinate system for positionning objects
 - @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
-- @engine: improve module struct with necessary fields for gameplay mechanics
 - @engine: make better rendering API. Less verbose?
 - @engine: implement beautyfull light PBR + effects
 - @engine: make the engine a static lib or something?

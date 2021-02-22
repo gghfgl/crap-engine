@@ -18,7 +18,7 @@ Renderer::~Renderer()
     // TODO: delete MemPool
 }
 
-void Renderer::newContext()
+void Renderer::NewContext()
 {
     glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -27,21 +27,21 @@ void Renderer::newContext()
     glStencilMask(0x00);
 }
 
-void Renderer::resetStats()
+void Renderer::ResetStats()
 {
     this->stats.drawCalls = 0;
     this->stats.vertexCount = 0;
 }
 
 // TODO: use geometry shader to make wireframe effect on individual object
-void Renderer::toggleWireframe()
+void Renderer::ToggleWireframe()
 {
     this->wireframe = !this->wireframe;
 
     glPolygonMode(GL_FRONT_AND_BACK, (this->wireframe ? GL_FILL : GL_LINE));
 }
 
-uint32 Renderer::prepareInstance(Model *model,
+uint32 Renderer::PrepareInstance(Model *model,
                                  glm::mat4 *modelMatrices,
                                  uint32 count)
 {
@@ -85,7 +85,7 @@ uint32 Renderer::prepareInstance(Model *model,
     return buffer;
 }
 
-void Renderer::drawLines(Mesh *mesh, float32 width)
+void Renderer::DrawLines(Mesh *mesh, float32 width)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
@@ -95,7 +95,7 @@ void Renderer::drawLines(Mesh *mesh, float32 width)
     this->stats.drawCalls++;
 }
 
-void Renderer::drawMesh(Mesh *mesh, Shader *shader)
+void Renderer::DrawMesh(Mesh *mesh, Shader *shader)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -117,7 +117,7 @@ void Renderer::drawMesh(Mesh *mesh, Shader *shader)
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        shader->setUniform1i((name + number).c_str(), i);
+        shader->SetUniform1i((name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -129,7 +129,7 @@ void Renderer::drawMesh(Mesh *mesh, Shader *shader)
     this->stats.drawCalls++;
 }
     
-void Renderer::drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
+void Renderer::DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -151,7 +151,7 @@ void Renderer::drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
         else if (name == "texture_height")
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
-        shader->setUniform1i((name + number).c_str(), i);
+        shader->SetUniform1i((name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
     }
 
@@ -167,40 +167,40 @@ void Renderer::drawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
     this->stats.drawCalls++;
 }
 
-void Renderer::drawModel(Model *model, Shader *shader)
+void Renderer::DrawModel(Model *model, Shader *shader)
 {
     // write to the stencil buffer
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
     glStencilMask(0xFF);
 
     for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->drawMesh(model->Meshes[i], shader);
+        this->DrawMesh(model->Meshes[i], shader);
 }
 
-void Renderer::drawModelOutline(Model *model, Shader *shader)
+void Renderer::DrawModelOutline(Model *model, Shader *shader)
 {
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilMask(0x00);
     //glDisable(GL_DEPTH_TEST);
 
     for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->drawMesh(model->Meshes[i], shader);
+        this->DrawMesh(model->Meshes[i], shader);
 
     glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     //glEnable(GL_DEPTH_TEST);
 }
 
-void Renderer::drawInstanceModel(Model *model, Shader *shader, uint32 count)
+void Renderer::DrawInstanceModel(Model *model, Shader *shader, uint32 count)
 {
     // set mask to 0x00 to not write to the stencil buffer
     glStencilMask(0x00);
 
     for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->drawInstanceMesh(model->Meshes[i], shader, count);
+        this->DrawInstanceMesh(model->Meshes[i], shader, count);
 }
     
-void Renderer::drawSkybox(Skybox *skybox)
+void Renderer::DrawSkybox(Skybox *skybox)
 {
     // set mask to 0x00 to not write to the stencil buffer
     //glStencilMask(0x00);
@@ -217,7 +217,7 @@ void Renderer::drawSkybox(Skybox *skybox)
     this->stats.drawCalls++;
 }
 
-void Renderer::prepareOriginDebug(Mesh *mesh)
+void Renderer::PrepareOriginDebug(Mesh *mesh)
 {    
     mesh->Vertices.clear();
 
@@ -249,7 +249,7 @@ void Renderer::prepareOriginDebug(Mesh *mesh)
                     &mesh->Vertices[0]);
 }
 
-void Renderer::prepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
+void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
 {
     uint32 vCount = resolution * 4 + 4;			   // 44
     float32 b = (float32)resolution / 2.0f + 1.0f; // 6
@@ -300,7 +300,7 @@ void Renderer::prepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
                     &mesh->Vertices[0]);
 }
 
-void Renderer::prepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
+void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
     //glm::vec3 target = origin + (direction * 1.0f);
 
