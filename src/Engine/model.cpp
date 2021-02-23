@@ -141,7 +141,6 @@ Model::Model(std::string const &path)
                                              | aiProcess_JoinIdenticalVertices
                                              | aiProcess_CalcTangentSpace
                                              | aiProcess_GenSmoothNormals
-                                             | aiProcess_Triangulate
                                              | aiProcess_FixInfacingNormals
                                              | aiProcess_FindInvalidData
                                              | aiProcess_ValidateDataStructure
