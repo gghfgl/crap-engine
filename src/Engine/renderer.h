@@ -21,6 +21,7 @@ struct Renderer
     void DrawModelOutline(Model *model, Shader *shader);
     void DrawInstanceModel(Model *model, Shader *shader, uint32 count);
     void DrawSkybox(Skybox *skybox);
+    void DrawBoundingBox(BoundingBox *boudingBox);
 
     // TODO: meh
     void PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction);

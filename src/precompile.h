@@ -10,3 +10,5 @@
 #include "../../dep/include/IMGUI/imgui_widgets.cpp"
 
 #include "../../dep/include/igfd/ImGuiFileDialog.cpp"
+
+#include "FONTAWESOME/IconsFontAwesome5.h"

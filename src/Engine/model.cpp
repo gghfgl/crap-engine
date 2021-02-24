@@ -164,6 +164,8 @@ Model::Model(std::string const &path)
     Log::info("\tload model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
+    // TODO: rework this crap
+    this->boundingBox = new BoundingBox(this->maxComponents.x, this->maxComponents.y, this->maxComponents.z);
     Log::info("=== END: New Model\n");
 }
 
@@ -203,6 +205,15 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene)
     // Vertices
     for (uint32 i = 0; i < mesh->mNumVertices; i++)
     {
+        // TODO: rework this crap
+        // Tracking max values for bounding box
+        if (mesh->mVertices[i].x > this->maxComponents.x)
+            this->maxComponents.x = mesh->mVertices[i].x;
+        if (mesh->mVertices[i].y > this->maxComponents.y)
+            this->maxComponents.y = mesh->mVertices[i].y;
+        if (mesh->mVertices[i].z > this->maxComponents.z)
+            this->maxComponents.z = mesh->mVertices[i].z;
+
         Vertex vertex;
         glm::vec3 vector; 
 
@@ -357,4 +368,68 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
     stbi_image_free(data);
 
     return textureID;
+}
+
+BoundingBox::BoundingBox(float32 maxX, float32 maxY, float32 maxZ)
+{
+    float32 scaleX = maxX * 1.3;
+    float32 scaleY = maxY * 1.3;
+    float32 scaleZ = maxZ * 1.3;
+
+    float32 bbVertices[] = {
+        -scaleX,  scaleY, -scaleZ,
+        -scaleX, -scaleY, -scaleZ,
+        scaleX, -scaleY, -scaleZ,
+        scaleX, -scaleY, -scaleZ,
+        scaleX,  scaleY, -scaleZ,
+        -scaleX,  scaleY, -scaleZ,
+
+        -scaleX, -scaleY,  scaleZ,
+        -scaleX, -scaleY, -scaleZ,
+        -scaleX,  scaleY, -scaleZ,
+        -scaleX,  scaleY, -scaleZ,
+        -scaleX,  scaleY,  scaleZ,
+        -scaleX, -scaleY,  scaleZ,
+
+        scaleX, -scaleY, -scaleZ,
+        scaleX, -scaleY,  scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        scaleX,  scaleY, -scaleZ,
+        scaleX, -scaleY, -scaleZ,
+
+        -scaleX, -scaleY,  scaleZ,
+        -scaleX,  scaleY,  scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        scaleX, -scaleY,  scaleZ,
+        -scaleX, -scaleY,  scaleZ,
+
+        -scaleX,  scaleY, -scaleZ,
+        scaleX,  scaleY, -scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        scaleX,  scaleY,  scaleZ,
+        -scaleX,  scaleY,  scaleZ,
+        -scaleX,  scaleY, -scaleZ,
+
+        -scaleX, -scaleY, -scaleZ,
+        -scaleX, -scaleY,  scaleZ,
+        scaleX, -scaleY, -scaleZ,
+        scaleX, -scaleY, -scaleZ,
+        -scaleX, -scaleY,  scaleZ,
+        scaleX, -scaleY,  scaleZ
+    };
+
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(bbVertices), &bbVertices, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    this->VAO = VAO;
+    this->VBO = VBO;
 }

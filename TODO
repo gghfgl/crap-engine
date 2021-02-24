@@ -3,7 +3,7 @@ GOAL
 * 3D top down
 * model animation
 * nice light system
-* in game GUI
+* in game GUI simple GUI
 * environment collision
 * weapon shooting stuff
 * netcode multiplayer
@@ -12,33 +12,29 @@ GOAL
 
 TODO
 
-- @all: rename func exported unexported convention and member field
-
-- @engine: load a player model and a tree model?
-- @engine: implement animation system
-- @engine: implement physics collisions
-- @game: show plateform infos string rendering
-- @game: add simple GUI to the game
+- @game: ImGui admin interface
+- @game: toggle bounding box over model
+- @game: draw wireframe mode
+- @game: rework model position to fit the ground?
+- @game: cast mouse ray from the middle of the player?
 - @game: draw circle around player?
-- @game: entity system with atachable component (health, dynamic, etc ...)
 
+- @game: entity system with atachable component (health, dynamic, etc ...)
 - @engine: improve coordinate system for positionning objects
 - @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
 - @engine: make better rendering API. Less verbose?
 - @engine: implement beautyfull light PBR + effects
 - @engine: make the engine a static lib or something?
-- @engine: fix / improve texture management from assimp model
+- @engine: fix / improve texture management from assimp model?
 - @engine: assimp be carefull of texture path (need to update blender mtl file)
 - @engine: find something better when loading skybox faces (from a single file ideally) + hdr
 
 - @editor: gui switch perf to string rendering
 - @editor: loader progress bar at startup editor and loading files?
-- @editor: run game rendering scene from editor?
 
 - @editor/@game: improve logger system
 
-- @game: implement a internal console with simple cli
-- @game: display state of everything
+- @game: implement a internal console with simple cli instead of imGui admin GUI?
 
 REMEMBER
 

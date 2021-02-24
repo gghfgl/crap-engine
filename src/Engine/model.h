@@ -34,6 +34,15 @@ private:
     void allocate_mesh();
 };
 
+struct BoundingBox
+{
+    BoundingBox(float32 maxX, float32 maxY, float32 maxZ);
+    ~BoundingBox();
+    
+    uint32 VAO;
+    uint32 VBO;
+};
+
 struct Model
 {
     Model(std::string const &path);
@@ -41,6 +50,9 @@ struct Model
 
     std::vector<Mesh*> Meshes;
     std::vector<Texture> TexturesLoadedCache;
+
+    glm::vec3 maxComponents = glm::vec3(0.0f, 0.0f, 0.0f);
+    BoundingBox *boundingBox;
 
     std::string objFilename;
     std::string directory;

@@ -156,7 +156,7 @@ Skybox::Skybox(const char* name, std::string directoryPath)
     auto p = std::filesystem::proximate(directoryPath);
     std::string p_string{p.u8string()};
 
-    float skyboxVertices[] = {
+    float32 skyboxVertices[] = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f,
@@ -206,6 +206,7 @@ Skybox::Skybox(const char* name, std::string directoryPath)
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     

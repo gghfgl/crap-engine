@@ -20,7 +20,8 @@ struct Entity
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     int scale = 1;
     float32 rotate = 0.0f; // degres
-    float32 speed = 30.0f;
+
+    float32 speed = 30.0f; // TODO: should be an external component like "Dynamic"
 };
 
 // ======================================

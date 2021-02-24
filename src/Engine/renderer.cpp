@@ -217,6 +217,18 @@ void Renderer::DrawSkybox(Skybox *skybox)
     this->stats.drawCalls++;
 }
 
+void Renderer::DrawBoundingBox(BoundingBox *boundingBox)
+{
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+    glBindVertexArray(boundingBox->VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+
+    this->stats.drawCalls++;
+}
+
 void Renderer::PrepareOriginDebug(Mesh *mesh)
 {    
     mesh->Vertices.clear();

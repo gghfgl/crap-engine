@@ -1,7 +1,8 @@
 #include "global.h"
 #include "game.h"
+#include "game_gui.h"
 
-void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
+void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState *GlobalState)
 {
     // Init game state
     GameState gs;
@@ -13,12 +14,15 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         glm::vec3(0.0f, 1.0f, 0.0f),   // worldUp
         45.0f,                         // fov
         -60.0f,                        // pitch
-        (float32)Window->GetWidth() / (float32)Window->GetHeight(), // aspect
+        (float32)Window->GetWidth() / (float32)Window->GetHeight(), // aspectRatio
         gs.nearPlane, gs.farPlane);    // near plane & far plane
 
     // Init renderer
     Renderer *renderer = new Renderer();
 
+    // Init GUI
+    GameGui gui = GameGui(Window);
+    
     // Compile and cache shaders
     ShaderCache *sCache = new ShaderCache();
     int32 error = sCache->CompileShadersFromDirectory("./shaders", camera->projectionMatrix);
@@ -31,10 +35,11 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
     // =================================================
 
     // ReferenceGrid
-    std::vector<uint32> uEmpty;
+    std::vector<uint32> uEmpty; // TODO: init default in constructor?
     std::vector<Texture> tEmpty;
     std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
     Mesh *ReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
+    renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
 
     // Aim ray
     std::vector<Vertex> vRay(2, Vertex());
@@ -54,11 +59,6 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
     }
 
     // =================================================
-
-    // Prepare static data rendering
-    renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
-
-    // =============================
 
     while (GlobalState->currentMode == GAME_MODE)
     {
@@ -106,10 +106,6 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
          *                                                      *
          ********************************************************/
 
-        // Camera follow player
-        glm::vec3 behindPlayer = glm::vec3(testPlayer->entity->position.x, camera->position.y, testPlayer->entity->position.z + 20.0f);
-        camera->SetCameraView(behindPlayer, testPlayer->entity->position, camera->worldUp);
-
         // Mouse ray
         glm::vec3 mouseRayWorld = MouseRayDirectionWorld((float32)Input->mouse->posX,
                                                     (float32)Input->mouse->posY,
@@ -126,6 +122,10 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
                                   &mouseRayIntersection))
             mouseRayIntersection = glm::vec3(0.0f);
 
+        // Camera follow player
+        glm::vec3 behindPlayer = glm::vec3(testPlayer->entity->position.x, camera->position.y, testPlayer->entity->position.z + 20.0f);
+        camera->SetCameraView(behindPlayer, testPlayer->entity->position, camera->worldUp);
+
         // Player follow mouse pointer
         testPlayer->entity->UpdateRotationFollowVec(mouseRayIntersection, glm::vec2(Input->mouse->posX, Input->mouse->posY), gs.farPlane);
 
@@ -140,7 +140,7 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         renderer->NewContext();
         glm::mat4 viewMatrix = camera->viewMatrix;
 
-        // Draw reference grid
+        // Draw ReferenceGrid
         Shader *colorShader = sCache->GetShader("color");
         colorShader->UseProgram();
         colorShader->SetUniform4fv("view", viewMatrix);
@@ -149,12 +149,12 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         colorShader->SetUniform4f("color", glm::vec4(0.360f, 1.0f, 0.360f, 1.0f));
         renderer->DrawLines(ReferenceGrid, 1.0f);
         
-        // Draw mouse ray
+        // Draw AimPlayerRay
         renderer->PrepareRaySubData(AimPlayerRay, testPlayer->entity->position, mouseRayIntersection);
         colorShader->SetUniform4f("color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
         renderer->DrawLines(AimPlayerRay, 1.0f);
 
-        // Draw player
+        // Draw Player
         Shader *defaultShader = sCache->GetShader("default");
         defaultShader->UseProgram();
         defaultShader->SetUniform4fv("view", viewMatrix);
@@ -168,8 +168,19 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
         model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
         defaultShader->SetUniform4fv("model", model);
         renderer->DrawModel(testPlayer->entity->model, defaultShader);
+
+        // Player BoundingBox
+        if (gs.showBoundingBox)
+        {
+            colorShader->UseProgram();
+            colorShader->SetUniform4fv("view", viewMatrix);
+            colorShader->SetUniform4fv("model", model);
+            colorShader->SetUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+            renderer->DrawBoundingBox(testPlayer->entity->model->boundingBox);
+        }
         
-        // Draw modules
+        // TODO: not modules anymore
+        // Draw Modules
         for (auto it = Modules->begin(); it != Modules->cend(); it++)
         {
             if (it->second->entity->model != nullptr)
@@ -195,22 +206,26 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
                 defaultShader->SetUniform4fv("model", model);
                 renderer->DrawModel(it->second->entity->model, defaultShader);
 
-                // if (isSelected)
-                // {
-                //     Shader *outlineShader = sCache->getShader("outline");
-                //     outlineShader->UseProgram();
-                //     outlineShader->SetUniform4fv("view", viewMatrix);
-                //     outlineShader->SetUniform4fv("model", glm::mat4(1.0f));
-
-                //     float32 scaleModifier = (float32(it->second->entity->scale) + 0.1f) / it->second->entity->scale;
-                //     model = glm::scale(model, glm::vec3(scaleModifier));
-                //     outlineShader->SetUniform4fv("model", model);
-
-                //     renderer->DrawModelOutline(it->second->entity->model, outlineShader);
-                // }
+                // Module BoundingBox
+                if (gs.showBoundingBox)
+                {
+                    colorShader->UseProgram();
+                    colorShader->SetUniform4fv("view", viewMatrix);
+                    colorShader->SetUniform4fv("model", model);
+                    colorShader->SetUniform4f("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+                    renderer->DrawBoundingBox(it->second->entity->model->boundingBox);
+                }
             }
         }
 
+        // Draw GUI
+        gui.NewFrame();
+        gui.PerformanceInfoOverlay(renderer, Info); // TODO: switch to string rendering
+        gui.MakePanel(10.f, 10.f);
+        gui.GeneralSettings(&gs);
+        gui.EndPanel();
+        gui.Draw();
+        
         // Swap buffer
         Window->SwapBuffer();
     }

@@ -1,12 +1,5 @@
 #pragma once
 
-#include "IMGUI/imgui.h"
-#include "IMGUI/imgui_impl_glfw.h"
-#include "IMGUI/imgui_impl_opengl3.h"
-#include "igfd/ImGuiFileDialog.h"
-
-#include "FONTAWESOME/IconsFontAwesome5.h"
-
 struct EditorGui
 {
     EditorGui(Window *window);

@@ -20,7 +20,7 @@ int main(int, char**)
             RunEditor(plateform->window, plateform->input, plateform->info, &gs);
 
         if (gs.currentMode == GAME_MODE)
-            RunGame(plateform->window, plateform->input, &gs);
+            RunGame(plateform->window, plateform->input, plateform->info, &gs);
     }
 
     delete plateform;
