@@ -12,11 +12,11 @@ GOAL
 
 TODO
 
-- @game: ImGui admin interface
-- @game: toggle bounding box over model
-- @game: draw wireframe mode
+- @game: improve bounding box struct and init?
+- @game: toggle wireframe mode at renderer level
 - @game: rework model position to fit the ground?
 - @game: cast mouse ray from the middle of the player?
+- @all: clean TODO
 - @game: draw circle around player?
 
 - @game: entity system with atachable component (health, dynamic, etc ...)

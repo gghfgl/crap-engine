@@ -190,13 +190,6 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
                 defaultShader->SetUniform4fv("view", viewMatrix);
                 defaultShader->SetUniform4fv("model", glm::mat4(1.0f));
 
-                // bool isSelected = false;
-                // if (es.hoveredModule == it->first || es.selectedModuleIndex == it->first)
-                //     isSelected = true;
-
-                // if (es.dragModule == it->first)
-                //     it->second->entity->position = pIntersection;
-
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(it->second->entity->position.x,
                                                         it->second->entity->position.y + float32(it->second->entity->scale) / 2,
