@@ -41,14 +41,14 @@ void RunGame(Window *Window, InputState *Input, GlobalState *GlobalState)
     Mesh *AimPlayerRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Test Payer
-    Player *testPlayer = new Player("testPlayer", "./assets/models/terrain/untitled.obj", glm::vec3(0.0f));
+    Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
 
     // Modules environment
     std::map<uint32, Module*> *Modules = new std::map<uint32, Module*>;
-    error = OpenModuleListFromFile(defaultModuleList, Modules);
+    error = OpenModuleListFromFile("./assets/lists/crap_modules_1614124982.list", Modules);
     if (error != 0)
     {
-        Log::error("\terror while opening file: %s", defaultModuleList);
+        Log::error("\terror while opening file: %s", "./assets/lists/crap_modules_1614124982.list");
         GlobalState->currentMode = EXIT_MODE;
         return;
     }
