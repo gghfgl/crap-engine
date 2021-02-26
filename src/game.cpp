@@ -230,7 +230,11 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
      ********************************************************/
 
     delete ReferenceGrid;
+    delete testPlayer;
     delete AimPlayerRay;
+    for (auto it = Modules->begin(); it != Modules->end(); it++)
+        delete it->second;
+    delete Modules;
 
     delete sCache;
     delete renderer;

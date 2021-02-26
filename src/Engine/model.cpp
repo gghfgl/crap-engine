@@ -177,6 +177,8 @@ Model::~Model()
     for (auto& m : this->TexturesLoadedCache)
         glDeleteTextures(1, &m.ID);
     this->TexturesLoadedCache.clear();
+
+    delete this->boundingBox;
 }
 
 void Model::process_node(aiNode *node, const aiScene *scene)
@@ -429,4 +431,10 @@ BoundingBox::BoundingBox(glm::vec3 maxComponents)
 
     this->VAO = VAO;
     this->VBO = VBO;
+}
+
+BoundingBox::~BoundingBox()
+{
+    glDeleteVertexArrays(1, &this->VAO);
+    glDeleteBuffers(1, &this->VBO);
 }

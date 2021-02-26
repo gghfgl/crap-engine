@@ -145,7 +145,7 @@ Player::Player(const char* name, std::string const &modelFilePath, glm::vec3 pos
 
 Player::~Player()
 {
-    delete[] this->name;
+    //delete[] this->name;
     delete this->entity;
 }
 
