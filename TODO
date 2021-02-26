@@ -1,4 +1,4 @@
-GOAL
+### GOAL
 
 * 3D top down
 * model animation
@@ -10,10 +10,8 @@ GOAL
 * base hideout
 * traders / faction / reputation
 
-TODO
+### TODO
 
-- @game: improve bounding box struct and init?
-- @game: toggle wireframe mode at renderer level
 - @game: rework model position to fit the ground?
 - @game: cast mouse ray from the middle of the player?
 - @all: clean TODO
@@ -36,7 +34,7 @@ TODO
 
 - @game: implement a internal console with simple cli instead of imGui admin GUI?
 
-REMEMBER
+### REMEMBER
 
 - @engine: improve ray mouse collision with modules
   -> OBB (Oriented Bounding Box) collision ?

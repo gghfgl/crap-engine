@@ -164,8 +164,7 @@ Model::Model(std::string const &path)
     Log::info("\tload model from file: %s\n", this->objFilename.c_str());
 
     this->process_node(scene->mRootNode, scene);
-    // TODO: rework this crap
-    this->boundingBox = new BoundingBox(this->maxComponents.x, this->maxComponents.y, this->maxComponents.z);
+    this->boundingBox = new BoundingBox(this->maxComponents); // TODO: mehh
     Log::info("=== END: New Model\n");
 }
 
@@ -292,9 +291,7 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene)
     return new Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::load_material_textures(aiMaterial *mat,
-                                                   aiTextureType type,
-                                                   std::string typeName)
+std::vector<Texture> Model::load_material_textures(aiMaterial *mat, aiTextureType type, std::string typeName)
 {
     std::vector<Texture> Textures;
     for(uint32 i = 0; i < mat->GetTextureCount(type); i++)
@@ -370,11 +367,11 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
     return textureID;
 }
 
-BoundingBox::BoundingBox(float32 maxX, float32 maxY, float32 maxZ)
+BoundingBox::BoundingBox(glm::vec3 maxComponents)
 {
-    float32 scaleX = maxX * 1.3;
-    float32 scaleY = maxY * 1.3;
-    float32 scaleZ = maxZ * 1.3;
+    float32 scaleX = maxComponents.x * 1.3;
+    float32 scaleY = maxComponents.y * 1.3;
+    float32 scaleZ = maxComponents.z * 1.3;
 
     float32 bbVertices[] = {
         -scaleX,  scaleY, -scaleZ,

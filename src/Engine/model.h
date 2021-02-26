@@ -36,7 +36,7 @@ private:
 
 struct BoundingBox
 {
-    BoundingBox(float32 maxX, float32 maxY, float32 maxZ);
+    BoundingBox(glm::vec3 maxComponents);
     ~BoundingBox();
     
     uint32 VAO;

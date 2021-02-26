@@ -139,7 +139,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         renderer->ResetStats();
         renderer->NewContext();
         glm::mat4 viewMatrix = camera->viewMatrix;
-
+        
         // Draw ReferenceGrid
         Shader *colorShader = sCache->GetShader("color");
         colorShader->UseProgram();
@@ -162,7 +162,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(testPlayer->entity->position.x,
-                                                testPlayer->entity->position.y + float32(testPlayer->entity->scale) / 2,
+                                                testPlayer->entity->position.y,
                                                 testPlayer->entity->position.z));
         model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
         model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -192,7 +192,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
 
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(it->second->entity->position.x,
-                                                        it->second->entity->position.y + float32(it->second->entity->scale) / 2,
+                                                        it->second->entity->position.y,
                                                         it->second->entity->position.z));
                 model = glm::scale(model, glm::vec3(it->second->entity->scale));
                 model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));

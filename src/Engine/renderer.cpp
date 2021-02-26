@@ -263,11 +263,11 @@ void Renderer::PrepareOriginDebug(Mesh *mesh)
 
 void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
 {
-    uint32 vCount = resolution * 4 + 4;			   // 44
+    uint32 vCount = resolution * 4 + 4;			 // 44
     float32 b = (float32)resolution / 2.0f + 1.0f; // 6
-    float32 a = -b;								   // -6
+    float32 a = -b;							 // -6
     float32 xPos = -((float32)resolution / 2.0f);  // -5
-    float32 zPos = xPos;						   // -5
+    float32 zPos = xPos;						 // -5
 
     mesh->Vertices.clear();
     uint32 i = 0;
@@ -315,7 +315,6 @@ void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
 void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
     //glm::vec3 target = origin + (direction * 1.0f);
-
     glm::vec3 target = direction * 1.0f;
 
     mesh->Vertices.clear();
@@ -326,10 +325,6 @@ void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 directi
     mesh->Vertices.push_back(v);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-    // glBufferSubData(GL_ARRAY_BUFFER,
-    //                 0,
-    //                 mesh->Vertices.size() * sizeof(Vertex),
-    //                 &mesh->Vertices[0]);
     glBufferData(GL_ARRAY_BUFFER,
                  mesh->Vertices.size() * sizeof(Vertex),
                  &mesh->Vertices[0],

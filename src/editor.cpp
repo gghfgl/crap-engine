@@ -282,7 +282,8 @@ void RunEditor(Window *Window, InputState *Input, PlateformInfo *Info, GlobalSta
                     // Model
                     glm::mat4 model = glm::mat4(1.0f);
                     model = glm::translate(model, glm::vec3(it->second->entity->position.x,
-                                                            it->second->entity->position.y + float32(it->second->entity->scale) / 2,
+                                                            //it->second->entity->position.y + float32(it->second->entity->scale) / 2,
+                                                            it->second->entity->position.y,
                                                             it->second->entity->position.z));
                     model = glm::scale(model, glm::vec3(it->second->entity->scale));
                     model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
