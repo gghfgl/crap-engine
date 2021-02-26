@@ -371,38 +371,38 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
 
 BoundingBox::BoundingBox(glm::vec3 maxComponents)
 {
-    float32 scaleX = maxComponents.x * 1.3;
-    float32 scaleY = maxComponents.y * 1.3;
-    float32 scaleZ = maxComponents.z * 1.3;
+    float32 scaleX = maxComponents.x * 1.1;
+    float32 scaleY = maxComponents.y * 1.1;
+    float32 scaleZ = maxComponents.z * 1.1;
 
     float32 bbVertices[] = {
         -scaleX,  scaleY, -scaleZ,
-        -scaleX, -scaleY, -scaleZ,
-        scaleX, -scaleY, -scaleZ,
-        scaleX, -scaleY, -scaleZ,
+        -scaleX, 0.0f, -scaleZ,
+        scaleX, 0.0f, -scaleZ,
+        scaleX, 0.0f, -scaleZ,
         scaleX,  scaleY, -scaleZ,
         -scaleX,  scaleY, -scaleZ,
 
-        -scaleX, -scaleY,  scaleZ,
-        -scaleX, -scaleY, -scaleZ,
+        -scaleX, 0.0f,  scaleZ,
+        -scaleX, 0.0f, -scaleZ,
         -scaleX,  scaleY, -scaleZ,
         -scaleX,  scaleY, -scaleZ,
         -scaleX,  scaleY,  scaleZ,
-        -scaleX, -scaleY,  scaleZ,
+        -scaleX, 0.0f,  scaleZ,
 
-        scaleX, -scaleY, -scaleZ,
-        scaleX, -scaleY,  scaleZ,
+        scaleX, 0.0f, -scaleZ,
+        scaleX, 0.0f,  scaleZ,
         scaleX,  scaleY,  scaleZ,
         scaleX,  scaleY,  scaleZ,
         scaleX,  scaleY, -scaleZ,
-        scaleX, -scaleY, -scaleZ,
+        scaleX, 0.0f, -scaleZ,
 
-        -scaleX, -scaleY,  scaleZ,
+        -scaleX, 0.0f,  scaleZ,
         -scaleX,  scaleY,  scaleZ,
         scaleX,  scaleY,  scaleZ,
         scaleX,  scaleY,  scaleZ,
-        scaleX, -scaleY,  scaleZ,
-        -scaleX, -scaleY,  scaleZ,
+        scaleX, 0.0f,  scaleZ,
+        -scaleX, 0.0f,  scaleZ,
 
         -scaleX,  scaleY, -scaleZ,
         scaleX,  scaleY, -scaleZ,
@@ -411,12 +411,12 @@ BoundingBox::BoundingBox(glm::vec3 maxComponents)
         -scaleX,  scaleY,  scaleZ,
         -scaleX,  scaleY, -scaleZ,
 
-        -scaleX, -scaleY, -scaleZ,
-        -scaleX, -scaleY,  scaleZ,
-        scaleX, -scaleY, -scaleZ,
-        scaleX, -scaleY, -scaleZ,
-        -scaleX, -scaleY,  scaleZ,
-        scaleX, -scaleY,  scaleZ
+        -scaleX, 0.0f, -scaleZ,
+        -scaleX, 0.0f,  scaleZ,
+        scaleX, 0.0f, -scaleZ,
+        scaleX, 0.0f, -scaleZ,
+        -scaleX, 0.0f,  scaleZ,
+        scaleX, 0.0f,  scaleZ
     };
 
     unsigned int VBO, VAO;

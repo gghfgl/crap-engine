@@ -12,39 +12,37 @@
 
 ### TODO
 
-- @game: rework model position to fit the ground?
-- @game: cast mouse ray from the middle of the player?
-- @all: clean TODO
-- @game: draw circle around player?
+- @: cast mouse ray from the middle of the player?
+- @: clean TODO
+- @: draw circle around player?
+- @: clean available default model and list
 
-- @game: entity system with atachable component (health, dynamic, etc ...)
-- @engine: improve coordinate system for positionning objects
-- @engine: implement memorypool + viz, add when heap allocated substract when delete from the heap
-- @engine: make better rendering API. Less verbose?
-- @engine: implement beautyfull light PBR + effects
-- @engine: make the engine a static lib or something?
-- @engine: fix / improve texture management from assimp model?
-- @engine: assimp be carefull of texture path (need to update blender mtl file)
-- @engine: find something better when loading skybox faces (from a single file ideally) + hdr
+- @: entity system with atachable component (health, dynamic, etc ...)
+- @: improve coordinate system for positionning objects
+- @: implement memorypool + viz, add when heap allocated substract when delete from the heap
+- @: make better rendering API. Less verbose?
+- @: implement beautyfull light PBR + effects
+- @: make the engine a static lib or something?
+- @: fix / improve texture management from assimp model?
+- @: assimp be carefull of texture path (need to update blender mtl file)
+- @: find something better when loading skybox faces (from a single file ideally) + hdr
 
-- @editor: gui switch perf to string rendering
-- @editor: loader progress bar at startup editor and loading files?
-
-- @editor/@game: improve logger system
-
-- @game: implement a internal console with simple cli instead of imGui admin GUI?
+- @: gui switch perf to string rendering
+- @: loader progress bar at startup editor and loading files?
+- @: improve logger system
+- @: implement a internal console with simple cli instead of imGui admin GUI?
 
 ### REMEMBER
 
-- @engine: improve ray mouse collision with modules
+- @: improve ray mouse collision with modules
   -> OBB (Oriented Bounding Box) collision ?
   -> AABB (Axis Aligned Bounding Box) collision ?
   -> Ray intersection / collision algo ?
 
-- @general: efficient + pretty error handling
-- @general: use memory block heap allocated and use offset to move around data? john blow
-- @general: string const& vs const char*
-- @general: opengl debug synchronous
-- @general: prefer unordered map
-- @general: command & observer pattern
-- @general: always default values from struct, just should init ptrs at constructor
+- @: efficient + pretty error handling
+- @: use memory block heap allocated and use offset to move around data? john blow
+- @: string const& vs const char*
+- @: opengl debug synchronous
+- @: prefer unordered map
+- @: command & observer pattern
+- @: always default values from struct, just should init ptrs at constructor
