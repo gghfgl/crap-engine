@@ -12,10 +12,14 @@
 
 ### TODO
 
-- @: cast mouse ray from the middle of the player?
 - @: clean TODO
 - @: draw circle around player?
 - @: clean available default model and list
+- @: animated model
+- @: light
+- @: collision
+- @: inventory system?
+- @: terrain editor?
 
 - @: entity system with atachable component (health, dynamic, etc ...)
 - @: improve coordinate system for positionning objects
