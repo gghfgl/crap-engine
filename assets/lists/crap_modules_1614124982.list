@@ -2,7 +2,7 @@ HEADER_MODULE_LIST
 ###
 id=1607707034
 name=moduleA
-directory=assets/models/tree
+directory=assets/models/terrain
 objfile=untitled.obj
 posx=5.89488
 posy=0
@@ -12,7 +12,7 @@ rotate=34.3762
 ###
 id=1607707045
 name=moduleB
-directory=assets/models/tree
+directory=assets/models/terrain
 objfile=untitled.obj
 posx=-12.3615
 posy=0
@@ -22,7 +22,7 @@ rotate=0.1
 ###
 id=1613829427
 name=moduleB
-directory=assets/models/tree
+directory=assets/models/terrain
 objfile=untitled.obj
 posx=8.46044
 posy=0
@@ -32,7 +32,7 @@ rotate=28.6635
 ###
 id=1613829435
 name=moduleC
-directory=assets/models/tree
+directory=assets/models/terrain
 objfile=untitled.obj
 posx=-5.36082
 posy=0
@@ -42,7 +42,7 @@ rotate=0.1
 ###
 id=1613829440
 name=moduleD
-directory=assets/models/tree
+directory=assets/models/terrain
 objfile=untitled.obj
 posx=-9.12109
 posy=0

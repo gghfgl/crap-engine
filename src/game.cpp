@@ -46,9 +46,12 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     Mesh *AimPlayerRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Test Payer
-    Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+    //Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+    Player *testPlayer = new Player("testPlayer", "./assets/models/vampire/dancing_vampire.dae", glm::vec3(0.0f));
+    Animation testAnimation = Animation("./assets/models/vampire/dancing_vampire.dae", testPlayer->entity->model);
+    Animator testAnimator(&testAnimation);
 
-    // Modules environment
+     // Modules environment
     std::map<uint32, Module*> *Modules = new std::map<uint32, Module*>;
     error = OpenModuleListFromFile("./assets/lists/crap_modules_1614124982.list", Modules);
     if (error != 0)
@@ -154,21 +157,40 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         colorShader->SetUniform4f("color", glm::vec4(1.0f, 0.8f, 0.0f, 1.0));
         renderer->DrawLines(AimPlayerRay, 1.0f);
 
-        // Draw Player
-        Shader *defaultShader = sCache->GetShader("default");
-        defaultShader->UseProgram();
-        defaultShader->SetUniform4fv("view", viewMatrix);
-        defaultShader->SetUniform4fv("model", glm::mat4(1.0f));
+        // // Draw Player
+        // Shader *defaultShader = sCache->GetShader("default");
+        // defaultShader->UseProgram();
+        // defaultShader->SetUniform4fv("view", viewMatrix);
+        // defaultShader->SetUniform4fv("model", glm::mat4(1.0f));
+        
+        // glm::mat4 model = glm::mat4(1.0f);
+        // model = glm::translate(model, testPlayer->entity->position);
+        // model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
+        // model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+        // defaultShader->SetUniform4fv("model", model);
+        // renderer->DrawModel(testPlayer->entity->model, defaultShader);
+
+        // DEBUG ==========================================================================================
+        Shader *animateShader = sCache->GetShader("animate");
+        animateShader->UseProgram();
+        animateShader->SetUniform4fv("view", viewMatrix);
+        animateShader->SetUniform4fv("model", glm::mat4(1.0f));
+
+        auto transforms = testAnimator.GetPoseTransforms();
+        for (int i = 0; i < transforms.size(); ++i)
+        {
+            std::string bm = "finalBonesMatrices[" + std::to_string(i) + "]";
+            animateShader->SetUniform4fv(bm.c_str(), transforms[i]);
+        }
         
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(testPlayer->entity->position.x,
-                                                testPlayer->entity->position.y,
-                                                testPlayer->entity->position.z));
+        model = glm::translate(model, testPlayer->entity->position);
         model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
         model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
-        defaultShader->SetUniform4fv("model", model);
-        renderer->DrawModel(testPlayer->entity->model, defaultShader);
-
+        animateShader->SetUniform4fv("model", model);
+        renderer->DrawModel(testPlayer->entity->model, animateShader);
+        // DEBUG ==========================================================================================
+        
         // Player BoundingBox
         if (gs.showBoundingBox)
         {
@@ -191,9 +213,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
                 defaultShader->SetUniform4fv("model", glm::mat4(1.0f));
 
                 glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(it->second->entity->position.x,
-                                                        it->second->entity->position.y,
-                                                        it->second->entity->position.z));
+                model = glm::translate(model, it->second->entity->position);
                 model = glm::scale(model, glm::vec3(it->second->entity->scale));
                 model = glm::rotate(model, glm::radians(it->second->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
                 defaultShader->SetUniform4fv("model", model);
