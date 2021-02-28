@@ -11,7 +11,7 @@ CXXFLAGS=-pedantic-errors -Wall -Wextra -g
 
 CXXFLAGS+=-Idep/include
 CXXFLAGS+=-Ldep/lib
-CXXFLAGS+=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -I/home/t/Documents/c/crap-engine/dep/lib/libassimp
+CXXFLAGS+=-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lassimp
 CXXFLAGS+=-DIMGUI_IMPL_OPENGL_LOADER_GLAD
 
 build:

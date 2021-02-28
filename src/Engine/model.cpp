@@ -146,13 +146,13 @@ Model::Model(std::string const &path)
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(p_string, aiProcess_Triangulate
                                              // | aiProcess_MakeLeftHanded
-                                             //| aiProcess_FlipWindingOrder
+                                             | aiProcess_FlipWindingOrder
                                              | aiProcess_FlipUVs
                                              //| aiProcess_PreTransformVertices
-                                             //| aiProcess_JoinIdenticalVertices
+                                             | aiProcess_JoinIdenticalVertices
                                              | aiProcess_CalcTangentSpace
                                              | aiProcess_GenSmoothNormals
-                                             //| aiProcess_FixInfacingNormals
+                                             | aiProcess_FixInfacingNormals
                                              | aiProcess_FindInvalidData
                                              | aiProcess_ValidateDataStructure
                                              | 0);
@@ -441,6 +441,8 @@ void Model::extract_bone_weight_for_vertices(std::vector<Vertex> &vertices, aiMe
         {
             int vertexId = weights[weightIndex].mVertexId;
             float weight = weights[weightIndex].mWeight;
+            // DEBUG
+            std::cout << "WEIGHT=" << weight << std::endl;
             assert(vertexId <= vertices.size());
             this->set_vertex_bone_data(vertices[vertexId], boneID, weight);
         }

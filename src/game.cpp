@@ -46,7 +46,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     Mesh *AimPlayerRay = new Mesh(vRay, uEmpty, tEmpty);
 
     // Test Payer
-    //Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+    // Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
     Player *testPlayer = new Player("testPlayer", "./assets/models/vampire/dancing_vampire.dae", glm::vec3(0.0f));
     Animation testAnimation = Animation("./assets/models/vampire/dancing_vampire.dae", testPlayer->entity->model);
     Animator testAnimator(&testAnimation);
@@ -67,6 +67,10 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     {
         Window->UpdateTime();
         Window->PollEvents();
+
+        // TODO: @animation
+        //testAnimator.UpdateAnimation(Window->time->deltaTime);
+        //testAnimator.PlayAnimation(&testAnimation);
 
         /********************************************************
          *                                                      *
@@ -185,7 +189,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, testPlayer->entity->position);
-        model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
+        model = glm::scale(model, glm::vec3(.05f, .05f, .05f));
         model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
         animateShader->SetUniform4fv("model", model);
         renderer->DrawModel(testPlayer->entity->model, animateShader);
