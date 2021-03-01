@@ -13,6 +13,9 @@
 ### TODO
 
 - @: clean TODO
+- @: animation model asset system
+- @: isolate assimp and opengl code + rework rederer and anim_model like an ACL
+- @: rework "plateform" split into input and necessary stuff
 - @: draw circle around player?
 - @: clean available default model and list
 - @: animated model
