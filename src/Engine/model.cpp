@@ -109,17 +109,6 @@ void Mesh::allocate_mesh()
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                               (void*)offsetof(Vertex, bitangent));
-
-        // TODO: @animation
-        // vertex bone_ids
-        glEnableVertexAttribArray(5);
-        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), 
-                               (void*)offsetof(Vertex, m_BoneIDs));
-
-        // vertex weights
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
-                              (void*)offsetof(Vertex, m_Weights));        
     }
 
     if (!this->Indices.empty())
@@ -234,9 +223,6 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene)
         Vertex vertex;
         glm::vec3 vector; 
 
-        // TODO @animation
-        this->set_vertex_bone_data_default(vertex);
-
         vector.x = mesh->mVertices[i].x;
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z; 
@@ -300,9 +286,6 @@ Mesh* Model::process_mesh(aiMesh *mesh, const aiScene *scene)
     // 4. height maps
     std::vector<Texture> heightMaps = this->load_material_textures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-    // TODO: @animation
-    this->extract_bone_weight_for_vertices(vertices, mesh, scene);
 
     return new Mesh(vertices, indices, textures);
 }
@@ -381,75 +364,6 @@ uint32 Model::load_texture_from_file(const char *path, const std::string &direct
     stbi_image_free(data);
 
     return textureID;
-}
-
-// TODO: @animation MEHH????? could be default in struct
-void Model::set_vertex_bone_data_default(Vertex &vertex)
-{
-    for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
-    {
-        vertex.m_BoneIDs[i] = -1;
-        vertex.m_Weights[i] = 0.0f;
-    }
-}
-
-// TODO: @animation
-void Model::set_vertex_bone_data(Vertex &vertex, int boneID, float weight)
-{
-    for (int i = 0; i < MAX_BONE_INFLUENCE; ++i)
-    {
-        if (vertex.m_BoneIDs[i] < 0)
-        {
-            vertex.m_Weights[i] = weight;
-            vertex.m_BoneIDs[i] = boneID;
-            break;
-        }
-    }
-}
-
-// TODO: @animation
-void Model::extract_bone_weight_for_vertices(std::vector<Vertex> &vertices, aiMesh* mesh, const aiScene* scene)
-{
-    auto& boneInfoMap = m_OffsetMatMap;
-    int& boneCount = m_BoneCount;
-
-    // DEBUG
-    std::cout << "BONE_COUNT=" << mesh->mNumBones << std::endl;
-
-    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
-    {
-        int boneID = -1;
-        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
-        if (boneInfoMap.find(boneName) == boneInfoMap.end())
-        {
-            BoneInfo newBoneInfo;
-            newBoneInfo.id = boneCount;
-            newBoneInfo.offset = AssimpGLMHelpers::ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
-            boneInfoMap[boneName] = newBoneInfo;
-            boneID = boneCount;
-            boneCount++;
-        }
-        else
-        {
-            boneID = boneInfoMap[boneName].id;
-        }
-        assert(boneID != -1);
-        auto weights = mesh->mBones[boneIndex]->mWeights;
-        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
-
-        // DEBUG
-        std::cout << "NUM_WEIGHT=" << numWeights << std::endl;
-
-        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
-        {
-            int vertexId = weights[weightIndex].mVertexId;
-            float weight = weights[weightIndex].mWeight;
-            // DEBUG
-            //std::cout << "WEIGHT=" << weight << std::endl;
-            assert(vertexId <= vertices.size());
-            this->set_vertex_bone_data(vertices[vertexId], boneID, weight);
-        }
-    }
 }
 
 BoundingBox::BoundingBox(glm::vec3 maxComponents)

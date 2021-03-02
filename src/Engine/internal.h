@@ -17,46 +17,51 @@ namespace Log
 {
     void debug(const char* fmt, ...)
     {
-        std::string info = "[*DEBUG] ";
-        info.append(fmt);
+        std::string prefix = "[*DEBUG] \t";
+        prefix.append(fmt);
 
         va_list args;
         va_start(args, fmt);
-        vprintf(info.c_str(), args);
+        vprintf(prefix.c_str(), args);
         va_end(args);
     }
 
     void info(const char* fmt, ...)
     {
-        std::string info = "[INFO] ";
-        info.append(fmt);
+        std::string prefix = "[INFO] \t";
+        prefix.append(fmt);
 
         va_list args;
         va_start(args, fmt);
-        vprintf(info.c_str(), args);
+        vprintf(prefix.c_str(), args);
         va_end(args);
     }
 
     void warn(const char* fmt, ...)
     {
-        std::string info = "[WARN] ";
-        info.append(fmt);
+        std::string prefix = "[WARN] \t";
+        prefix.append(fmt);
 
         va_list args;
         va_start(args, fmt);
-        vprintf(info.c_str(), args);
+        vprintf(prefix.c_str(), args);
         va_end(args);
     }
 
     void error(const char* fmt, ...)
     {
-        std::string info = "[ERROR] ";
-        info.append(fmt);
+        std::string prefix = "[ERROR] \t";
+        prefix.append(fmt);
 
         va_list args;
         va_start(args, fmt);
-        vprintf(info.c_str(), args);
+        vprintf(prefix.c_str(), args);
         va_end(args);
+    }
+
+    void separator()
+    {
+        printf("===========================================================\n");
     }
 }
 

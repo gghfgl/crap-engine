@@ -91,7 +91,7 @@ inline int32 SaveModuleListInTextFormat(const char *filepath, std::map<uint32, M
         if (it->second->entity->model != nullptr)
         {
             dir = it->second->entity->model->directory.c_str();
-            objf = it->second->entity->model->objFilename.c_str();
+            objf = it->second->entity->model->filename.c_str();
         }
 
         file << "###\n";
@@ -128,7 +128,7 @@ inline int32 SaveGroundListInTextFormat(const char *filepath, std::map<uint32, G
         if (it->second->entity->model != nullptr)
         {
             dir = it->second->entity->model->directory.c_str();
-            objf = it->second->entity->model->objFilename.c_str();
+            objf = it->second->entity->model->filename.c_str();
         }
 
         file << "###\n";

@@ -42,7 +42,7 @@ private:
 struct ShaderCache
 {
     ~ShaderCache();
-    int32 CompileShadersFromDirectory(const char* directory, glm::mat4 projectionMatrix);
+    int32 CompileShadersFromDirectory(const char* directory);
     Shader* GetShader(const std::string& name);
     
     std::map<std::string, Shader*> Shaders;

@@ -27,14 +27,10 @@
 
 #include "internal.h"
 #include "plateform.cpp"
- // TODO: @animation
-#include "assimp_helper.h"
 
 #include "camera.cpp"
 #include "shader.cpp"
-#include "model.cpp"
-// TODO: @animation
-#include "animation.h"
+#include "model2.cpp"
 #include "entity.cpp"
 #include "ray.cpp"
 #include "renderer.cpp"
