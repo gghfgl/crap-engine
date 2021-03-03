@@ -12,7 +12,8 @@
 
 ### TODO
 
-- @: clean TODO
+- @: clean TODO + ASSET + GPU ACL
+- @: texture without cache really working???
 - @: animation model asset system
 - @: isolate assimp and opengl code + rework rederer and anim_model like an ACL
 - @: rework "plateform" split into input and necessary stuff

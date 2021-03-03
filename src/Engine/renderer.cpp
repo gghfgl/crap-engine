@@ -53,9 +53,9 @@ uint32 Renderer::PrepareInstance(Model *model,
                  &modelMatrices[0],
                  GL_STATIC_DRAW);
 
-    for (uint32 i = 0; i < model->Meshes.size(); i++)
+    for (uint32 i = 0; i < model->meshes.size(); i++)
     {
-        glBindVertexArray(model->Meshes[i]->VAO);
+        glBindVertexArray(model->meshes[i]->VAO);
 
         glEnableVertexAttribArray(5);
         glVertexAttribPointer(5, 4,
@@ -89,7 +89,7 @@ void Renderer::DrawLines(Mesh *mesh, float32 width)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
-    glDrawArrays(GL_LINES, 0, (GLsizei)mesh->Vertices.size());
+    glDrawArrays(GL_LINES, 0, (GLsizei)mesh->vertices.size());
 
     glBindVertexArray(0);         // good practice
     this->stats.drawCalls++;
@@ -103,11 +103,11 @@ void Renderer::DrawMesh(Mesh *mesh, Shader *shader)
     uint32 heightNr = 1;
 
     // TODO: improve texture management
-    for (uint32 i = 0; i < mesh->Textures.size(); i++)
+    for (uint32 i = 0; i < mesh->textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
         std::string number;
-        std::string name = mesh->Textures[i].type;
+        std::string name = mesh->textures[i].type;
         if (name == "texture_diffuse")
             number = std::to_string(diffuseNr++);
         else if (name == "texture_specular")
@@ -118,11 +118,11 @@ void Renderer::DrawMesh(Mesh *mesh, Shader *shader)
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
         shader->SetUniform1i((name + number).c_str(), i);
-        glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
+        glBindTexture(GL_TEXTURE_2D, mesh->textures[i].ID);
     }
 
     glBindVertexArray(mesh->VAO);
-    glDrawElements(GL_TRIANGLES, (GLsizei)mesh->Indices.size(), GL_UNSIGNED_INT, NULL);
+    glDrawElements(GL_TRIANGLES, (GLsizei)mesh->indices.size(), GL_UNSIGNED_INT, NULL);
 
     glBindVertexArray(0);         // good practice
     glActiveTexture(GL_TEXTURE0); // good practice
@@ -137,11 +137,11 @@ void Renderer::DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
     uint32 heightNr = 1;
 
     // TODO: improve texture management
-    for (uint32 i = 0; i < mesh->Textures.size(); i++)
+    for (uint32 i = 0; i < mesh->textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
         std::string number;
-        std::string name = mesh->Textures[i].type;
+        std::string name = mesh->textures[i].type;
         if (name == "texture_diffuse")
             number = std::to_string(diffuseNr++);
         else if (name == "texture_specular")
@@ -152,12 +152,12 @@ void Renderer::DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
             number = std::to_string(heightNr++); // transfer unsigned int to stream
 
         shader->SetUniform1i((name + number).c_str(), i);
-        glBindTexture(GL_TEXTURE_2D, mesh->Textures[i].ID);
+        glBindTexture(GL_TEXTURE_2D, mesh->textures[i].ID);
     }
 
     glBindVertexArray(mesh->VAO);
     glDrawElementsInstanced(GL_TRIANGLES,
-                            (GLsizei)mesh->Indices.size(),
+                            (GLsizei)mesh->indices.size(),
                             GL_UNSIGNED_INT,
                             0,
                             count);
@@ -173,8 +173,8 @@ void Renderer::DrawModel(Model *model, Shader *shader)
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
     glStencilMask(0xFF);
 
-    for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->DrawMesh(model->Meshes[i], shader);
+    for (uint32 i = 0; i < model->meshes.size(); i++)
+        this->DrawMesh(model->meshes[i], shader);
 }
 
 void Renderer::DrawModelOutline(Model *model, Shader *shader)
@@ -183,8 +183,8 @@ void Renderer::DrawModelOutline(Model *model, Shader *shader)
     glStencilMask(0x00);
     //glDisable(GL_DEPTH_TEST);
 
-    for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->DrawMesh(model->Meshes[i], shader);
+    for (uint32 i = 0; i < model->meshes.size(); i++)
+        this->DrawMesh(model->meshes[i], shader);
 
     glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
@@ -196,8 +196,8 @@ void Renderer::DrawInstanceModel(Model *model, Shader *shader, uint32 count)
     // set mask to 0x00 to not write to the stencil buffer
     glStencilMask(0x00);
 
-    for (uint32 i = 0; i < model->Meshes.size(); i++)
-        this->DrawInstanceMesh(model->Meshes[i], shader, count);
+    for (uint32 i = 0; i < model->meshes.size(); i++)
+        this->DrawInstanceMesh(model->meshes[i], shader, count);
 }
     
 void Renderer::DrawSkybox(Skybox *skybox)
@@ -231,34 +231,34 @@ void Renderer::DrawBoundingBox(BoundingBox *boundingBox)
 
 void Renderer::PrepareOriginDebug(Mesh *mesh)
 {    
-    mesh->Vertices.clear();
+    mesh->vertices.clear();
 
     Vertex vXa;
     vXa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vXa);
+    mesh->vertices.push_back(vXa);
     Vertex vXb;
     vXb.position = glm::vec3(2.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vXb);
+    mesh->vertices.push_back(vXb);
 
     Vertex vYa;
     vYa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vYa);
+    mesh->vertices.push_back(vYa);
     Vertex vYb;
     vYb.position = glm::vec3(0.0f, 2.0f, 0.0f);
-    mesh->Vertices.push_back(vYb);
+    mesh->vertices.push_back(vYb);
 
     Vertex vZa;
     vZa.position = glm::vec3(0.0f, 0.1f, 0.0f);
-    mesh->Vertices.push_back(vZa);
+    mesh->vertices.push_back(vZa);
     Vertex vZb;
     vZb.position = glm::vec3(0.0f, 0.1f, -2.0f);
-    mesh->Vertices.push_back(vZb);
+    mesh->vertices.push_back(vZb);
     
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
+                    mesh->vertices.size() * sizeof(Vertex),
+                    &mesh->vertices[0]);
 }
 
 void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
@@ -269,7 +269,7 @@ void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
     float32 xPos = -((float32)resolution / 2.0f);  // -5
     float32 zPos = xPos;						 // -5
 
-    mesh->Vertices.clear();
+    mesh->vertices.clear();
     uint32 i = 0;
     while (i < vCount / 2) // z axis ->
     {
@@ -284,7 +284,7 @@ void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
             zPos += 1.0f;
         }
 
-        mesh->Vertices.push_back(v);
+        mesh->vertices.push_back(v);
         i++;
     }
 
@@ -301,15 +301,15 @@ void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
             xPos += 1.0f;
         }
 
-        mesh->Vertices.push_back(v);
+        mesh->vertices.push_back(v);
         i++;
     }
         
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    mesh->Vertices.size() * sizeof(Vertex),
-                    &mesh->Vertices[0]);
+                    mesh->vertices.size() * sizeof(Vertex),
+                    &mesh->vertices[0]);
 }
 
 void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
@@ -317,16 +317,16 @@ void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 directi
     //glm::vec3 target = origin + (direction * 1.0f);
     glm::vec3 target = direction * 1.0f;
 
-    mesh->Vertices.clear();
+    mesh->vertices.clear();
     Vertex v;
     v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
-    mesh->Vertices.push_back(v);
+    mesh->vertices.push_back(v);
     v.position = target;
-    mesh->Vertices.push_back(v);
+    mesh->vertices.push_back(v);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferData(GL_ARRAY_BUFFER,
-                 mesh->Vertices.size() * sizeof(Vertex),
-                 &mesh->Vertices[0],
+                 mesh->vertices.size() * sizeof(Vertex),
+                 &mesh->vertices[0],
                  GL_DYNAMIC_DRAW);
 }

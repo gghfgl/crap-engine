@@ -23,7 +23,7 @@ struct Texture
 {
     uint32 ID;
     std::string type;
-    std::string path; // TODO: full? relative? absolute?
+    std::string filename;
 };
 
 // Mesh hold the data needed to draw a model or a part of a model.
@@ -33,9 +33,10 @@ struct Texture
 // @vertices: all vertices needed to make a mesh.
 // @indices: all indicies to optimize vertices layout.
 struct Mesh {
-    Mesh();
+    Mesh(std::vector<Vertex> &vertices, std::vector<uint32> &indices, std::vector<Texture> &textures);
     ~Mesh();
-
+    void allocate_mesh();
+    
     uint32 VAO;
     uint32 VBO;
     uint32 IBO;
@@ -83,7 +84,7 @@ struct Keyframe {
     float32 timestamp;
 };
 
-// TODO: useless??
+// TODO: useless?? []Keyframe = animation in Animated?
 // Animation hold data needed to animate a 3D model.
 struct Animation {
     Animation();
@@ -105,11 +106,12 @@ struct Animated {
     Animation *animation; // TODO: ??
 };
 
+// TODO: meh?
 // ASSET ACL
-static std::string ASSET_load_meshes(const std::string &path, std::vector<*Mesh> &meshes);
-static void ASSET_process_node(const aiScene *scene, std::vector<*Mesh> &meshes);
-static Mesh* ASSET_process_mesh(aiMesh *mesh, const aiScene *scene);
-static std::vector<Texture> ASSET_load_material_textures(aiMaterial *mat, aiTextureType type, std::string typeName);
+static std::string ASSET_load_meshes(const std::string &directory, const std::string &filename, std::vector<Mesh*> &meshes);
+static void ASSET_process_node(const std::string &directory, aiNode *node, const aiScene *scene, std::vector<Mesh*> &meshes);
+static Mesh* ASSET_process_mesh(const std::string &directory, aiMesh *mesh, const aiScene *scene);
+static std::vector<Texture> ASSET_load_material_textures(const std::string &directory, aiMaterial *mat, aiTextureType type, std::string typeName);
 static uint32 ASSET_load_texture_from_file(const std::string &path);
 
 // Model represents the minimum stuff for loading 3D model.
@@ -123,13 +125,24 @@ struct Model {
     std::vector<Mesh*> meshes;
 };
 
+// TODO: delete
+struct BoundingBox
+{
+    BoundingBox(glm::vec3 maxComponents);
+    ~BoundingBox();
+    
+    uint32 VAO;
+    uint32 VBO;
+};
+
 // ====================================================================
 
 // ASSET LOAD MESHES.
-static std::string ASSET_load_meshes(const std::string &path, std::vector<*Mesh> &meshes)
+static std::string ASSET_load_meshes(const std::string &directory, const std::string &filename, std::vector<Mesh*> &meshes)
 {
+    std::string fullpath = directory+"/"+filename;
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate
+    const aiScene *scene = importer.ReadFile(fullpath, aiProcess_Triangulate
                                              // // | aiProcess_MakeLeftHanded
                                              // // | aiProcess_PreTransformVertices
                                              | aiProcess_FlipUVs
@@ -143,31 +156,28 @@ static std::string ASSET_load_meshes(const std::string &path, std::vector<*Mesh>
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         return importer.GetErrorString();
 
-    ASSET_process_node(scene->mRootNode, scene);
+    ASSET_process_node(directory, scene->mRootNode, scene, meshes);
 
-    return;
-    // TODO: ?
-    // return importer.GetErrorString();
+    return "";
 }
 
 // ASSET PROCESS NODE.
-static void ASSET_process_node(const aiScene *scene, &std::vector<*Mesh> meshes)
+static void ASSET_process_node(const std::string &directory, aiNode *node, const aiScene *scene, std::vector<Mesh*> &meshes)
 {
-    aiNode *node = scene->mRootNode;
     for(uint32 i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
-        meshes.push_back(ASSET_process_mesh(mesh, scene));
+        meshes.push_back(ASSET_process_mesh(directory, mesh, scene));
     }
 
     for(uint32 i = 0; i < node->mNumChildren; i++)
     {
-        ASSET_process_node(node->mChildren[i], scene);
+        ASSET_process_node(directory, node->mChildren[i], scene, meshes);
     }
 }
 
 // ASSET PROCESS MESH.
-static Mesh* ASSET_process_mesh(aiMesh *mesh, const aiScene *scene)
+static Mesh* ASSET_process_mesh(const std::string &directory, aiMesh *mesh, const aiScene *scene)
 {
     std::vector<Vertex> vertices;
     std::vector<uint32> indices;
@@ -229,26 +239,28 @@ static Mesh* ASSET_process_mesh(aiMesh *mesh, const aiScene *scene)
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
     // Diffuse maps.
-    std::vector<Texture> diffuseMaps = ASSET_load_material_textures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+    std::vector<Texture> diffuseMaps = ASSET_load_material_textures(directory, material, aiTextureType_DIFFUSE, "texture_diffuse");
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
     // Specular maps.
-    std::vector<Texture> specularMaps = ASSET_load_material_textures(material, aiTextureType_SPECULAR, "texture_specular");
+    std::vector<Texture> specularMaps = ASSET_load_material_textures(directory, material, aiTextureType_SPECULAR, "texture_specular");
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
     // Normal maps.
-    std::vector<Texture> normalMaps = ASSET_load_material_textures(material, aiTextureType_HEIGHT, "texture_normal");
+    std::vector<Texture> normalMaps = ASSET_load_material_textures(directory, material, aiTextureType_HEIGHT, "texture_normal");
     textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 
     // Height maps.
-    std::vector<Texture> heightMaps = ASSET_load_material_textures(material, aiTextureType_AMBIENT, "texture_height");
+    std::vector<Texture> heightMaps = ASSET_load_material_textures(directory, material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
     return new Mesh(vertices, indices, textures);
 }
 
+
+
 // ASSET LOAD MATERIAL TEXTURES
-static std::vector<Texture> ASSET_load_material_textures(aiMaterial *mat, aiTextureType type, std::string typeName)
+static std::vector<Texture> ASSET_load_material_textures(const std::string &directory, aiMaterial *mat, aiTextureType type, std::string typeName)
 {
     std::vector<Texture> textures;
     for(uint32 i = 0; i < mat->GetTextureCount(type); i++)
@@ -260,20 +272,23 @@ static std::vector<Texture> ASSET_load_material_textures(aiMaterial *mat, aiText
         bool skip = false;
         for(uint32 j = 0; j < textures.size(); j++)
         {
-            if(std::strcmp(textures[j].path.data(), str.C_Str()) == 0)
+            if(std::strcmp(textures[j].filename.data(), str.C_Str()) == 0)
             {
                 skip = true;
                 break;
             }
         }
 
+        std::string filename(str.C_Str());
+        std::string fullpath = directory+"/"+filename;
+
         // if texture hasn't been loaded already, load it
         if(!skip)
         {
             Texture t;
-            t.ID = ASSET_load_texture_from_file(str.C_Str()); // TODO
+            t.ID = ASSET_load_texture_from_file(fullpath.c_str());
             t.type = typeName;
-            t.path = str.C_Str();
+            t.filename = str.C_Str();
             textures.push_back(t);
         }
     }
@@ -284,13 +299,13 @@ static std::vector<Texture> ASSET_load_material_textures(aiMaterial *mat, aiText
 // ASSET LOAD TEXTURE FROM FILE
 static uint32 ASSET_load_texture_from_file(const std::string &path)
 {
-    Log::info("loading texture [file]: %s\n", path.c_str());
+    Log::info("loading texture: '%s'\n", path.c_str());
 
     uint32 textureID;
     glGenTextures(1, &textureID); // TODO: OGL
-
+    
     int width, height, nrComponents;
-    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
     if (data)
     {
         // TODO: OGL
@@ -316,7 +331,7 @@ static uint32 ASSET_load_texture_from_file(const std::string &path)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
     else
-        Log::warn("failed to load texture from: %s\n", path.c_str());
+        Log::error("failed to load texture from: %s\n", path.c_str());
 
     stbi_image_free(data);
 

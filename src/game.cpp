@@ -34,14 +34,16 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     // =================================================
 
     // // ReferenceGrid
-    // std::vector<uint32> uEmpty; // TODO: init default in constructor?
-    // std::vector<Texture> tEmpty;
-    // std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
-    // Mesh *ReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
-    // renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
+    std::vector<uint32> uEmpty; // TODO: init default in constructor?
+    std::vector<Texture> tEmpty;
+    std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
+    Mesh *ReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
+    renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
 
-    // // Test Payer
+    // Test Payer
     // Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+
+    Model *testModel = new Model("./assets/models/untitled-scene-obj/untitled.obj");
 
     // =================================================
 
@@ -111,15 +113,15 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         glm::mat4 projectionMatrix = camera->projectionMatrix;
         glm::mat4 identityMatrix = glm::mat4(1.0f);
         
-        // // Draw ReferenceGrid
-        // Shader *colorShader = sCache->GetShader("color");
-        // colorShader->UseProgram();
-        // colorShader->SetUniform4fv("projection", projectionMatrix);
-        // colorShader->SetUniform4fv("view", viewMatrix);
-        // colorShader->SetUniform4fv("model", identityMatrix);
+        // Draw ReferenceGrid
+        Shader *colorShader = sCache->GetShader("color");
+        colorShader->UseProgram();
+        colorShader->SetUniform4fv("projection", projectionMatrix);
+        colorShader->SetUniform4fv("view", viewMatrix);
+        colorShader->SetUniform4fv("model", identityMatrix);
 
-        // colorShader->SetUniform4f("color", glm::vec4(0.360f, 1.0f, 0.360f, 1.0f));
-        // renderer->DrawLines(ReferenceGrid, 1.0f);
+        colorShader->SetUniform4f("color", glm::vec4(0.360f, 1.0f, 0.360f, 1.0f));
+        renderer->DrawLines(ReferenceGrid, 1.0f);
         
         // // Draw Player
         // Shader *defaultShader = sCache->GetShader("default");
@@ -129,8 +131,8 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         
         // glm::mat4 model = identityMatrix;
         // model = glm::translate(model, testPlayer->entity->position);
-        // //model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
-        // model = glm::scale(model, glm::vec3(0.01f));
+        // model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
+        // //model = glm::scale(model, glm::vec3(0.01f));
         // model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
         // defaultShader->SetUniform4fv("model", model);
         // renderer->DrawModel(testPlayer->entity->model, defaultShader);
