@@ -14,9 +14,9 @@ struct Renderer
     void ResetStats();
     void ToggleWireframe();
     uint32 PrepareInstance(Model *model, glm::mat4 *modelMatrices, uint32 count);
-    void DrawLines(Mesh *mesh, float32 width);
-    void DrawMesh(Mesh *mesh, Shader *shader);
-    void DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count);
+    void DrawLines(GPUMesh *mesh, float32 width);
+    void DrawMesh(GPUMesh *mesh, Shader *shader);
+    void DrawInstanceMesh(GPUMesh *mesh, Shader *shader, uint32 count);
     void DrawModel(Model *model, Shader *shader);
     void DrawModelOutline(Model *model, Shader *shader);
     void DrawInstanceModel(Model *model, Shader *shader, uint32 count);
@@ -24,9 +24,9 @@ struct Renderer
     void DrawBoundingBox(BoundingBox *boudingBox);
 
     // TODO: meh
-    void PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction);
-    void PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution);
-    void PrepareOriginDebug(Mesh *mesh);
+    void PrepareRaySubData(GPUMesh *mesh, glm::vec3 origin, glm::vec3 direction);
+    void PrepareReferenceGridSubData(GPUMesh *mesh, uint32 resolution);
+    void PrepareOriginDebug(GPUMesh *mesh);
 
     
     bool wireframe;

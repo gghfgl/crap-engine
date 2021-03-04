@@ -35,9 +35,9 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
 
     // // ReferenceGrid
     std::vector<uint32> uEmpty; // TODO: init default in constructor?
-    std::vector<Texture> tEmpty;
-    std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
-    Mesh *ReferenceGrid = new Mesh(vReferenceGrid, uEmpty, tEmpty);
+    std::vector<GPUTexture> tEmpty;
+    std::vector<GPUVertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, GPUVertex());
+    GPUMesh *ReferenceGrid = new GPUMesh(vReferenceGrid, uEmpty, tEmpty);
     renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
 
     // Test Payer

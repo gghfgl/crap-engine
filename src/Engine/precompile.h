@@ -27,6 +27,8 @@
 
 #include "internal.h"
 #include "plateform.cpp"
+#include "GPU.cpp"
+#include "asset.h"
 
 #include "camera.cpp"
 #include "shader.cpp"
