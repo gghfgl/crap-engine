@@ -1,5 +1,16 @@
 #pragma once
 
+glm::mat4 ASSET_convert_matrix_to_GLM(const aiMatrix4x4& from)
+{
+    glm::mat4 to;
+    //the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
+    to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+    to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+    to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+    to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+    return to;
+}
+
 // ASSET LOAD TEXTURE FROM FILE
 uint32 ASSET_load_texture_from_file(const std::string &path)
 {
@@ -79,6 +90,62 @@ std::vector<GPUTexture> ASSET_load_material_textures(const std::string &director
     return textures;
 }
 
+uint32 ASSET_process_animation_data(std::vector<GPUVertex> &vertices, aiMesh* mesh, const aiScene* scene)
+{
+    uint32 jointCount = 0;
+    Joint *rootJoint = new Joint;
+    for (uint32 i = 0; i < mesh->mNumBones; ++i)
+    {
+        if (i == 0)
+        {
+            rootJoint->ID = i;
+            rootJoint->name = mesh->mBones[i]->mName.C_Str();
+
+            // DEBUG:
+            Log::debug("rootJoint->ID %d\n", i);
+            Log::debug("rootJoint->name %s\n", rootJoint->name.c_str());
+
+            rootJoint->animatedTransform = ASSET_convert_matrix_to_GLM(mesh->mBones[i]->mOffsetMatrix);
+        } else {
+            Joint joint;
+            joint.ID = i;
+            joint.name = mesh->mBones[i]->mName.C_Str();
+            joint.animatedTransform = ASSET_convert_matrix_to_GLM(mesh->mBones[i]->mOffsetMatrix);
+
+            // DEBUG:
+            Log::debug("childJoint.ID %d\n", i);
+            Log::debug("childJoint.name %s\n", joint.name.c_str());
+
+            rootJoint->children.push_back(joint);
+        }
+        jointCount++;
+
+        auto weights = mesh->mBones[i]->mWeights;
+        uint32 numWeights = mesh->mBones[i]->mNumWeights;
+
+        for (uint32 y = 0; y < numWeights; ++y)
+        {
+            int vertexId = weights[y].mVertexId;
+            float weight = weights[y].mWeight;
+
+            for (int w = 0; w < GPU_MAX_JOINT_INFLUENCE; ++w)
+            {
+                if (vertices[vertexId].jointIDs[w] < 0)
+                {
+                    vertices[vertexId].jointIDs[w] = i;
+                    vertices[vertexId].weights[w] = weight;
+                    break;
+                }
+
+                // DEBUG:
+                //Log::debug("id=%d weight=%f\n", vertices[vertexId].jointIDs[w], vertices[vertexId].weights[w]);
+            }
+        }
+    }
+
+    return jointCount;
+}
+
 // ASSET PROCESS MESH.
 GPUMesh* ASSET_process_mesh(const std::string &directory, aiMesh *mesh, const aiScene *scene)
 {
@@ -90,6 +157,12 @@ GPUMesh* ASSET_process_mesh(const std::string &directory, aiMesh *mesh, const ai
     for (uint32 i = 0; i < mesh->mNumVertices; i++)
     {
         GPUVertex vertex;
+        for (uint32 i = 0; i < GPU_MAX_JOINT_INFLUENCE; i++)
+        {
+            vertex.jointIDs[i] = -1;
+            vertex.weights[i] = 0.0f;            
+        }
+        
         glm::vec3 vector; 
 
         vector.x = mesh->mVertices[i].x;
@@ -157,7 +230,10 @@ GPUMesh* ASSET_process_mesh(const std::string &directory, aiMesh *mesh, const ai
     std::vector<GPUTexture> heightMaps = ASSET_load_material_textures(directory, material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-    return new GPUMesh(vertices, indices, textures);
+    // TODO: @animation
+    uint32 jointCount = ASSET_process_animation_data(vertices, mesh, scene);
+    
+    return new GPUMesh(vertices, indices, textures, jointCount);
 }
 
 // ASSET PROCESS NODE.

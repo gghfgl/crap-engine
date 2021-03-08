@@ -39,6 +39,16 @@ uint32 GPU_allocate_mesh(GPUMesh *mesh)
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GPUVertex),
                               (void*)offsetof(GPUVertex, bitangent));
+
+        // vertex jointIDs
+        glEnableVertexAttribArray(5);
+        glVertexAttribIPointer(5, GPU_MAX_JOINT_INFLUENCE, GL_INT, sizeof(GPUVertex), 
+                               (void*)offsetof(GPUVertex, jointIDs));
+
+        // vertex weights
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, GPU_MAX_JOINT_INFLUENCE, GL_FLOAT, GL_FALSE, sizeof(GPUVertex), 
+                              (void*)offsetof(GPUVertex, weights));         
     }
 
     if (!mesh->indices.empty())
@@ -61,11 +71,12 @@ void GPU_deallocate_mesh(GPUMesh *mesh)
 
 // =========================================================
 
-GPUMesh::GPUMesh(std::vector<GPUVertex> &vertices, std::vector<uint32> &indices, std::vector<GPUTexture> &textures)
+GPUMesh::GPUMesh(std::vector<GPUVertex> &vertices, std::vector<uint32> &indices, std::vector<GPUTexture> &textures, uint32 jointCount)
 {
     this->vertices = vertices;
     this->indices = indices;
     this->textures = textures;
+    this->jointCount = jointCount;
 
     GPU_allocate_mesh(this);
 }

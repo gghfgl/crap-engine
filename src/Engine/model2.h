@@ -1,29 +1,5 @@
 #pragma once
 
-// Joint is the tree holding joint hierarchy, starting by the root joint.
-// Commonly from the "Hip" to the "Hands" and "Arms".
-// @name: name used in the model file used to identify which joint in an
-// animation keyframe refer to.
-// @transform: current position and rotation of the joint in model-space from the
-// binded joint.
-// @localBindTransform: original position of the joint relative to it's parent
-// in joint-space.
-// @inverseBindTransform: is the @localBindTransform in model-space and inverted.
-// @children: linked / binded child joints. A joint can hold multiple children.
-struct Joint {
-    Joint(uint32 ID, std::string name, glm::mat4 localBindTransform);
-    ~Joint();
-    
-    uint32 ID;
-    std::string name;
-    glm::mat4 animatedTransform;
-    glm::mat4 localBindTransform;
-    glm::mat4 inverseBindTransform;
-    std::vector<Joint> children;
-
-    void calc_inverse_bind_transform();
-};
-
 // JointTransform represents position / rotation of a joint in joint space.
 struct JointTransform {
     glm::vec3 position;
@@ -35,7 +11,7 @@ struct JointTransform {
 // joint. Its in joint space, not model space!
 // @timestamp: time to play the pose;
 struct Keyframe {
-    std::vector<JointTransform> jointTransforms;
+    std::unordered_map<std::string,JointTransform> jointTransforms;
     float32 timestamp;
 };
 

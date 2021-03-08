@@ -37,13 +37,13 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     std::vector<uint32> uEmpty; // TODO: init default in constructor?
     std::vector<GPUTexture> tEmpty;
     std::vector<GPUVertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, GPUVertex());
-    GPUMesh *ReferenceGrid = new GPUMesh(vReferenceGrid, uEmpty, tEmpty);
+    GPUMesh *ReferenceGrid = new GPUMesh(vReferenceGrid, uEmpty, tEmpty, 0);
     renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
 
     // Test Payer
-    // Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+    //Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
 
-    Model *testModel = new Model("./assets/models/untitled-scene-obj/untitled.obj");
+    Model *testModel = new Model("./assets/models/vampire/dancing_vampire.dae");
 
     // =================================================
 

@@ -12,6 +12,7 @@
 
 ### TODO
 
+- @: load model with animation with asset wrapper
 - @: clean TODO + ASSET + GPU ACL
 - @: texture without cache really working???
 - @: animation model asset system
