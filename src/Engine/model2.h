@@ -1,51 +1,81 @@
 #pragma once
 
-// JointTransform represents position / rotation of a joint in joint space.
-struct JointTransform {
+// This should be the maximum bone<->weights relation
+#define MAX_JOINT_INFLUENCE 4
+
+struct Vertex
+{
     glm::vec3 position;
-    glm::quat rotation;
+    glm::vec3 normal;
+    glm::vec2 texCoords;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
+    int32     jointIDs[MAX_JOINT_INFLUENCE];
+    float32   weights[MAX_JOINT_INFLUENCE];
 };
 
-// Keyframe represents a certain pose at a certain time of the animation.
-// @jointTransforms: positions and rotations for each joints related to his parent
-// joint. Its in joint space, not model space!
-// @timestamp: time to play the pose;
-struct Keyframe {
-    std::unordered_map<std::string,JointTransform> jointTransforms;
-    float32 timestamp;
-};
-
-// TODO: useless?? []Keyframe = animation in Animated?
-// Animation hold data needed to animate a 3D model.
-struct Animation {
-    Animation();
-    ~Animation();
-    
-    std::vector<Keyframe> frames;
-};
-
-// Animated hold the data needed for animated model.
-// @roots: the whole skeleton from tree joint.
-struct Animated {
-    Animated(const std::string &path);
-    ~Animated();
-    
+struct Texture
+{
+    uint32 ID;
+    std::string type;
     std::string filename;
-    std::string directory;
-    Joint *rootJoint;
-    uint32 jointCount;
-    Animation *animation; // TODO: ??
 };
 
-// Model represents the minimum stuff for loading 3D model.
-// @meshes: the "skin" of the model.
+struct Joint {
+    uint32 ID;
+    glm::mat4 localTransform;
+};
+
+struct Mesh {
+    Mesh(std::vector<Vertex> &vertices, std::vector<uint32> &indices, std::vector<Texture> &textures);
+    ~Mesh();
+
+    uint32 VAO;
+    uint32 VBO;
+    uint32 IBO;
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32> indices;
+    std::vector<Texture> textures;
+};
+
+/* struct JointTransform { */
+/*     glm::vec3 position; */
+/*     glm::quat rotation; */
+/* }; */
+
+/* struct Keyframe { */
+/*     std::unordered_map<std::string,JointTransform> jointTransforms; */
+/*     float32 timestamp; */
+/* }; */
+
+/* struct Animation { */
+/*     Animation(); */
+/*     ~Animation(); */
+    
+/*     std::vector<Keyframe> frames; */
+/* }; */
+
+/* struct Animated { */
+/*     Animated(const std::string &path); */
+/*     ~Animated(); */
+    
+/*     std::string filename; */
+/*     std::string directory; */
+
+/*     Animation *animation; // TODO: useless []Keyframe = animation in Animated? */
+/* }; */
+
 struct Model {
     Model(const std::string &path);
     ~Model();
-    
+
     std::string filename;
     std::string directory;
-    std::vector<GPUMesh*> meshes;
+
+    std::vector<Mesh*> meshes;                    // Skin
+    std::unordered_map<std::string,Joint> joints; // Bones
+    uint32 jointCount;
 };
 
 // TODO: delete

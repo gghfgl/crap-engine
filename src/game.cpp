@@ -34,10 +34,10 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     // =================================================
 
     // // ReferenceGrid
-    std::vector<uint32> uEmpty; // TODO: init default in constructor?
-    std::vector<GPUTexture> tEmpty;
-    std::vector<GPUVertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, GPUVertex());
-    GPUMesh *ReferenceGrid = new GPUMesh(vReferenceGrid, uEmpty, tEmpty, 0);
+    std::vector<uint32> indicesEmpty; // TODO: init default in constructor?
+    std::vector<Texture> texturesEmpty;
+    std::vector<Vertex> vReferenceGrid(g_ReferenceGridResolution * 4 + 4, Vertex());
+    Mesh *ReferenceGrid = new Mesh(vReferenceGrid, indicesEmpty, texturesEmpty);
     renderer->PrepareReferenceGridSubData(ReferenceGrid, g_ReferenceGridResolution);
 
     // Test Payer
@@ -149,6 +149,7 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
 
     // delete ReferenceGrid;
     // delete testPlayer;
+    delete testModel;
 
     delete camera;
     delete sCache;

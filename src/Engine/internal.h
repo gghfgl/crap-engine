@@ -13,6 +13,16 @@ typedef double   float64;
 
 #define ASSERT(x) if (!(x)) __debugbreak();
 
+namespace Utils
+{
+    std::string absolute_to_relative_path(const std::string &path)
+    {
+        auto p = std::filesystem::proximate(path);
+
+        return p.u8string();
+    }
+}
+
 namespace Log
 {
     void debug(const char* fmt, ...)

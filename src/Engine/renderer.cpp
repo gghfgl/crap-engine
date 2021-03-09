@@ -85,7 +85,7 @@ uint32 Renderer::PrepareInstance(Model *model,
     return buffer;
 }
 
-void Renderer::DrawLines(GPUMesh *mesh, float32 width)
+void Renderer::DrawLines(Mesh *mesh, float32 width)
 {
     glLineWidth(width);
     glBindVertexArray(mesh->VAO);
@@ -95,7 +95,7 @@ void Renderer::DrawLines(GPUMesh *mesh, float32 width)
     this->stats.drawCalls++;
 }
 
-void Renderer::DrawMesh(GPUMesh *mesh, Shader *shader)
+void Renderer::DrawMesh(Mesh *mesh, Shader *shader)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -129,7 +129,7 @@ void Renderer::DrawMesh(GPUMesh *mesh, Shader *shader)
     this->stats.drawCalls++;
 }
     
-void Renderer::DrawInstanceMesh(GPUMesh *mesh, Shader *shader, uint32 count)
+void Renderer::DrawInstanceMesh(Mesh *mesh, Shader *shader, uint32 count)
 {
     uint32 diffuseNr = 1;
     uint32 specularNr = 1;
@@ -229,39 +229,40 @@ void Renderer::DrawBoundingBox(BoundingBox *boundingBox)
     this->stats.drawCalls++;
 }
 
-void Renderer::PrepareOriginDebug(GPUMesh *mesh)
+void Renderer::PrepareOriginDebug(Mesh *mesh)
 {    
     mesh->vertices.clear();
 
-    GPUVertex vXa;
+    Vertex vXa;
     vXa.position = glm::vec3(0.0f, 0.1f, 0.0f);
     mesh->vertices.push_back(vXa);
-    GPUVertex vXb;
+    Vertex vXb;
     vXb.position = glm::vec3(2.0f, 0.1f, 0.0f);
     mesh->vertices.push_back(vXb);
 
-    GPUVertex vYa;
+    Vertex vYa;
     vYa.position = glm::vec3(0.0f, 0.1f, 0.0f);
     mesh->vertices.push_back(vYa);
-    GPUVertex vYb;
+    Vertex vYb;
     vYb.position = glm::vec3(0.0f, 2.0f, 0.0f);
     mesh->vertices.push_back(vYb);
 
-    GPUVertex vZa;
+    Vertex vZa;
     vZa.position = glm::vec3(0.0f, 0.1f, 0.0f);
     mesh->vertices.push_back(vZa);
-    GPUVertex vZb;
+    Vertex vZb;
     vZb.position = glm::vec3(0.0f, 0.1f, -2.0f);
     mesh->vertices.push_back(vZb);
     
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    mesh->vertices.size() * sizeof(GPUVertex),
+                    mesh->vertices.size() * sizeof(Vertex),
                     &mesh->vertices[0]);
 }
 
-void Renderer::PrepareReferenceGridSubData(GPUMesh *mesh, uint32 resolution)
+// TODO: should not be in renderer ...
+void Renderer::PrepareReferenceGridSubData(Mesh *mesh, uint32 resolution)
 {
     uint32 vCount = resolution * 4 + 4;			 // 44
     float32 b = (float32)resolution / 2.0f + 1.0f; // 6
@@ -273,7 +274,7 @@ void Renderer::PrepareReferenceGridSubData(GPUMesh *mesh, uint32 resolution)
     uint32 i = 0;
     while (i < vCount / 2) // z axis ->
     {
-        GPUVertex v;
+        Vertex v;
         if (i % 2 == 0)
         {
             v.position = glm::vec3(a, 0.0f, zPos);
@@ -290,7 +291,7 @@ void Renderer::PrepareReferenceGridSubData(GPUMesh *mesh, uint32 resolution)
 
     while (i < vCount) // x axis ->
     {
-        GPUVertex v;
+        Vertex v;
         if (i % 2 == 0)
         {
             v.position = glm::vec3(xPos, 0.0f, a);
@@ -308,17 +309,17 @@ void Renderer::PrepareReferenceGridSubData(GPUMesh *mesh, uint32 resolution)
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferSubData(GL_ARRAY_BUFFER,
                     0,
-                    mesh->vertices.size() * sizeof(GPUVertex),
+                    mesh->vertices.size() * sizeof(Vertex),
                     &mesh->vertices[0]);
 }
 
-void Renderer::PrepareRaySubData(GPUMesh *mesh, glm::vec3 origin, glm::vec3 direction)
+void Renderer::PrepareRaySubData(Mesh *mesh, glm::vec3 origin, glm::vec3 direction)
 {
     //glm::vec3 target = origin + (direction * 1.0f);
     glm::vec3 target = direction * 1.0f;
 
     mesh->vertices.clear();
-    GPUVertex v;
+    Vertex v;
     v.position = glm::vec3(origin.x, origin.y, origin.z - 0.1f);
     mesh->vertices.push_back(v);
     v.position = target;
@@ -326,7 +327,7 @@ void Renderer::PrepareRaySubData(GPUMesh *mesh, glm::vec3 origin, glm::vec3 dire
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
     glBufferData(GL_ARRAY_BUFFER,
-                 mesh->vertices.size() * sizeof(GPUVertex),
+                 mesh->vertices.size() * sizeof(Vertex),
                  &mesh->vertices[0],
                  GL_DYNAMIC_DRAW);
 }
