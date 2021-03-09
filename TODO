@@ -14,6 +14,7 @@
 
 - @: load model with animation with asset wrapper
 - @: clean TODO + ASSET + GPU ACL
+- @: check every alloc->delete and same as GPU call
 - @: texture without cache really working???
 - @: animation model asset system
 - @: isolate assimp and opengl code + rework rederer and anim_model like an ACL
