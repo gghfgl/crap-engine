@@ -30,7 +30,7 @@
 
 #include "camera.cpp"
 #include "shader.cpp"
-#include "model2.cpp"
+#include "model.cpp"
 #include "entity.cpp"
 #include "ray.cpp"
 #include "renderer.cpp"

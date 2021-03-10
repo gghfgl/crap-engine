@@ -51,8 +51,8 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     // Log::debug("name=%s\t count=%d\n", testAnimation->rootNode.name.c_str(), testAnimation->rootNode.childrenCount);
     // for (auto& child : testAnimation->rootNode.children)
     //     Log::debug("name=%s\t count=%d size=%d\n", child.name.c_str(), child.childrenCount, child.children.size());
-    for (auto& joint : testModel->joints)
-        Log::debug("name=%s\t ID=%d\n", joint->name.c_str(), joint->ID);
+    // for (auto& joint : testModel->joints)
+    //     Log::debug("name=%s\n", joint->name.c_str());
 
     // =================================================
 
@@ -156,9 +156,10 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
      *                                                      *
      ********************************************************/
 
-    // delete ReferenceGrid;
+    delete ReferenceGrid;
     // delete testPlayer;
     delete testModel;
+    delete testAnimation;
 
     delete camera;
     delete sCache;
