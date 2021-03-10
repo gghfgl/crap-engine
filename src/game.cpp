@@ -44,6 +44,15 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
     //Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
 
     Model *testModel = new Model("./assets/models/vampire/dancing_vampire.dae");
+    Animation *testAnimation = new Animation("./assets/models/vampire/dancing_vampire.dae", testModel);
+    // DEBUG
+    // for (auto it = testModel->jointTransforms.begin(); it != testModel->jointTransforms.end(); it++)
+    //     Log::debug("name=%s\t ID=%d\n", it->first.c_str(), it->second.ID);
+    // Log::debug("name=%s\t count=%d\n", testAnimation->rootNode.name.c_str(), testAnimation->rootNode.childrenCount);
+    // for (auto& child : testAnimation->rootNode.children)
+    //     Log::debug("name=%s\t count=%d size=%d\n", child.name.c_str(), child.childrenCount, child.children.size());
+    for (auto& joint : testModel->joints)
+        Log::debug("name=%s\t ID=%d\n", joint->name.c_str(), joint->ID);
 
     // =================================================
 

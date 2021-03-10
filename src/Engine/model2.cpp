@@ -1,19 +1,41 @@
 #include "model2.h"
 
-// ASSIMP
+// ASSET
 std::string load_model(Model *model);
 void process_node(Model *model, const aiScene *scene, aiNode *node);
 Mesh* process_mesh(Model *model, aiMesh *mesh, const aiScene *scene);
-void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh, const aiScene* scene);
+void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh);
 std::vector<Texture> load_material_textures(const std::string &directory, aiMaterial *mat, aiTextureType type, std::string typeName);
 uint32 load_texture_from_file(const std::string &path);
+std::string load_animation(Animation *animation, Model *model);
+void process_animation_hierarchy(AnimationNode& dest, const aiNode* src);
+void setup_animation_joints(const aiAnimation* aiAnim, Model *model);
+Joint* create_animation_joint(const std::string& name, int32 ID, const aiNodeAnim* channel);
+
 glm::mat4 convert_aimatrix_to_glm(const aiMatrix4x4& from);
+glm::vec3 convert_aivec_to_glm(const aiVector3D& vec);
+glm::quat convert_aiquat_to_glm(const aiQuaternion& pOrientation);
 
 // GPU
-uint32 allocate_mesh(Mesh *mesh);
+void allocate_mesh(Mesh *mesh);
 void deallocate_mesh(Mesh *mesh);
 
 // ======================================================================================
+
+// TODO
+Joint::Joint(uint32 ID, std::string name)
+{
+    this->ID = ID;
+    this->name = name;
+}
+
+// TODO
+Joint::~Joint()
+{
+    this->positions.clear();
+    this->rotations.clear();
+    this->scales.clear();
+}
 
 Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<uint32> &indices, std::vector<Texture> &textures)
 {
@@ -67,6 +89,44 @@ Model::~Model()
     for (auto& mesh : this->meshes)
         delete mesh;
     this->meshes.clear();
+
+    for (auto& joint : this->joints)
+        delete joint;
+    this->joints.clear();
+}
+
+Animation::Animation(const std::string &path, Model *model)
+{
+    Log::separator();
+    Log::info("loading animation: \"%s\"\n", path.c_str());
+
+    std::string path_r = Utils::absolute_to_relative_path(path);
+    std::string directory = path_r.substr(0, path_r.find_last_of('/'));
+    std::string filename = path_r.substr(directory.length() + 1, path_r.length());
+
+    this->directory = directory;
+    this->filename = filename;
+    
+    std::string error = load_animation(this, model);
+    if (error != "")
+    {
+        directory = "";
+        filename = "";
+
+        Log::error("asset_load_animation: \"%s\"\n", error.c_str());
+        Log::separator();
+
+        return;
+    }
+
+    Log::info("done!\n");
+    Log::separator();
+}
+
+// TODO
+Animation::~Animation()
+{
+    // ...
 }
 
 // ======================================================================================
@@ -170,8 +230,6 @@ Mesh* process_mesh(Model *model, aiMesh *mesh, const aiScene *scene)
             indices.push_back(face.mIndices[j]);
     }  
 
-    Log::info("loading vertices OK\n");
-
     // Materials / Textures.
     std::vector<Texture> textures;
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -186,37 +244,37 @@ Mesh* process_mesh(Model *model, aiMesh *mesh, const aiScene *scene)
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
     // Joints
-    process_joint_data(model, vertices, mesh, scene);
+    process_joint_data(model, vertices, mesh);
     
     return new Mesh(vertices, indices, textures);
 }
 
-void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh, const aiScene* scene)
+void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh)
 {
-    auto& joints = model->joints;
-    uint32& count = model->jointCount;
+    auto& jointTransforms = model->jointTransforms;
+    uint32& jointCount = model->jointCount;
 
     for (uint32 i = 0; i < mesh->mNumBones; ++i)
     {
-        uint32 jointID = -1;
+        int32 jointID = -1;
         std::string name = mesh->mBones[i]->mName.C_Str();
 
         // DEBUG
-        Log::debug("joint= \"%s\"\n", name.c_str());
+        //Log::debug("joint= \"%s\"\n", name.c_str());
 
-        if (joints.find(name) == joints.end())
+        if (jointTransforms.find(name) == jointTransforms.end())
         {
-            Joint joint;
-            joint.ID = count;
-            joint.localTransform = convert_aimatrix_to_glm(mesh->mBones[i]->mOffsetMatrix);
+            JointTransform jointTrans;
+            jointTrans.ID = jointCount;
+            jointTrans.localTransform = convert_aimatrix_to_glm(mesh->mBones[i]->mOffsetMatrix);
 
-            joints[name] = joint;
+            jointTransforms[name] = jointTrans;
 
-            jointID = count;
-            count++;
+            jointID = jointCount;
+            jointCount++;
         } else
         {
-            jointID = joints[name].ID;
+            jointID = jointTransforms[name].ID;
         }
 
         // DEBUG
@@ -225,7 +283,7 @@ void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mes
         auto weights = mesh->mBones[i]->mWeights;
         uint32 numWeights = mesh->mBones[i]->mNumWeights;
 
-        for (int j = 0; j < numWeights; ++j)
+        for (uint32 j = 0; j < numWeights; ++j)
         {
             uint32 vertexID = weights[j].mVertexId;
             float32 weight = weights[j].mWeight;
@@ -245,8 +303,6 @@ void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mes
             }
         }
     }
-
-    Log::info("loading joints OK\n");
 }
 
 std::vector<Texture> load_material_textures(const std::string &directory, aiMaterial *mat, aiTextureType type, std::string typeName)
@@ -326,6 +382,119 @@ uint32 load_texture_from_file(const std::string &path)
     return textureID;
 }
 
+std::string load_animation(Animation *animation, Model *model)
+{
+    std::string fullpath = animation->directory+"/"+animation->filename;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(fullpath, aiProcess_Triangulate);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+        return importer.GetErrorString();
+
+    auto aiAnim = scene->mAnimations[0];
+    animation->duration = aiAnim->mDuration;
+    animation->ticksPerSecond = aiAnim->mTicksPerSecond;
+
+    aiMatrix4x4 globalTransformation = scene->mRootNode->mTransformation;
+    globalTransformation = globalTransformation.Inverse();
+
+    process_animation_hierarchy(animation->rootNode, scene->mRootNode);
+
+    setup_animation_joints(aiAnim, model);
+
+    return "";
+}
+
+void process_animation_hierarchy(AnimationNode& dest, const aiNode* src)
+{
+    // DEBUG
+    assert(src);
+
+    dest.name = src->mName.data;
+    dest.transformation = convert_aimatrix_to_glm(src->mTransformation);
+    dest.childrenCount = src->mNumChildren;
+
+    for (uint32 i = 0; i < src->mNumChildren; i++)
+    {
+        AnimationNode newNode;
+        process_animation_hierarchy(newNode, src->mChildren[i]);
+        dest.children.push_back(newNode);
+    }
+}
+
+void setup_animation_joints(const aiAnimation* aiAnim, Model *model)
+{
+    uint32 size = aiAnim->mNumChannels;
+
+    auto& jointTransforms = model->jointTransforms;
+    uint32& jointCount = model->jointCount;
+
+    for (uint32 i = 0; i < size; i++)
+    {
+        auto channel = aiAnim->mChannels[i];
+        std::string jointName = channel->mNodeName.data;
+
+        if (jointTransforms.find(jointName) == jointTransforms.end())
+        {
+            jointTransforms[jointName].ID = jointCount;
+            jointCount++;
+        }
+
+        model->joints.push_back(create_animation_joint(channel->mNodeName.data, jointTransforms[channel->mNodeName.data].ID, channel));
+    }
+
+    //TODO: m_BoneInfoMap = jointTransforms;
+}
+
+Joint* create_animation_joint(const std::string& name, int32 ID, const aiNodeAnim* channel)
+{
+    Joint *joint = new Joint(ID, name);
+
+    joint->numPositions = channel->mNumPositionKeys;
+    for (uint32 i = 0; i < joint->numPositions; ++i)
+    {
+        aiVector3D aiPosition = channel->mPositionKeys[i].mValue;
+        float32 timestamp = channel->mPositionKeys[i].mTime;
+
+        KeyPosition data;
+        data.position = convert_aivec_to_glm(aiPosition);
+        data.timestamp = timestamp;
+
+        joint->positions.push_back(data);
+    }
+
+    joint->numRotations = channel->mNumRotationKeys;
+    for (uint32 i = 0; i < joint->numRotations; ++i)
+    {
+        aiQuaternion aiOrientation = channel->mRotationKeys[i].mValue;
+        float32 timestamp = channel->mRotationKeys[i].mTime;
+
+        KeyRotation data;
+        data.orientation = convert_aiquat_to_glm(aiOrientation);
+        data.timestamp = timestamp;
+
+        joint->rotations.push_back(data);
+    }
+
+    joint->numScales = channel->mNumScalingKeys;
+    for (uint32 i = 0; i < joint->numScales; ++i)
+    {
+        aiVector3D scale = channel->mScalingKeys[i].mValue;
+        float32 timestamp = channel->mScalingKeys[i].mTime;
+
+        KeyScale data;
+        data.scale = convert_aivec_to_glm(scale);
+        data.timestamp = timestamp;
+
+        joint->scales.push_back(data);
+    }
+
+    // DEBUG
+    Log::debug("TEST1=%d\n", joint->positions.size());
+    Log::debug("TEST2=%d\n", joint->rotations.size());
+    Log::debug("TEST3=%d\n", joint->scales.size());
+
+}
+
 glm::mat4 convert_aimatrix_to_glm(const aiMatrix4x4& from)
 {
     glm::mat4 to;
@@ -337,9 +506,19 @@ glm::mat4 convert_aimatrix_to_glm(const aiMatrix4x4& from)
     return to;
 }
 
+glm::vec3 convert_aivec_to_glm(const aiVector3D& vec) 
+{ 
+    return glm::vec3(vec.x, vec.y, vec.z); 
+}
+
+glm::quat convert_aiquat_to_glm(const aiQuaternion& pOrientation)
+{
+    return glm::quat(pOrientation.w, pOrientation.x, pOrientation.y, pOrientation.z);
+}
+
 // ================================================================================
 
-uint32 allocate_mesh(Mesh *mesh)
+void allocate_mesh(Mesh *mesh)
 {
     glGenVertexArrays(1, &mesh->VAO);
     glGenBuffers(1, &mesh->VBO);

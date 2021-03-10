@@ -21,7 +21,42 @@ struct Texture
     std::string filename;
 };
 
+struct KeyPosition
+{
+    glm::vec3 position;
+    float32 timestamp;
+};
+
+struct KeyRotation
+{
+    glm::quat orientation;
+    float32 timestamp;
+};
+
+struct KeyScale
+{
+    glm::vec3 scale;
+    float32 timestamp;
+};
+
 struct Joint {
+    Joint(uint32 ID, std::string name);
+    ~Joint();
+
+    uint32 ID;
+    std::string name;
+    glm::mat4 localTransform = glm::mat4(1.0f);
+
+    std::vector<KeyPosition> positions;
+    std::vector<KeyRotation> rotations;
+    std::vector<KeyScale> scales;
+
+    uint32 numPositions;
+    uint32 numRotations;
+    uint32 numScales;
+};
+
+struct JointTransform {
     uint32 ID;
     glm::mat4 localTransform;
 };
@@ -39,33 +74,6 @@ struct Mesh {
     std::vector<Texture> textures;
 };
 
-/* struct JointTransform { */
-/*     glm::vec3 position; */
-/*     glm::quat rotation; */
-/* }; */
-
-/* struct Keyframe { */
-/*     std::unordered_map<std::string,JointTransform> jointTransforms; */
-/*     float32 timestamp; */
-/* }; */
-
-/* struct Animation { */
-/*     Animation(); */
-/*     ~Animation(); */
-    
-/*     std::vector<Keyframe> frames; */
-/* }; */
-
-/* struct Animated { */
-/*     Animated(const std::string &path); */
-/*     ~Animated(); */
-    
-/*     std::string filename; */
-/*     std::string directory; */
-
-/*     Animation *animation; // TODO: useless []Keyframe = animation in Animated? */
-/* }; */
-
 struct Model {
     Model(const std::string &path);
     ~Model();
@@ -73,9 +81,30 @@ struct Model {
     std::string filename;
     std::string directory;
 
-    std::vector<Mesh*> meshes;                    // Skin
-    std::unordered_map<std::string,Joint> joints; // Bones
+    std::vector<Mesh*> meshes; // Skin
+    std::vector<Joint*> joints; // Bones
+    std::unordered_map<std::string,JointTransform> jointTransforms;
     uint32 jointCount;
+};
+
+struct AnimationNode
+{
+	std::string name;
+	int32 childrenCount;
+	glm::mat4 transformation;
+	std::vector<AnimationNode> children;
+};
+
+struct Animation {
+    Animation(const std::string &path, Model *model);
+    ~Animation();
+
+    std::string filename;
+    std::string directory;
+
+    float32 duration = 0;
+    uint32 ticksPerSecond = 0;
+    AnimationNode rootNode;
 };
 
 // TODO: delete
