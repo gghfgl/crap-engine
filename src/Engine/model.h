@@ -97,7 +97,6 @@ struct AnimationNode
 
 struct Animation {
     Animation(const std::string &path, Model *model);
-    ~Animation();
 
     std::string filename;
     std::string directory;

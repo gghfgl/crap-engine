@@ -9,7 +9,7 @@ std::vector<Texture> load_material_textures(const std::string &directory, aiMate
 uint32 load_texture_from_file(const std::string &path);
 std::string load_animation(Animation *animation, Model *model);
 void process_animation_hierarchy(AnimationNode& dest, const aiNode* src);
-void setup_animation_joints(const aiAnimation* aiAnim, Model *model);
+void load_animation_joints(const aiAnimation* aiAnim, Model *model);
 Joint* create_animation_joint(const std::string& name, int32 ID, const aiNodeAnim* channel);
 
 glm::mat4 convert_aimatrix_to_glm(const aiMatrix4x4& from);
@@ -22,14 +22,12 @@ void deallocate_mesh(Mesh *mesh);
 
 // ======================================================================================
 
-// TODO
 Joint::Joint(uint32 ID, std::string name)
 {
     this->ID = ID;
     this->name = name;
 }
 
-// TODO
 Joint::~Joint()
 {
     this->positions.clear();
@@ -121,12 +119,6 @@ Animation::Animation(const std::string &path, Model *model)
 
     Log::info("done!\n");
     Log::separator();
-}
-
-// TODO
-Animation::~Animation()
-{
-    // ...
 }
 
 // ======================================================================================
@@ -259,9 +251,6 @@ void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mes
         int32 jointID = -1;
         std::string name = mesh->mBones[i]->mName.C_Str();
 
-        // DEBUG
-        //Log::debug("joint= \"%s\"\n", name.c_str());
-
         if (jointTransforms.find(name) == jointTransforms.end())
         {
             JointTransform jointTrans;
@@ -393,7 +382,7 @@ std::string load_animation(Animation *animation, Model *model)
 
     process_animation_hierarchy(animation->rootNode, scene->mRootNode);
 
-    setup_animation_joints(aiAnim, model);
+    load_animation_joints(aiAnim, model);
 
     return "";
 }
@@ -412,7 +401,7 @@ void process_animation_hierarchy(AnimationNode& dest, const aiNode* src)
     }
 }
 
-void setup_animation_joints(const aiAnimation* aiAnim, Model *model)
+void load_animation_joints(const aiAnimation* aiAnim, Model *model)
 {
     uint32 size = aiAnim->mNumChannels;
 

@@ -13,7 +13,7 @@
 ### TODO
 
 - @: load model with animation with asset wrapper
-- @: clean TODO + ASSET + GPU ACL
+- @: clean TODO + ASSET + GPU ACL + clean Engine files maybe merge some of them
 - @: check every alloc->delete and same as GPU call
 - @: texture without cache really working???
 - @: animation model asset system

@@ -42,9 +42,12 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
 
     // Test Payer
     //Player *testPlayer = new Player("testPlayer", "./assets/models/untitled-scene-obj/untitled.obj", glm::vec3(0.0f));
+    Player *testPlayer = new Player("testPlayer", "./assets/models/vampire/dancing_vampire.dae", glm::vec3(0.0f));
+    //Player *testPlayer = new Player("testPlayer", "./assets/models/man/model.dae", glm::vec3(0.0f));
 
-    Model *testModel = new Model("./assets/models/vampire/dancing_vampire.dae");
-    Animation *testAnimation = new Animation("./assets/models/vampire/dancing_vampire.dae", testModel);
+    // Model *testModel = new Model("./assets/models/vampire/dancing_vampire.dae");
+    Animation *testAnimation = new Animation("./assets/models/vampire/dancing_vampire.dae", testPlayer->entity->model);
+    // Animation *testAnimation = new Animation("./assets/models/man/model.dae", testPlayer->entity->model);
     // DEBUG
     // for (auto it = testModel->jointTransforms.begin(); it != testModel->jointTransforms.end(); it++)
     //     Log::debug("name=%s\t ID=%d\n", it->first.c_str(), it->second.ID);
@@ -132,19 +135,19 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
         colorShader->SetUniform4f("color", glm::vec4(0.360f, 1.0f, 0.360f, 1.0f));
         renderer->DrawLines(ReferenceGrid, 1.0f);
         
-        // // Draw Player
-        // Shader *defaultShader = sCache->GetShader("default");
-        // defaultShader->UseProgram();
-        // defaultShader->SetUniform4fv("projection", projectionMatrix);
-        // defaultShader->SetUniform4fv("view", viewMatrix);
+        // Draw Player
+        Shader *defaultShader = sCache->GetShader("default");
+        defaultShader->UseProgram();
+        defaultShader->SetUniform4fv("projection", projectionMatrix);
+        defaultShader->SetUniform4fv("view", viewMatrix);
         
-        // glm::mat4 model = identityMatrix;
-        // model = glm::translate(model, testPlayer->entity->position);
-        // model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
-        // //model = glm::scale(model, glm::vec3(0.01f));
-        // model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
-        // defaultShader->SetUniform4fv("model", model);
-        // renderer->DrawModel(testPlayer->entity->model, defaultShader);
+        glm::mat4 model = identityMatrix;
+        model = glm::translate(model, testPlayer->entity->position);
+        model = glm::scale(model, glm::vec3(testPlayer->entity->scale));
+        //model = glm::scale(model, glm::vec3(0.01f));
+        model = glm::rotate(model, glm::radians(testPlayer->entity->rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+        defaultShader->SetUniform4fv("model", model);
+        renderer->DrawModel(testPlayer->entity->model, defaultShader);
         
         // Swap buffer
         Window->SwapBuffer();
@@ -157,9 +160,9 @@ void RunGame(Window *Window, InputState *Input, PlateformInfo *Info, GlobalState
      ********************************************************/
 
     delete ReferenceGrid;
-    // delete testPlayer;
-    delete testModel;
-    delete testAnimation;
+    delete testPlayer;
+    //delete testModel;
+    //delete testAnimation;
 
     delete camera;
     delete sCache;
