@@ -1,7 +1,7 @@
 #pragma once
 
-// This should be the maximum bone<->weights relation
-#define MAX_JOINT_INFLUENCE 4
+#define MAX_JOINTS 100 // This should be the maximum of joints from a single model
+#define MAX_JOINT_INFLUENCE 4 // This should be the maximum bone<->weights relation
 
 struct Vertex
 {
@@ -74,19 +74,6 @@ struct Mesh {
     std::vector<Texture> textures;
 };
 
-struct Model {
-    Model(const std::string &path);
-    ~Model();
-
-    std::string filename;
-    std::string directory;
-
-    std::vector<Mesh*> meshes; // Skin
-    std::vector<Joint*> joints; // Bones
-    std::unordered_map<std::string,JointTransform> jointTransforms;
-    uint32 jointCount;
-};
-
 struct AnimationNode
 {
 	std::string name;
@@ -96,14 +83,43 @@ struct AnimationNode
 };
 
 struct Animation {
-    Animation(const std::string &path, Model *model);
+    ~Animation();
 
+    // @TODO: clean this crap
+    Joint* FindBone(const std::string& name)
+        {
+            auto iter = std::find_if(joints.begin(), joints.end(),
+                                     [&](Joint *joint)
+                                     {
+                                         return joint->name == name;
+                                     }
+                );
+            if (iter == joints.end()) return nullptr;
+            else return *iter;
+        }
+    
     std::string filename;
     std::string directory;
 
     float32 duration = 0;
     uint32 ticksPerSecond = 0;
     AnimationNode rootNode;
+
+    std::vector<Joint*> joints; // @Warning: loaded during load_animation().
+    std::unordered_map<std::string,JointTransform> jointTransforms; // @Warning: loaded during load_model().
+    uint32 jointCount;
+};
+
+struct Model {
+    Model(const std::string &path);
+    ~Model();
+    void LoadAnimation(const std::string &path);
+
+    std::string filename;
+    std::string directory;
+
+    Animation *animation;
+    std::vector<Mesh*> meshes;
 };
 
 // TODO: delete

@@ -20,7 +20,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-// TODO: @animation
 //#include <assimp/quaternion.h>
 //#include <assimp/vector3.h>
 //#include <assimp/matrix4x4.h>
@@ -31,6 +30,7 @@
 #include "camera.cpp"
 #include "shader.cpp"
 #include "model.cpp"
+#include "animator.h" // @TODO: WIP
 #include "entity.cpp"
 #include "ray.cpp"
 #include "renderer.cpp"

@@ -7,9 +7,9 @@ Mesh* process_mesh(Model *model, aiMesh *mesh, const aiScene *scene);
 void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh);
 std::vector<Texture> load_material_textures(const std::string &directory, aiMaterial *mat, aiTextureType type, std::string typeName);
 uint32 load_texture_from_file(const std::string &path);
-std::string load_animation(Animation *animation, Model *model);
+std::string load_animation(Animation *animation);
 void process_animation_hierarchy(AnimationNode& dest, const aiNode* src);
-void load_animation_joints(const aiAnimation* aiAnim, Model *model);
+void load_animation_joints(const aiAnimation* aiAnim, Animation *animation);
 Joint* create_animation_joint(const std::string& name, int32 ID, const aiNodeAnim* channel);
 
 glm::mat4 convert_aimatrix_to_glm(const aiMatrix4x4& from);
@@ -63,6 +63,7 @@ Model::Model(const std::string &path)
     std::string directory = path_r.substr(0, path_r.find_last_of('/'));
     std::string filename = path_r.substr(directory.length() + 1, path_r.length());
 
+    this->animation = new Animation;
     this->directory = directory;
     this->filename = filename;
     
@@ -82,18 +83,7 @@ Model::Model(const std::string &path)
     Log::separator();
 }
 
-Model::~Model()
-{
-    for (auto& mesh : this->meshes)
-        delete mesh;
-    this->meshes.clear();
-
-    for (auto& joint : this->joints)
-        delete joint;
-    this->joints.clear();
-}
-
-Animation::Animation(const std::string &path, Model *model)
+void Model::LoadAnimation(const std::string &path)
 {
     Log::separator();
     Log::info("loading animation: \"%s\"\n", path.c_str());
@@ -102,10 +92,10 @@ Animation::Animation(const std::string &path, Model *model)
     std::string directory = path_r.substr(0, path_r.find_last_of('/'));
     std::string filename = path_r.substr(directory.length() + 1, path_r.length());
 
-    this->directory = directory;
-    this->filename = filename;
+    this->animation->directory = directory;
+    this->animation->filename = filename;
     
-    std::string error = load_animation(this, model);
+    std::string error = load_animation(this->animation);
     if (error != "")
     {
         directory = "";
@@ -121,6 +111,23 @@ Animation::Animation(const std::string &path, Model *model)
     Log::separator();
 }
 
+Model::~Model()
+{
+    for (auto& mesh : this->meshes)
+        delete mesh;
+    this->meshes.clear();
+
+    if (this->animation)
+        delete this->animation;
+}
+
+Animation::~Animation()
+{
+    for (auto& joint : this->joints)
+        delete joint;
+    this->joints.clear();
+}
+
 // ======================================================================================
 
 std::string load_model(Model *model)
@@ -128,8 +135,7 @@ std::string load_model(Model *model)
     std::string fullpath = model->directory+"/"+model->filename;
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(fullpath, aiProcess_Triangulate
-                                             // // | aiProcess_MakeLeftHanded
-                                             // // | aiProcess_PreTransformVertices
+                                             // | aiProcess_PreTransformVertices
                                              | aiProcess_FlipUVs
                                              | aiProcess_JoinIdenticalVertices
                                              | aiProcess_CalcTangentSpace
@@ -243,8 +249,8 @@ Mesh* process_mesh(Model *model, aiMesh *mesh, const aiScene *scene)
 
 void process_joint_data(Model *model, std::vector<Vertex> &vertices, aiMesh* mesh)
 {
-    auto& jointTransforms = model->jointTransforms;
-    uint32& jointCount = model->jointCount;
+    auto& jointTransforms = model->animation->jointTransforms;
+    uint32& jointCount = model->animation->jointCount;
 
     for (uint32 i = 0; i < mesh->mNumBones; ++i)
     {
@@ -365,7 +371,7 @@ uint32 load_texture_from_file(const std::string &path)
     return textureID;
 }
 
-std::string load_animation(Animation *animation, Model *model)
+std::string load_animation(Animation *animation)
 {
     std::string fullpath = animation->directory+"/"+animation->filename;
     Assimp::Importer importer;
@@ -382,7 +388,7 @@ std::string load_animation(Animation *animation, Model *model)
 
     process_animation_hierarchy(animation->rootNode, scene->mRootNode);
 
-    load_animation_joints(aiAnim, model);
+    load_animation_joints(aiAnim, animation);
 
     return "";
 }
@@ -401,12 +407,12 @@ void process_animation_hierarchy(AnimationNode& dest, const aiNode* src)
     }
 }
 
-void load_animation_joints(const aiAnimation* aiAnim, Model *model)
+void load_animation_joints(const aiAnimation* aiAnim, Animation *animation)
 {
     uint32 size = aiAnim->mNumChannels;
 
-    auto& jointTransforms = model->jointTransforms;
-    uint32& jointCount = model->jointCount;
+    auto& jointTransforms = animation->jointTransforms;
+    uint32& jointCount = animation->jointCount;
 
     for (uint32 i = 0; i < size; i++)
     {
@@ -419,7 +425,7 @@ void load_animation_joints(const aiAnimation* aiAnim, Model *model)
             jointCount++;
         }
 
-        model->joints.push_back(create_animation_joint(channel->mNodeName.data, jointTransforms[channel->mNodeName.data].ID, channel));
+        animation->joints.push_back(create_animation_joint(channel->mNodeName.data, jointTransforms[channel->mNodeName.data].ID, channel));
     }
 }
 
